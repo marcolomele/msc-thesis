@@ -1,0 +1,73 @@
+% custom-macros.tex — load via \input{style/custom-macros} in main.tex
+
+% ----------------------------------------------------------------
+% Vectors and Matrices
+% ----------------------------------------------------------------
+\newcommand{\vv}[1]{\mathbf{#1}}            % bold vector: \vv{x}
+\newcommand{\mm}[1]{\mathbf{#1}}            % bold matrix: \mm{A}
+\newcommand{\vvhat}[1]{\hat{\mathbf{#1}}}   % estimated vector: \vvhat{x}
+
+% ----------------------------------------------------------------
+% Sets and Spaces
+% ----------------------------------------------------------------
+\newcommand{\set}[1]{\mathcal{#1}}          % calligraphic set: \set{X}
+\newcommand{\R}{\mathbb{R}}                 % real numbers
+\newcommand{\N}{\mathbb{N}}                 % natural numbers
+\newcommand{\Z}{\mathbb{Z}}                 % integers
+
+% ----------------------------------------------------------------
+% Probability and Statistics
+% ----------------------------------------------------------------
+\newcommand{\E}{\mathbb{E}}                 % expectation
+\newcommand{\Var}{\mathrm{Var}}             % variance
+\newcommand{\Cov}{\mathrm{Cov}}             % covariance
+\newcommand{\Prob}{\mathbb{P}}              % probability
+\newcommand{\iid}{\overset{\text{iid}}{\sim}}           % iid distributed
+\newcommand{\normaldist}[2]{\mathcal{N}(#1, #2)}        % normal distribution
+
+% ----------------------------------------------------------------
+% Neural Network Operations
+% ----------------------------------------------------------------
+\newcommand{\softmax}{\mathrm{softmax}}     % softmax
+\newcommand{\sigmoid}{\sigma}               % sigmoid
+\newcommand{\relu}{\mathrm{ReLU}}           % ReLU
+\newcommand{\layernorm}{\mathrm{LN}}        % layer norm
+\newcommand{\attn}{\mathrm{Attn}}           % attention
+\newcommand{\mhattn}{\mathrm{MHA}}          % multi-head attention
+
+% ----------------------------------------------------------------
+% Attention Mechanism
+% ----------------------------------------------------------------
+\newcommand{\query}{\mm{Q}}                 % query matrix
+\newcommand{\key}{\mm{K}}                   % key matrix
+\newcommand{\val}{\mm{V}}                   % value matrix
+\newcommand{\dmodel}{d_{\text{model}}}      % model dimension
+\newcommand{\dkey}{d_k}                     % key dimension
+\newcommand{\dhead}{d_{\text{head}}}        % head dimension
+
+% ----------------------------------------------------------------
+% Vision and Segmentation
+% ----------------------------------------------------------------
+\newcommand{\img}{\set{I}}                  % image
+\newcommand{\mask}{\mm{M}}                  % segmentation mask
+\newcommand{\feat}{\vv{f}}                  % feature vector
+\newcommand{\patch}{\vv{p}}                 % patch token
+\newcommand{\cls}{\vv{z}_{\text{cls}}}      % CLS token
+\newcommand{\iou}{\text{IoU}}               % intersection over union
+
+% ----------------------------------------------------------------
+% Loss Functions and Metrics
+% ----------------------------------------------------------------
+\newcommand{\loss}{\mathcal{L}}                             % loss
+\newcommand{\lossce}{\mathcal{L}_{\text{CE}}}               % cross-entropy loss
+\newcommand{\losscon}{\mathcal{L}_{\text{con}}}             % contrastive loss
+
+% ----------------------------------------------------------------
+% General Convenience
+% ----------------------------------------------------------------
+\newcommand{\eg}{e.g.,\xspace}
+\newcommand{\ie}{i.e.,\xspace}
+\newcommand{\etal}{et al.\xspace}
+\newcommand{\transpose}{^\top}                              % transpose: \mm{A}\transpose
+\newcommand{\norm}[1]{\left\lVert#1\right\rVert}            % norm: \norm{\vv{x}}
+\newcommand{\abs}[1]{\left|#1\right|}                       % absolute value

@@ -1,0 +1,156 @@
+# CLAUDE.md — Context for Claude Code
+
+This file gives Claude Code in Cursor the context it needs to assist
+with the `msc-thesis` repository. Read this before acting on any request.
+
+---
+
+## What This Repo Is
+
+A master's thesis in Data Science (Statistics and Modern Machine Learning)
+at Bocconi University. The thesis presents an empirical research project
+in computer vision — specifically an inference pipeline for cross-view
+object correspondence in egocentric/exocentric video using foundation models.
+
+The thesis is ~50 pages, written in LaTeX, and compiled via Overleaf
+(GitHub sync). Prose is drafted in markdown via Claude UI and converted
+to LaTeX here.
+
+---
+
+## Repo Structure
+
+```
+/project-guidelines/
+  - scope.md
+  - style-guide.md
+  - writing-samples.md
+  - thesis-outline.md
+  - thesis-theory-topics.md
+  - technical-specs.md
+
+/chapter-briefs/
+  - chapter-brief-template.md
+  - [chapter-name]-brief.md      (one per chapter, filled before drafting)
+
+/assets/
+  - /figures/                    (.png / .pdf / .svg — plots, diagrams)
+  - /tables/                     (.csv / .xlsx — raw data tables)
+  - /data/                       (.json / .csv — experiment results)
+
+/latex/
+  - main.tex                     (master document)
+  - references.bib               (all citations)
+  - /chapters/
+  - /style/
+      - thesis.sty
+      - custom-macros.tex
+
+/thesis-drafts/
+  - [chapter-name]-draft.md      (approved markdown drafts from Claude UI)
+```
+
+---
+
+## Your Responsibilities in This Repo
+
+### Converting Drafts to LaTeX
+When given an approved markdown draft:
+1. Preserve the prose exactly — do not rephrase, reorder, or improve
+2. Convert markdown formatting to LaTeX equivalents
+3. Wrap display equations in `\begin{equation}...\end{equation}` with `\label{eq:name}`
+4. Wrap inline math in `$...$`
+5. Replace citation placeholders with `\cite{bibtex_key}` using keys from `references.bib`
+6. Convert figure references to `\begin{figure}...\end{figure}` blocks pulling from `/assets/figures/`
+7. Convert tables to `\begin{table}...\end{table}` blocks with `\toprule/\midrule/\bottomrule`
+8. Save output to `/latex/chapters/[XX-chapter-name].tex`
+9. Add `\input{chapters/XX-chapter-name}` to `main.tex` if not already present
+
+### Managing references.bib
+When adding new citations:
+- Use the bibtex keys defined in `thesis-theory-topics.md` exactly — do not invent new keys
+- Check for duplicates before adding
+- Standard fields required: author, title, year, and venue (journal/booktitle/publisher)
+- For arXiv papers: use `@misc` with `howpublished = {arXiv preprint arXiv:XXXX.XXXXX}`
+
+### Git Commits
+Use this commit format:
+```
+draft: add [chapter name] markdown draft
+latex: convert [chapter name] to tex
+refs: add [author] bibtex entries
+fix: [brief description of fix]
+assets: add [figure/table name]
+```
+
+One logical change per commit. Do not bundle draft + latex conversion in one commit.
+
+### Compilation
+When asked to compile:
+1. Run pdflatex → bibtex → pdflatex → pdflatex (standard sequence)
+2. Report all errors and warnings clearly
+3. Fix LaTeX errors autonomously if they are formatting/syntax issues
+4. Flag content errors (wrong citation key, missing figure) for human review
+
+---
+
+## LaTeX Conventions
+
+These are non-negotiable — they apply to every chapter file.
+
+**Math notation** (defined in `custom-macros.tex` — use macros, not raw LaTeX):
+- Vectors: `\vv{x}` (bold lowercase)
+- Matrices: `\mm{A}` (bold uppercase)
+- Sets: `\set{X}` (calligraphic)
+- Real numbers: `\R`
+- Expectation: `\E`
+- All other macros: see `custom-macros.tex`
+
+**Equations:**
+- Every display equation gets a `\label{eq:descriptive-name}`
+- Every equation is referenced in prose before or immediately after it appears
+- Component-by-component explanation follows every display equation in prose
+
+**Figures:**
+- Every figure is referenced in text with `\cref{fig:name}` before it appears
+- Captions are standalone and descriptive — a reader should understand the
+  figure without reading surrounding prose
+- Figures live in `/assets/figures/` — never embedded raw in `.tex` files
+
+**Citations:**
+- Inline author+year in prose: "Vaswani et al.~\cite{Vaswani2017}"
+- Pure citation (no inline name): `\cite{key}` at end of clause
+- Never stack citations without surrounding text: no `\cite{A}\cite{B}\cite{C}`
+
+**Cross-references:**
+- Use `\cref{}` throughout (not `\ref{}`) — requires `cleveref` package
+- Label convention: `fig:name`, `tab:name`, `eq:name`, `sec:name`
+
+---
+
+## What Claude Code Should Never Do
+
+- Never rephrase or improve prose from an approved draft — convert only
+- Never invent bibtex keys — use only keys from `thesis-theory-topics.md`
+- Never edit files in `/project-guidelines/` — these are read-only references
+- Never commit directly to main without flagging if changes touch `main.tex` structure
+- Never resolve a missing figure by removing the reference — flag it instead
+
+---
+
+## Current Status
+
+Track the current state of each chapter here. Update after each commit.
+
+| Chapter | Brief | Draft | LaTeX | Compiled |
+|---|---|---|---|---|
+| 01 Introduction | ☐ | ☐ | ☐ | ☐ |
+| 02a Visual Representation | ☐ | ☐ | ☐ | ☐ |
+| 02b Segmentation | ☐ | ☐ | ☐ | ☐ |
+| 02c Language Grounding | ☐ | ☐ | ☐ | ☐ |
+| 02d Foundation Models & Agents | ☐ | ☐ | ☐ | ☐ |
+| 02e Addition of Time | ☐ | ☐ | ☐ | ☐ |
+| 03 Related Works | ☐ | ☐ | ☐ | ☐ |
+| 04 Pipeline | ☐ | ☐ | ☐ | ☐ |
+| 05 Experiments | ☐ | ☐ | ☐ | ☐ |
+| 06 Conclusions | ☐ | ☐ | ☐ | ☐ |

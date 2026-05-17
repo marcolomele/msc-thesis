@@ -1,4 +1,4 @@
-/project-guidelines/
+/project-guidelines/ <-- read only instructions
   - writing-samples.md <-- examples of writing syle, tone, and vocabulary. 
   - style-guide.md <-- writing guide for syle, tone, and vocabulary.
   - thesis-outline.md <-- thesis index structure.

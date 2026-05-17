@@ -1,0 +1,82 @@
+\documentclass[12pt, a4paper]{report}
+
+% Encoding and fonts
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+
+% Page geometry
+\usepackage[top=2.5cm, bottom=2.5cm, left=3cm, right=2.5cm]{geometry}
+
+% Mathematics
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{mathtools}
+\usepackage{bm}
+
+% Graphics and figures
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{subcaption}
+
+% Tables
+\usepackage{booktabs}
+
+% Algorithms
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+% Color
+\usepackage{xcolor}
+
+% Typography
+\usepackage{microtype}
+
+% Spacing
+\usepackage{setspace}
+\onehalfspacing
+
+% Section formatting
+\usepackage{titlesec}
+
+% Appendix
+\usepackage{appendix}
+
+% Convenience macros (e.g., \xspace)
+\usepackage{xspace}
+
+% References and links — hyperref must come before cleveref
+\usepackage[colorlinks=true, linkcolor=black, citecolor=black, urlcolor=blue]{hyperref}
+\usepackage[capitalise, noabbrev]{cleveref}
+
+% Bibliography
+\usepackage[authoryear, round]{natbib}
+
+% Custom macros
+\input{style/custom-macros}
+
+% ----------------------------------------------------------------
+
+\begin{document}
+
+\input{style/titlepage}
+
+\tableofcontents
+\listoffigures
+\listoftables
+
+\input{chapters/01-introduction}
+\input{chapters/02a-visual-representation}
+\input{chapters/02b-segmentation}
+\input{chapters/02c-language-grounding}
+\input{chapters/02d-foundation-models-agents}
+\input{chapters/02e-addition-of-time}
+\input{chapters/03-related-works}
+\input{chapters/04-pipeline}
+\input{chapters/05-experiments}
+\input{chapters/06-conclusions}
+
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\end{document}
