@@ -94,7 +94,9 @@
 
 **Personal/contextual reference is permitted.** "This was confirmed later in 2024 by Dynamical regimes of Diffusion Models, a work of professor Mezard from our faculty" (Sample 5, oral) — citations in oral work include social or institutional context.
 
-**Both inline name+year and \cite{} are used concurrently in written work.** Sample 7 confirms this: "DeepWalk by B. Perozzi et al. (2014)... \cite{Perozzi2014}" — the author and year appear in prose and the \cite{} tag follows in the same sentence. The name+year is not a replacement for \cite{}; it is a narrative embedding of the citation. The \cite{} is always added as well. This resolves the earlier ambiguity.
+**Both inline name+year and \cite{} are used concurrently in written work.** Sample 7 confirms this: "DeepWalk by B. Perozzi et al. (2014)... \cite{Perozzi2014}" — the author and year appear in prose and the \cite{} tag follows in the same sentence. The name+year is not a replacement for \cite{}; it is a narrative embedding of the citation. The \cite{} is always added as well to link the citation to the references list.
+
+**Citation management in Latex** All citations are stored inside `references.bib`; the \cite{} command is called for all citations to track numbering and allow cross-referencing during the text. Following highest standards of academic writing.
 
 ---
 

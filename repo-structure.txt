@@ -6,8 +6,8 @@
   - thesis-theory-topics.md <-- topics for theoretical section of thesis.
   - scope.md <-- target audience, prior knowledge of reader, what this thesis always does and what this thesis never does.
 
-/section-briefs/
-  - [section-name]-brief.md
+/chapter-briefs/
+  - [chapter-name]-brief.md <-- standard summary and content brief, one per chapter.
 
 /assets/
   - /figures/

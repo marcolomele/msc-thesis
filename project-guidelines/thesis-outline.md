@@ -1,4 +1,9 @@
-Content:
+## Narrative Arc
+The thesis formally presents the work I completed as an empirical research assistant during the last semester of my Master studies. It builds upon all the research, studies, experiments, results, and learnings that my team and I went through. Therefore, the narrative flow will follow that of academic research. 
+
+First, we will introduce the problem we are trying to solve, highlighting the gap in the field, anticipating our pipeline, and listing our contributions. Because our method leverages the inference capabilities of several state of the art models, we will follow the intruduciton with a theoretical chapter. The aim is to build a mechanistic understanding of the architectures used later in the pipeline. Next, we will move on the actual work done in the last months. First, we define formally the problem and present related works, again underlining the gap in the field in more detail. Second, we will discuss our pipeline, validating choices with empirical analyses, experiments, results, and ablations. Finally, we will wrap up the findings with a conclusion, connecting again to the problem statement, highlighting limitations, and suggesting future research directions.
+
+## Table of contents 
 1.	Introduction (3-5 pages)
 a.	Problem motivation: object correspondence, motivation.
 b.	Research gap: no inference only, no exploration of language. 
