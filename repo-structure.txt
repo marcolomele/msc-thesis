@@ -1,0 +1,37 @@
+/project-guidelines/
+  - writing-samples.md <-- examples of writing syle, tone, and vocabulary. 
+  - style-guide.md <-- writing guide for syle, tone, and vocabulary.
+  - thesis-outline.md <-- thesis index structure.
+  - technical-specs.md <-- research details and findings.
+  - thesis-theory-topics.md <-- topics for theoretical section of thesis.
+  - scope.md <-- target audience, prior knowledge of reader, what this thesis always does and what this thesis never does.
+
+/section-briefs/
+  - [section-name]-brief.md
+
+/assets/
+  - /figures/
+      - [figure-name].png/.pdf/.svg    (your plots, diagrams, architecture figs)
+  - /tables/
+      - [table-name].csv/.xlsx         (raw data tables)
+  - /data/
+      - [results-file].json/.csv       (experiment results, metrics)
+
+/latex/
+  - main.tex                           (master document, pulls everything in)
+  - references.bib                     (bibliography)
+  - /chapters/
+      - 01-introduction.tex
+      - 02-related-work.tex
+      - 03-background.tex
+      - 04-methodology.tex
+      - 05-experiments.tex
+      - 06-results.tex
+      - 07-discussion.tex
+      - 08-conclusion.tex
+  - /style/
+      - thesis.sty                     (your university's style file if applicable)
+      - custom-macros.tex              (your notation shortcuts, reusable commands)
+
+/thesis-drafts/
+  - [section-name]-draft.md            (plain text drafts before LaTeX conversion)
