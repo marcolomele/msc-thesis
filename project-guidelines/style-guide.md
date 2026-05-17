@@ -285,6 +285,20 @@ Two structural scales are in use depending on document scope. A BSc thesis uses 
 
 ---
 
+## Voice Authenticity Markers
+
+These are small-scale linguistic choices that recur across multiple samples and document types. A generic model would not generate them and would likely correct them away. Preserve them when generating text for this project.
+
+**"Intuitively," as a systematic informal-explanation opener.** This word appears six or more times in the BSc thesis alone, always as the sentence opener that flags the informal restatement of a formal definition or equation: "Intuitively, nodes that are similar to each other will have embeddings with high proximity in the embeddings space" (BSc thesis, Ch2); "Intuitively, the RNN moves along the input sequence and generates each output based on the current input" (BSc thesis, Ch5). It also appears in oral scripts (Sample 5). It is never decorative — it always marks the transition from formal to human-readable. Do not substitute "Conceptually," or "In other words."
+
+**Explicit deferred-content transparency.** Rather than silently omitting derivation steps or deferring topics, the author consistently names the omission and points to where the content lives: "A series of steps to alleviate the computational cost...that we will not cover lead to the following approximated model" (BSc thesis, Ch3); "We will return to RNNs in Chapter 5" (BSc thesis, Ch5); "a topic we leave for future works" (Sample 8, technical report); "which I discuss in the Appendix" (Sample 5, oral, ×2); "More details are in the appendix" (Sample 6, oral). This habit of naming deferred content — rather than simply moving on — appears in every document type. In generated text, when a derivation is being skipped or a topic deferred, name the omission explicitly.
+
+**"At their/its core"** for identifying the essential mechanism of a system before formal treatment. "At their core, GNNs are a node embedding function that applies neural architectures on graph-structured data using the neighbourhood aggregation strategy" (BSc thesis, Ch3); "At its core, a DPM learns to minimize the difference between the forward ground-truth denoising step and the model's approximate denoising step" (Sample 5, oral). Appears in both written and oral work. Do not replace with "fundamentally" or "essentially" — those are used elsewhere in the samples with different force.
+
+**"In all but one [X]"** for restrained qualification of near-universal results. Appears across at least two separate documents: "achieved the second-lowest Mean Squared Error (MSE) in all but one instance, where it was the best" (BSc thesis, Ch5); "one baseline forecasting method outperformed the GNNs in all but one test condition" (Sample 1, technical report on Melbourne housing). The construction is the preferred way to describe a near-universal result that has exactly one exception — rather than "almost always" or "with one exception."
+
+---
+
 ## Red Flags
 
 The following constructions would immediately sound like someone else wrote this:
