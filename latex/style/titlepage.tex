@@ -1,29 +1,60 @@
-\begin{titlepage}
-    \centering
+% Title page — for personal printing only.
+% NOT included in main.tex (Bocconi digital submission forbids title pages and the university seal).
+% Compile this file standalone when printing a physical copy.
 
-    \vspace*{1cm}
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{mathtools}
+\usepackage{bm}
+\usepackage{hyperref}
+\usepackage{xurl}
+\usepackage{setspace}
+\usepackage[a4paper,left=2.5cm,right=2.5cm,top=2cm,bottom=2cm]{geometry}
+\usepackage[table]{xcolor}
+\usepackage{xcolor}
+\usepackage{pagecolor}
+\usepackage{booktabs}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{multirow}
+\usepackage{lscape}
+\usepackage{tikz}
+\sloppy
 
-    {\Large \textbf{Bocconi University}}\\[0.4cm]
-    {\large Department of Decision Sciences}\\[0.2cm]
-    {\large Master of Science in Data Science and Business Analytics}\\[0.2cm]
-    {\normalsize Track: Statistics and Modern Machine Learning}
+\hyphenpenalty=100000
+\exhyphenpenalty=100000
+\pagenumbering{gobble}
+\definecolor{customblue}{RGB}{0, 51, 102}
 
-    \vspace{2.5cm}
+\begin{document}
 
-    {\LARGE \textbf{Two Eyes and One Mouth: a Training-Free Pipeline with Agentic Image Segmentation and Object Video Tracking for Cross-View Object Correspondence}}
+\newgeometry{left=6cm, right=2cm, top=2cm, bottom=2cm}
+\pagecolor{white}
+\color{black}
 
-    \vspace{2.5cm}
+\begin{tikzpicture}[remember picture,overlay]
+    % Bocconi top-left vertical logo
+    \node[anchor=north west, rotate=90, font=\Huge\bfseries, xshift=6.1cm, yshift=-2cm] at (current page.west) {\includegraphics[height=1.3cm]{Bocconi1.png}};
+    % Bocconi bottom-left horizontal logo
+    \node[anchor=south west, xshift=1.9cm, yshift=1.9cm] at (current page.south west) {\includegraphics[height=5cm]{Bocconi2.png}};
+\end{tikzpicture}
 
-    \begin{tabular}{ll}
-        \textbf{Author:}     & Marco Lomele \\[0.5cm]
-        \textbf{Supervisor:} & Chiara Plizzari \\
-    \end{tabular}
+\begin{raggedright}
+{\noindent\Large\textbf{Master of Science in Data Science and Business Analytics}}\\[3cm]
 
-    \vfill
+{\noindent\Huge\textbf{Two Eyes and One Mouth:}\\[0.05cm]
+\Huge\textbf{a Training-Free Pipeline with}\\[0.05cm]
+\Huge\textbf{Agentic Image Segmentation}\\[0.05cm]
+\Huge\textbf{and Object Video Tracking for}\\[0.5cm]
+\Huge\textbf{Cross-View Object Correspondence}}\\[3cm]
+\end{raggedright}
 
-    {\large Academic Year 2025--2026}
+\noindent\large\textbf{Master of Science thesis by:}\\
+\large Marco Lomele\\[3cm]
 
-\end{titlepage}
+\noindent\textbf{Supervisor:}\\
+\large Prof. Chiara Plizzari\\[3cm]
 
-\thispagestyle{empty}
-\cleardoublepage
+\noindent Academic Year 2025--2026\\[0cm]
+
+\end{document}

@@ -1,7 +1,7 @@
 # Thesis Scope & Reader Profile
 
 ## Thesis role
-This thesis is the final piece of work of my Master studies in Data Science with concentration in Statistics and Modern Machine Learning at Bocconi University. Over the last 4 months I have been working on an empirical research in computer vision. This thesis will be about this project and the inference pipeline it proposed. Therefore, its goals will be to (1) provide the theoretical foundations to understand at a mechanistic level the SOTA methods used in the pipeline, and (2) present the inference pipeline along with ablations and experimental results. 
+This thesis is the final piece of work of my Master studies in Data Science with concentration in Statistics and Modern Machine Learning at Bocconi University. Over the last 4 months I have been working on an empirical research in computer vision. The output of that project is a paper that we will attempt to submit. This thesis will extend the paper and detail the theory and the proposed inference pipeline. Therefore, its goals will be to (1) provide the theoretical foundations to understand at a mechanistic level the SOTA methods used in the pipeline, and (2) present the inference pipeline along with ablations and experimental results. 
 
 ## Audience
 - **Who is reading this**: university professors expert in machine learning and compute science who will examine me on the topics, PhD & MSc & BSc students who interested in the topic. 

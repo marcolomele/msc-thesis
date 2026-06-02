@@ -5,7 +5,7 @@
 
 | Tool                     | Role                                            |
 | ------------------------ | ----------------------------------------------- |
-| Claude UI (this project) | Drafting prose, voice iteration, chapter briefs |
+| Claude UI (this project) | Drafting prose, voice iteration, chapter directives |
 | Cursor + Claude Code     | File ops, LaTeX conversion, git, compilation    |
 | GitHub (`msc-thesis`)    | Single source of truth                          |
 | Overleaf (GitHub sync)   | Final rendering and manual refinement           |
@@ -29,30 +29,31 @@ by Claude at the start of every drafting chat:
 
 /chapter-briefs/
   - chapter-brief-template.md   ← fill one per chapter before drafting
-  - [chapter-name]-brief.md     ← completed briefs, one per chapter
+  - [chapter-name]-brief.md     ← completed directives, one per chapter
 ```
 
 ---
 
 ## Per-Chapter Workflow
 
-### Step 1 — Fill the Brief (you, ~15 mins)
+### Step 1 — Fill the Directive (you, ~5 mins)
 
 Copy `chapter-brief-template.md`, rename it `[chapter-name]-brief.md`,
-and fill every field. Pay most attention to:
+and fill the fields at the top:
 
-- **The Angle** — why this chapter exists in your thesis specifically
-- **Your Research's Relationship** — the pipeline connection
-- **Story Arc** — the flow of the argument
-- **Draft Prompt for Claude** — assembled last from the other fields
+- **Paper section** — paste the corresponding section from the submission paper
+- **Target length** — how many pages to expand to
+- **Arc** — the flow of the argument (A/B/C/D or custom)
+- **Deep / Surface / Skip** — depth calls per concept
+- **Connections** — backward and forward links to other chapters
 
-Commit the brief to the repo before drafting begins.
+Commit the directive to the repo before drafting begins.
 
 ### Step 2 — Draft in Claude UI (new chat in this project)
 
-Open a new chat. Paste the "Draft Prompt for Claude" field from the brief
-as your first message. Claude reads the project knowledge files and drafts
-the chapter in your voice.
+Open a new chat. Paste the entire brief file as your first message.
+Claude reads the project knowledge files and drafts the chapter in your voice,
+following the paper section's order of information.
 
 Iterate in the same chat until the draft is approved:
 
@@ -84,14 +85,14 @@ placement, layout tweaks.
 
 ## Multi-Chat Chapters (>8 pages)
 
-For long chapters (e.g., Chapter 2 Theory at ~20 pages), use the
-subchapter breakdown table in the brief to split across chats:
+For long chapters (e.g., Chapter 2 Theory at ~20 pages), split into one
+directive file per subchapter:
 
-- One chat per subchapter
-- Start each chat with the same project knowledge + the parent chapter brief
+- One chat per subchapter, each with its own directive
+- Start each chat with the same project knowledge + the subchapter directive
 - Reference what was established in previous subchapters explicitly
-in the Draft Prompt ("Chapter 2a.1 defined the CLS token — reference
-that definition here rather than redefining it")
+in the directive's "Connect back to" field ("Chapter 2a.1 defined the
+CLS token — reference that definition here rather than redefining it")
 - Consolidate all subchapter drafts in Cursor before LaTeX conversion
 
 ---

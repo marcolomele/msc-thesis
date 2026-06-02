@@ -31,7 +31,7 @@ to LaTeX here.
 
 /chapter-briefs/
   - chapter-brief-template.md
-  - [chapter-name]-brief.md      (one per chapter, filled before drafting)
+  - [chapter-name]-brief.md      (one per chapter — paper section + expansion directive, filled before drafting)
 
 /assets/
   - /figures/                    (.png / .pdf / .svg — plots, diagrams)
@@ -139,7 +139,7 @@ These are non-negotiable — they apply to every chapter file.
 
 Track the current state of each chapter here. Update after each commit.
 
-| Chapter | Brief | Draft | LaTeX | Compiled |
+| Chapter | Directive | Draft | LaTeX | Compiled |
 |---|---|---|---|---|
 | 01 Introduction | ☐ | ☐ | ☐ | ☐ |
 | 02a Visual Representation | ☐ | ☐ | ☐ | ☐ |
