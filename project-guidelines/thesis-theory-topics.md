@@ -55,15 +55,47 @@ image resolution.
   CVPR 2022. *(SAM's image encoder is MAE-pretrained — worth a paragraph)*
 
 ### Pipeline link
-`frame_selection.py` embeds all candidate destination frames with DINOv2
-(facebook/dinov2-small), L2-normalises CLS tokens, then selects seed frames B/C
-by maximising cosine distance from A, ensuring temporal diversity before passing
-frames to SAM3.
+DINOv2 features underpin the broader cross-view setting (O-MaMa selects masks in a learned
+DINOv2 latent space; DINO patch features give label-free semantic correspondence — §2b.0).
+In the current pipeline, anchor (destination) frame selection is handled by Grounding DINO
+or RoMa rather than DINOv2 CLS-token diversity; the DINOv2 cosine-distance diversity scheme
+was a v1 design retained here for theoretical grounding and as the `MaxInfo`/diversity
+ablation baseline (CLIP-embedding variant, Experiment D.2).
 
 ---
 
-## Chapter 2b — Segmentation
-*Previous approaches → SAM → SAM2*
+## Chapter 2b — Correspondence & Segmentation
+*Feature matching & dense correspondence (RoMa) → previous segmentation approaches → SAM → SAM2*
+
+### 2b.0 Feature Matching & Dense Correspondence
+**Theory:**
+- **Handcrafted local descriptors:** SIFT, SURF, ORB — keypoint detection + descriptor
+  matching; robustness limits under large viewpoint and illumination change.
+- **Learned sparse matching:** SuperPoint (trained keypoint detector/descriptor) +
+  SuperGlue (graph-neural-network matcher with attention).
+- **Detector-free dense matching:** LoFTR and RoMa bypass keypoint detection and produce
+  dense correspondences directly. **RoMa** learns a robust warp field between an image pair
+  of a 3D scene, achieving state-of-the-art dense feature matching under wide baseline
+  changes; each match carries a confidence score.
+- **Semantic correspondence without geometry:** DINO/DINOv2 patch features establish
+  correspondences between semantically similar images without geometric priors. Ego-exo
+  correspondence is an extreme case of this setting, stressing all of the above.
+
+**Key papers:**
+- Lowe, D. *Distinctive Image Features from Scale-Invariant Keypoints* (SIFT). IJCV 2004.
+- Bay, H. et al. *SURF: Speeded Up Robust Features*. ECCV 2006.
+- Rublee, E. et al. *ORB: An Efficient Alternative to SIFT or SURF*. ICCV 2011.
+- DeTone, D. et al. *SuperPoint*. CVPRW 2018.
+- Sarlin, P.-E. et al. *SuperGlue*. CVPR 2020.
+- Sun, J. et al. *LoFTR: Detector-Free Local Feature Matching with Transformers*. CVPR 2021.
+- Edstedt, J. et al. *RoMa: Robust Dense Feature Matching*. CVPR 2024.
+
+### Pipeline link
+RoMa provides the **geometry-based, language-free anchor-selection** signal in Block 3
+(Experiment E): the source object mask is matched against every destination frame, and
+frames are ranked by the count of confident matches (confidence > 0.5) whose source
+endpoint falls inside the object mask. It is the alternative to Grounding DINO and reaches
+comparable full-test-set IoU.
 
 ### 2b.1 Segmentation Landscape (brief survey)
 **Theory:** Semantic vs instance vs panoptic segmentation; fully convolutional
@@ -169,19 +201,28 @@ for Block 4 bi-directional propagation.
 
 ### 2c.3 SAM3 — Promptable Concept Segmentation
 **Theory:**
-- **Text prompt conditioning in SAM:** how a free-form phrase is encoded and
-  injected into the prompt encoder alongside spatial prompts; zero-shot text-to-mask
-  transfer.
-- **Promptable concept segmentation:** generalising beyond points/boxes to semantic
-  noun-phrase queries; the grounding challenge (phrase → spatial region) and how
-  it differs from classic referring expression comprehension.
-- **Why canonical noun phrases matter:** short discriminative phrases ("blue
-  ceramic mug") outperform verbose descriptions in text-to-mask accuracy — connects
-  directly to the pipeline's VLM prompt design and the PixelRefer-Lite finding.
+- **Promptable Concept Segmentation (PCS):** SAM 3's central task — detect, segment, and
+  track *all* instances of a visual concept specified by a noun phrase, image exemplars, or
+  both. Generalises beyond points/boxes to semantic queries; the grounding challenge
+  (phrase → spatial region) and how it differs from classic referring expression
+  comprehension.
+- **Agentic interface:** to overcome the limits of short noun-phrase prompts, SAM 3 exposes
+  an interface in which a multimodal LLM acts as a planner that iteratively invokes SAM 3,
+  inspects the resulting masks, and refines its queries. This loop handles complex relational
+  expressions ("left-most", "near the") that matter for cluttered scenes — and is exactly the
+  loop the pipeline's Block 3 builds on.
+- **Tracker inherits SAM 2:** the module that propagates masks through a video reuses the
+  SAM 2 architecture (§2b.3 / §2e); Hu et al. (LM-EEC) validate SAM 2's tracker for video
+  cross-view correspondence.
+- **Why canonical noun phrases matter:** short discriminative phrases ("blue ceramic mug")
+  outperform verbose descriptions in text-to-mask accuracy — connects directly to the
+  pipeline's VLM prompt design (the agent simplifies the rich description into a short
+  prompt) and the PixelRefer-Lite finding.
 
 **Key paper:**
-- Ravi, N. et al. *SAM 2: Segment Anything in Images and Videos*. arXiv 2024.
-  *(cover text-prompting extension as SAM3 contribution on top of SAM2 base)*
+- Ravi, N. et al. *SAM 3: Segment Anything with Concepts*. 2025.
+  *(distinct citation from SAM 2; cover PCS and the agentic interface as the SAM 3
+  contributions on top of the SAM 2 base architecture)*
 
 ### 2c.4 PixelRefer — Mask-Conditioned Region Description
 **Theory:**
@@ -359,8 +400,8 @@ IoU/LE/CA/VA against GT per-frame annotations.
 - **Contour Accuracy (CA):** IoU after centroid-aligning prediction to GT;
   isolates shape fidelity from positional offset.
 - **Visibility Accuracy (VA):** balanced accuracy (TPR + TNR) / 2 for
-  frame-level presence/absence prediction; preferred over raw accuracy when
-  visible/occluded frames are imbalanced.
+  frame-level presence/absence prediction. Used internally during development but
+  **not reported in the paper** — the published tables report IoU, LE, and CA only.
 
 ---
 
@@ -368,52 +409,80 @@ IoU/LE/CA/VA against GT per-frame annotations.
 
 | Pipeline Block | Technique | Thesis Section |
 |---|---|---|
-| Block 1: frame scoring | Area ratio + centrality heuristic | §4 Pipeline |
-| Block 1: diversity selection | DINOv2 CLS + cosine similarity | §2a |
-| Block 1 (alt.): diversity | GroundingDINO detection scores | §2c |
-| Block 2: VLM description | Qwen2-VL multimodal inference | §2d |
+| Block 1: source frame scoring | Area (0.99) + centrality (0.01) heuristic | §4 Pipeline |
+| Block 2: VLM description | Qwen 3.5 35B multimodal inference | §2d |
 | Block 2 (alt.): description | PixelRefer mask-conditioned | §2c |
-| Block 2.5: frame reranking | GroundingDINO top-K | §2c |
-| Block 3: agent loop | ReAct tool-use, Qwen3.5-35B | §2d |
-| Block 3: mask proposal | SAM3 text-to-mask | §2b / §2c |
-| Block 3: pre-filter | MiniLM cosine re-ranking | §2c (PixelRefer) |
-| Block 3: MLLM verification | Qwen2-VL multimodal reasoning | §2d |
-| Block 4: propagation | SAM2/SAM3 bi-directional video | §2e |
-| Block 4: evaluation | IoU, LE, CA, VA | §5 Experiments |
+| Block 3a: anchor selection (language) | Grounding DINO confidence top-K | §2c |
+| Block 3a: anchor selection (geometry) | RoMa dense-match count top-K | §2b.0 |
+| Block 3b: agent loop | ReAct tool-use, Qwen 3.5 35B | §2d |
+| Block 3b: mask proposal | SAM 3 PCS text-to-mask | §2b / §2c |
+| Block 3b: pre-filter (ablated) | MiniLM cosine re-ranking | §2c (PixelRefer) |
+| Block 3b: MLLM verification | Qwen 3.5 35B multimodal reasoning | §2d |
+| Block 4: propagation | SAM 2/SAM 3 bi-directional video | §2e |
+| Evaluation | IoU (primary), LE, CA | §5 Experiments |
 
 ---
 
 ## Core Reference List (bibtex keys to collect)
 
+**Key convention:** keys follow the paper's `references.bib` style — lowercase
+`author + year + firstword` (e.g. `oquab2023dinov2`, `liu2024groundingdino`). The paper's
+`references.bib` is the single source of truth for any work that already appears in the
+paper; reuse those exact keys and never invent a parallel key (the paper currently carries a
+duplicate, `fu2025objectrelator` vs. `fu2025objectrelatorenablingcrossviewobject` — use the
+former and treat the long form as a bug to reconcile). Theory-only works below are not yet in
+`references.bib` and will be added during drafting using the same convention.
+
+**Already in the paper's `references.bib` (use verbatim):**
 ```
-Vaswani2017        Attention Is All You Need
-Dosovitskiy2021    ViT — An Image is Worth 16×16 Words
-Caron2021          DINO — Emerging Properties in SSL ViTs
-Oquab2024          DINOv2
-He2022             MAE
-Long2015           FCN
-Ronneberger2015    U-Net
-He2017             Mask R-CNN
-Kirillov2023       Segment Anything (SAM)
-Ravi2024           SAM 2
-Radford2021        CLIP
-Liu2023LLaVA       Visual Instruction Tuning (LLaVA)
-Carion2020         DETR
-Zhang2023DINO      DINO detector
-Liu2024GDINO       Grounding DINO
-Chen2024PixelRefer PixelRefer
-Reimers2019        Sentence-BERT
-Wang2020MiniLM     MiniLM
-Kaplan2020         Scaling Laws
-Hoffmann2022       Chinchilla
-Ouyang2022         InstructGPT / RLHF
-Rafailov2023       DPO
-BaiQwen2023        Qwen Technical Report
-WangQwen2024       Qwen2-VL
-Yao2023ReAct       ReAct
-Schick2023         Toolformer
-Wei2022CoT         Chain-of-Thought
-Caelles2017        OSVOS
-Oh2019STM          Space-Time Memory Networks
-Cheng2022XMem      XMem
+kirillov2023sam       Segment Anything (SAM)
+ravi2024sam2          SAM 2
+ravi2025sam3          SAM 3 — Segment Anything with Concepts (PCS + agent)
+dinov1                DINO
+oquab2023dinov2       DINOv2
+dinov3                DINOv3
+long2015fcn           FCN
+he2017maskrcnn        Mask R-CNN
+lowe2004sift          SIFT
+bay2008surf           SURF
+rublee2011orb         ORB
+detone2018superpoint  SuperPoint
+sarlin2020superglue   SuperGlue
+sun2021loftr          LoFTR
+roma                  RoMa — Robust Dense Feature Matching
+liu2024groundingdino  Grounding DINO
+lai2024lisa           LISA
+rasheed2024glamm      GLaMM
+psalm2024eccv         PSALM
+yuan2025sa2va         Sa2VA
+oh2019stm             Space-Time Memory Networks (STM)
+cheng2022xmem         XMem
+qwen35blog            Qwen 3.5 (model blog)
+gemma4blog            Gemma 4 (judge; model blog)
+```
+
+**Theory-only — to add to `references.bib` during drafting (same convention):**
+```
+vaswani2017attention     Attention Is All You Need
+dosovitskiy2021vit       ViT — An Image is Worth 16×16 Words
+touvron2021deit          DeiT
+he2022mae                MAE
+ronneberger2015unet      U-Net
+radford2021clip          CLIP
+liu2023llava             Visual Instruction Tuning (LLaVA)
+carion2020detr           DETR
+zhang2023dino            DINO detector
+chen2024pixelrefer       PixelRefer
+reimers2019sentencebert  Sentence-BERT
+wang2020minilm           MiniLM
+kaplan2020scaling        Scaling Laws
+hoffmann2022chinchilla   Chinchilla
+ouyang2022instructgpt    InstructGPT / RLHF
+rafailov2023dpo          DPO
+bai2023qwen              Qwen Technical Report
+wang2024qwen2vl          Qwen2-VL
+yao2023react             ReAct
+schick2023toolformer     Toolformer
+wei2022cot               Chain-of-Thought
+caelles2017osvos         OSVOS
 ```

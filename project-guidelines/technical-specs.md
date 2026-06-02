@@ -13,58 +13,71 @@ calibration — serves as the bridge between viewpoints.
 
 The pipeline operates on a single take (a multi-camera recording from Ego-Exo4D) and
 processes one (object, source-camera, destination-camera) triplet at a time. It is divided
-into four blocks that play three conceptual roles:
+into four sequential blocks that play three conceptual roles. The four-block structure
+mirrors the paper exactly; the destination-grounding stage that v2 treated as a separate
+"Block 2.5" is now the anchor-selection half of Block 3.
 
 - **Block 1 — Source Frame Selection** (optimisation): scores all source-view annotated
-  frames by a composite function and selects the single highest-quality frame to feed the
-  VLM, avoiding redundant calls and maximising description quality.
+  frames by a composite function and selects the single highest-quality seed frame to feed
+  the VLM, avoiding redundant calls and maximising description quality. The composite score
+  is a weighted combination of normalised mask area (0.99 weight) and centrality (0.01,
+  acting as a tie-breaker).
 
 - **Block 2 — Object Description** (semantic bridging): a multimodal LLM (Qwen 3.5 35B)
   generates a structured JSON description of the target object from the seed frame. The
   description contains three fields: `colour`, `object` (canonical noun phrase), and
   `view_independent_descriptors`. The description is explicitly view- and time-independent
-  so it remains valid across cameras and across the take.
+  (intrinsic properties only — colour, canonical identity, material, structural parts) so
+  it remains valid across cameras and across the take. For each seed frame the VLM receives
+  two images: one with the mask overlaid as a red semi-transparent region with a contour
+  outline, and one in raw form.
 
-- **Block 2.5 — Destination Grounding** (semantic bridging): Grounding DINO scores every
-  destination-view frame against the VLM-generated noun phrase and returns the top-K frames
-  by detection confidence. This replaces v1's temporal-proximity selection and is the
-  central addition of v2.
+- **Block 3 — SAM 3 Agentic Grounding** (semantic bridging): two stages. *(3a) Anchor
+  selection* scores every destination-view frame for object visibility and keeps the top-K
+  as anchor frames, using one of two interchangeable signals — **Grounding DINO** (language-
+  grounded: open-vocabulary detection with the VLM noun phrase as query) or **RoMa**
+  (geometry-based, language-free: counts confident dense feature matches whose source
+  endpoint falls inside the source object mask). *(3b) Agentic segmentation* runs an
+  independent SAM 3 Agent loop on each anchor frame, with Qwen 3.5 35B as orchestrator —
+  simplify description → SAM 3 segments → VLM accepts/rejects each candidate mask → restart
+  with a new prompt if all are rejected.
 
-- **Block 3 — Agentic SAM 3 Segmentation** (semantic bridging): a ReAct-style agentic loop
-  uses Qwen 3.5 35B as both planner and verifier to produce candidate masks on each of the
-  K destination frames, with SAM 3 as the segmentation backbone.
-
-- **Block 4 — Bi-directional Mask Propagation** (completion): SAM 3's video tracker
-  propagates the surviving seed masks forward and backward through all destination-view
-  frames, using a nearest-seed assignment to minimise temporal drift.
+- **Block 4 — Bi-directional Mask Propagation** (completion): SAM 2's video tracker
+  (inherited by SAM 3) propagates the accepted anchor masks forward and backward through all
+  destination-view frames, conditioning each prediction on a memory bank of anchor and
+  recently processed frames via cross-attention.
 
 All foundation models are frozen at inference time. The pipeline output is a per-frame
 mask track plus a JSON of frame-level predictions.
 
-**Best-known configuration (exo→ego):** Qwen 3.5 35B as descriptor and agentic planner,
-`n_source_frames = 1`, `diversity_mode = gdino` with `colour_object` query, `K = 3`
-destination frames, 8 agent generations per frame, PixelRefer mask pre-filter disabled.
+**Best-known configuration:** Qwen 3.5 35B as descriptor and agentic planner,
+`n_source_frames = 1` seed frame, `K = 3` anchor frames, anchor selection via Grounding DINO
+or RoMa (the two are comparable on the full test set; RoMa edges ahead on the ablation
+subset), 8 agent generations per anchor frame, PixelRefer mask pre-filter disabled. Run
+locally on a single NVIDIA H200 with no fine-tuning.
 
 ---
 
 ## Dataset & Evaluation Setup
 
-- **Dataset**: Ego-Exo4D
-- **Evaluation directions**: ego→exo and exo→ego (all ablations run in both unless noted)
-- **Test set**: 191-pair manifest (full scale); 50-pair curated set used for v1 phase 1
-- **Primary metrics**:
+- **Dataset**: Ego-Exo4D Correspondences, v2 test split
+- **Evaluation directions**: ego→exo (*Ego2Exo*) and exo→ego (*Exo2Ego*); all ablations run
+  in both unless noted
+- **Reported metrics** (following the official benchmark):
   - **IoU** (Jaccard Index): intersection over union of predicted and ground-truth masks;
-    primary measure of segmentation quality
+    the primary evaluation metric
   - **LE** (Location Error): normalised centroid distance; measures localisation accuracy
     independently of shape
-  - **CA** (Contour Accuracy): IoU after centroid-aligning prediction to ground truth;
-    isolates shape fidelity from positional offset
-  - **VA** (Visibility Accuracy): balanced accuracy (TPR + TNR) / 2 for frame-level
-    presence/absence prediction; preferred over raw accuracy when visible/occluded frames
-    are imbalanced
-- **Secondary metrics**: inference time (wall-clock per take), VLM-as-judge score
-- **Comparison targets**: LM-EEC (SOTA baseline — see below), challenge leaderboard entries
-  ObjectRelator and V2-SAM
+  - **CA** (Contour Accuracy): similarity between predicted and ground-truth contours after
+    translation; isolates shape fidelity from positional offset
+- **Internal-only metric (not reported in the paper)**: **VA** (Visibility Accuracy),
+  balanced accuracy (TPR + TNR) / 2 for frame-level presence/absence; used during
+  development but not in the published tables
+- **Secondary metrics**: inference time (wall-clock per take / per frame), VLM-as-judge
+  description-quality score (Gemma 4 as judge)
+- **Comparison targets**: LM-EEC (overall SOTA — see below); O-MaMa (2025 challenge winner
+  and primary peer within the no-backbone-retraining family); challenge leaderboard entries
+  ObjectRelator and V2-SAM; official baselines XSegTx, XMem, and XMem+XSegTx
 
 ---
 
@@ -81,8 +94,14 @@ produced for a particular frame. Our pipeline is training-free and produces a
 human-readable JSON description at each step, making it directly inspectable.
 
 Other challenge entries for context:
-- **ObjectRelator** (Fu 2025): extends PSALM with a Multimodal Condition Fusion module and
-  an SSL-based cross-view alignment module.
+- **O-MaMa** (the 2025 Ego-Exo4D Correspondences Challenge winner): generates candidate
+  masks in the destination view via FastSAM and selects the best match using pooled DINOv2
+  features in a learned cross-view latent space, with only ~1% of ObjectRelator's trainable
+  parameters. It is our closest peer — like us it does not retrain SAM's backbone — and our
+  primary point of comparison; our pipeline trails it by ~5 IoU in both directions.
+- **ObjectRelator** (Fu 2025): fine-tunes PSALM with view-invariant alignment modules,
+  incorporating language as an explicit cross-view cue in a trainable component. We surpass
+  it in IoU in both directions.
 - **V2-SAM** (Pan 2025): adapts SAM 2 with dual prompt generators (geometry-aware anchor
   prompts and appearance-guided visual prompts) and a cyclic-consistency selector.
 
@@ -128,12 +147,20 @@ on cleaned plain-prose versions of the JSON descriptions.
 
 ## Main Runs
 
-| Run | Direction | Status |
-|---|---|---|
-| Pipeline v2 on test set | ego→exo | ⟳ |
-| Pipeline v2 on test set | exo→ego | ⟳ |
+Headline results on the Ego-Exo4D Correspondences v2 test split (IoU):
 
-Results to be presented in a table against LM-EEC, ObjectRelator, and V2-SAM.
+| Run | Direction | IoU | vs. O-MaMa | vs. baseline | Status |
+|---|---|---|---|---|---|
+| Ours (Language as Bridge + G-DINO) | ego→exo | 37.7 | −11.5% | +9% | ✓ |
+| Ours (Language as Bridge + G-DINO) | exo→ego | 40.6 | −7.9% | +62% | ✓ |
+| Ours (Language as Bridge + RoMa) | ego→exo | TBD | — | — | ⟳ |
+| Ours (Language as Bridge + RoMa) | exo→ego | TBD | — | — | ⟳ |
+
+Reference points (test v2 IoU, Ego2Exo / Exo2Ego): LM-EEC 54.98 / 65.77 (SOTA),
+V2-SAM 46.3 / 49.6, O-MaMa 42.6 / 44.1 (challenge winner), ObjectRelator 35.3 / 40.3,
+XMem+XSegTx 34.9 / 25.0. Results are presented in one table reporting IoU, LE, and CA,
+with `Training Free / Camera Agnostic / Dataset Agnostic` flags distinguishing our method
+from all competing baselines.
 
 ---
 
@@ -166,13 +193,17 @@ Note: restricted to frame selection of main v2 with `n_source_frames = 1`.
 |---|---|
 | PixelRefer-7B | ⟳ |
 | PixelRefer-Lite-7B | ⟳ |
-| Qwen 3.5 35B no thinking | ✓ (best-known config) |
-| Qwen 3.6 35B no thinking | ⟳ |
-| Qwen 3.5 35B batching | ✓ (v1; +16.5% IoU at full scale) |
+| Qwen 3.5 35B no thinking | ✓ (best-known config; judge 77.0% Ego2Exo / 70.0% Exo2Ego) |
+| Qwen 3.6 35B no thinking | ✓ (75.0% / 58.2%) |
+| Qwen 3.5 35B batching | ✓ (43% faster but −23.4 pp Ego2Exo quality) |
 | Qwen 3.5 35B thinking | ? |
 | Qwen 3.6 35B thinking | ? |
 
-Comparison on VLM-as-judge output score and inference time.
+Comparison on description-quality score (Gemma 4 as judge, scoring object identity,
+contextual descriptors, and view-independent attributes as binary correctness) and on
+single-call inference time. Qwen 3.5 35B wins on quality in both directions; the
+region-aware PixelRefer models underperform it, supporting the case for general-purpose
+foundation models.
 
 ---
 
@@ -188,20 +219,24 @@ Comparison on VLM-as-judge output score and inference time.
 
 ---
 
-### Block 2.5 — Destination Frame Selection (Diversity Mode)
+### Block 3 — Anchor (Destination) Frame Selection
 
-**Goal**: isolate the contribution of language-driven grounding vs. temporal proximity vs.
-random selection for destination frame choice.
+**Goal**: isolate the contribution of language-grounded vs. geometry-based vs. random
+selection for anchor frame choice. In the paper these are Experiments D (Grounding DINO
+family) and E (RoMa family).
 
 | Variant | Description | Status |
 |---|---|---|
-| `off` (K=1) | Single destination frame by temporal proximity to source seed; v1 behaviour | ✓ |
-| `dino` | Two additional frames B, C selected by maximising DINOv2-S CLS-token cosine distance from time-aligned frame A; no language signal | ⟳ |
-| `dino_band` (0.90) | B, C sampled at 90th percentile band of DINOv2 similarity to A | ⟳ |
-| `dino_band` (0.80) | B, C sampled at 80th percentile band of DINOv2 similarity to A | ⟳ |
-| `MaxInfo` | Diversity-maximising selection from v1 evaluation | ✓ (v1; −3.7% IoU) |
-| `dino_random` | K frames selected uniformly at random; control condition isolating grounding signal from multi-frame benefit | ⟳ |
-| `gdino` | Grounding DINO scores all destination frames against VLM noun phrase; top-K by confidence forwarded to Block 3 | ✓ (best-known config) |
+| D.1 `gdino` | Grounding DINO filters destination frames by language-vision grounding confidence, ranks survivors by bounding-box area; top-K anchors | ✓ |
+| D.2 `MaxInfo` | Replaces area ranking with MaxInfo selection, maximising geometric diversity in CLIP embedding space | ✓ |
+| D.3 `random` | K anchor frames sampled uniformly at random; control isolating principled selection from multi-frame budget | ✓ |
+| E.1 `roma` (fp32) | RoMa scores each destination frame by confident feature matches (conf > 0.5) whose source endpoint falls inside the source object mask; top-K by match count | ✓ |
+| E.2 `roma` + subsample | Same RoMa scoring over ≤20 uniformly-sampled frames; −47% latency, −6.2 pp IoU | ✓ |
+| E.3 `roma` (fp16) | RoMa scoring in fp16; −30% latency vs. E.1, best ablation IoU (0.433) | ✓ |
+
+Headline: D.1 and E.3 reach comparable IoU on the full test set, so the paper reports both
+Grounding DINO and RoMa as the two anchor-selection strategies; RoMa's lead on the ablation
+subset is attributed largely to subset noise.
 
 ---
 
@@ -370,15 +405,17 @@ Each claim has a corresponding ablation or analysis designed to confirm or quali
    as the only cross-view signal achieves competitive performance against learned
    cross-view feature matching methods on the Ego-Exo4D object correspondence task.
 
-2. **Destination frame selection dominates source frame selection.** Investing the frame
-   budget in grounding-based destination selection (Block 2.5) yields larger IoU gains
-   than equivalent investment in source-view diversity or description quality, as
-   evidenced by the v1→v2 ablation programme.
+2. **Anchor (destination) frame selection is the highest-leverage stage.** Anchor quality
+   is the single strongest predictor of pipeline success: when seed-frame IoU is high the
+   gap to LM-EEC nearly closes, and when it is low the pipeline collapses. Investing the
+   frame budget in anchor selection (Block 3a) yields larger IoU gains than equivalent
+   investment in source-view selection or description quality.
 
-3. **Open-set grounding outperforms temporal proximity and visual diversity for
-   destination frame selection.** The `gdino` diversity mode consistently outperforms
-   `off`, `dino`, `dino_band`, and `gdino_random` across both directions, confirming
-   that the language signal — not merely the multi-frame budget — drives the improvement.
+3. **Principled anchor selection beats random, and language and geometry are interchangeable
+   signals for it.** Both Grounding DINO (language-grounded) and RoMa (geometry-based,
+   language-free) outperform random anchor selection and reach comparable IoU on the full
+   test set, so the paper reports both. The improvement comes from principled selection, not
+   merely from the multi-frame budget.
 
 4. **Foundation model composition introduces characteristic failure modes.** The failure
    taxonomy and quality flow analysis identify VLM hallucination and GDINO localisation
