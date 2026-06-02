@@ -26,9 +26,15 @@
 
 **Paragraph closing pattern:** Closes with interpretation, implication, or a forward pivot. "This is analogous to tuning FastSAM such that it segments details rather than follow object contours" (Sample 3, Results) — closes an observational paragraph with an analogy. "The latter element makes the bulk of the estimation, and it is called denoising matching" (Sample 5, oral) — names the key term last.
 
-**"However," is the primary contrast pivot.** Used consistently at the start of sentences to mark a limitation, contrast, or complication. "Moreover," is the additive counterpart. "In contrast," is used for direct side-by-side comparisons (especially in Results).
+**Paragraph assembly — the generative sequence.** Every paragraph follows a four-step logic, in order: (1) open with a claim, named concept, or concrete observation the paragraph will develop — this sentence is never a citation, never a question, and never "We can see that..." — it stakes a position; (2) develop through 2–4 sentences that move by logical connectors ("because," "although," "while," "but," "yet," "However," "Moreover," "Crucially") rather than by em dashes or colons — each sentence advances, none merely restates; (3) ground the claim with an example, a cited result, an equation reference, or an analogy; (4) close with interpretation, implication, or a forward pivot toward the next idea.
+
+**Inter-paragraph logic.** Paragraphs chain by tension, not by sequence. The connector between paragraphs names the complication the previous paragraph left open and launches the response: "However," "To address this," "To this end," "In contrast," "Nevertheless." Pure additive chaining — "Moreover" paragraph after "Moreover" paragraph — signals a list rather than an argument and should be avoided. Aim for a consistent and engaging narrative flow.
+
+**"However," is the primary contrast pivot.** Used consistently at the start of sentences to mark a limitation, contrast, or complication. "Moreover," is the additive counterpart. "In contrast," is used for direct side-by-side comparisons (especially in Results). Consider also using "conversely" and "oppositely" when "however" becomes repetitive. Use "Nonetheless" when a weakness, drawback, or negative point is counter-balanced, softened, or reduced by another point.
 
 **Enumeration in prose uses (i)...(ii)...(iii)... format** within a single sentence or short paragraph, not bullet points: "Namely, (i) that slope random effects across different features are uncorrelated, (ii) that..." (Sample 1, Method). Future work sometimes uses a numbered list format instead of prose, but body paragraphs never use bullets.
+
+**Connector-rich prose over schematic punctuation.** Sentences flow through logical connectors — subordinating conjunctions ("because," "although," "while," "since"), coordinating conjunctions ("and," "but," "yet"), and transitional phrases — rather than relying on em dashes or colons to impose mid-sentence structure. When the impulse is to write "[claim] — [elaboration]", rewrite with a subordinate clause or begin a new sentence. When the impulse is to write "[claim]: [elaboration]", rewrite with "namely," "specifically," "that is," or a relative clause. Both punctuation marks interrupt rhythm and substitute typographic scaffolding for prose craft; both are prohibited mid-sentence.
 
 ---
 
@@ -100,19 +106,35 @@
 
 ---
 
-### What I Never Do
+### Prohibited Constructions
 
-- Do not open a paragraph with a citation.
-- Do not use passive voice as the default construction. Passive is reserved for cases where the agent is genuinely irrelevant (e.g., "The score is commonly used in energy-based models as a workaround...") or when describing what *was done* in prior work.
-- Do not use bullet points within body paragraphs.
-- Do not write "It is important to note that," "It is worth noting that," "It should be noted," or "Needless to say."
-- Do not use "firstly / secondly / thirdly" — only "First / Then / Finally" or "(i) / (ii) / (iii)."
-- Do not use "very" or "extremely" as degree adverbs. Use precise quantifiers or "significantly."
-- Do not use "The rest of this paper is organized as follows:" as a standalone sentence — roadmapping is embedded in the introduction's final paragraph as flowing prose.
-- Do not open the abstract with a question.
-- Do not use scare quotes for established terms — only for coined terms at first introduction.
-- Do not pad sentences with "as mentioned previously" or "as discussed above."
-- Do not use exclamation marks in written work.
+**Paragraph openings:**
+- Never open a paragraph with a citation — every paragraph opens with a claim, named concept, or concrete observation the author owns.
+- Never open with "We can see that..." — state results directly.
+- Never open the abstract with a question.
+
+**Banned phrases:**
+- "It is important to note that" / "It is worth noting that" / "It should be noted" / "Needless to say" — bureaucratic padding; remove entirely.
+- "As mentioned above" / "As discussed previously" / "as mentioned previously" — implies the reader cannot remember.
+- "In today's rapidly evolving world" or any colloquial temporal framing ("In this day and age," etc.).
+- "This paper aims to" — replace with "In this paper, we..." or "we address X by doing Y."
+- "The rest of this paper is organized as follows:" as a standalone sentence — roadmapping is embedded in the Introduction's closing paragraph as flowing prose.
+- "Obviously," "Clearly," "Of course," — never used to wave past complexity.
+- Sentence-opening "So," in written text — reserved for oral scripts only.
+- "Firstly / secondly / thirdly" — always "First / Then / Finally" or "(i) / (ii) / (iii)."
+- "Very [adjective]" / "extremely [adjective]" — use precise quantifiers or "significantly."
+
+**Voice and register:**
+- Passive voice as the default for describing what the researchers do ("it was found that" instead of "we found"). Passive is reserved for cases where the agent is genuinely irrelevant, or when describing what was done in prior work.
+- "I" in written work — strictly "we" throughout.
+- Exclamation marks in written work.
+- Scare quotes on established terms — quotation marks reserved for coined phenomena at first introduction.
+
+**Structure:**
+- Bullet points within body paragraphs.
+- Stacked citations without surrounding text — no `\cite{A}\cite{B}\cite{C}`.
+- Mid-sentence em dash "—" to insert a parenthetical, contrast, or elaboration — rewrite as a subordinate clause or a new sentence.
+- Mid-sentence colon ":" to introduce an elaboration or example — rewrite with "namely," "that is," or a relative clause. A colon is only acceptable after a grammatically complete sentence that formally opens an enumeration.
 
 ---
 
@@ -298,27 +320,6 @@ These are small-scale linguistic choices that recur across multiple samples and 
 **"In all but one [X]"** for restrained qualification of near-universal results. Appears across at least two separate documents: "achieved the second-lowest Mean Squared Error (MSE) in all but one instance, where it was the best" (BSc thesis, Ch5); "one baseline forecasting method outperformed the GNNs in all but one test condition" (Sample 1, technical report on Melbourne housing). The construction is the preferred way to describe a near-universal result that has exactly one exception — rather than "almost always" or "with one exception."
 
 ---
-
-## Red Flags
-
-The following constructions would immediately sound like someone else wrote this:
-
-- "It is important to note that..." — too bureaucratic
-- "As mentioned above" / "As discussed previously" — never used; implies the reader cannot remember
-- "In today's rapidly evolving world" or any variant — never used
-- "Firstly, secondly, thirdly" — always "First, Then, Finally" or "(i)(ii)(iii)"
-- "This paper aims to" — uses "In this paper, we..." or "we address X by doing Y"
-- "The rest of this paper is organized as follows:" as a standalone sentence — roadmapping is embedded in prose
-- Bullet points mid-paragraph in body text
-- Starting a paragraph with "We can see that..." — results are stated, not narrated from a "we can see" vantage
-- "Very [adjective]" — replaced by precise quantifiers or "significantly"
-- Passive constructions for what the researchers do — "it was found that" instead of "we found"
-- "In this day and age" or any colloquial temporal framing
-- Stacked citations without accompanying text — "[1][2][3]"
-- "Obviously," "Clearly," "Of course," — these are never used to wave past complexity
-- Scare quotes on established terms — quotation marks reserved for coined phenomena
-- Exclamation marks in written work
-- Sentence-opening "So," in written text — reserved for oral scripts only
 
 ---
 

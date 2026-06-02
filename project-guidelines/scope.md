@@ -10,22 +10,13 @@ This thesis is the final piece of work of my Master studies in Data Science with
 
 ## Depth & Tone
 - **Technical depth**: Rigorous and unambiguous but not exhaustive; show key equations, skip full derivations unless central to our contribution.
-- **Tone**: Invested but not emptional, first person plural throughout written work.
 - **Formality level**: 8.
 
-For full details on style, see msc-thesis/project-guidelines/style-guide.md.
+All voice, tone, sentence structure, and section-level prose rules are in `project-guidelines/style-guide.md`.
 
-## What This Thesis Always Does
-- Connects to purpose of the research project. 
-– Organises ideas into paragraphs. Each paragraph starts with the point, then proceeds into an explanation with an example. 
-- Links paragraphs via narrative-like dymaic with problem-solution tensions.
-- Stays scientific, factual, unmabiguous, academic.
-- Uses MSc-level language. 
-– Cites works by others.
-
-## What This Thesis Never Does
-- Never uses verbose sentences and passive expressions. 
-- Never uses filler words or expressions.
-- Never presents points confusely and perplexingly. 
-- Never states theory without providing citations. 
-- Never makes statements that are factually false or scientifically unproven. 
+## Content Standards
+- Connects to the purpose of the research project.
+- Stays scientific, factual, unambiguous, and academic.
+- Uses MSc-level language appropriate to the audience.
+- Always cites works by others; never states theory without a citation.
+- Never makes statements that are factually false or scientifically unproven.

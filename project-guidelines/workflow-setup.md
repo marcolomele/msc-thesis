@@ -98,14 +98,7 @@ that definition here rather than redefining it")
 
 ## Git Conventions
 
-All commits made by Claude Code in Cursor follow this format:
-
-```
-draft: add chapter 2a — visual representation
-latex: convert chapter 2a to tex
-refs: add DINOv2, ViT bibtex entries
-fix: resolve compilation error in chapter 2a
-```
+Commit format is defined in `.claude/CLAUDE.md` — that file is the authority.
 
 ---
 

@@ -3,38 +3,48 @@ Examples of the writing style and voice from different samples for each section 
 
 ## Sample 1 – Technical Report
 ### Introduction
+*[Move: universalizing opening claim → named stakeholders → specific metric → research aim → explicit hypothesis via "We hypothesize that..."]*
 Real estate is one of the few markets that can truly impact the economy of a country. Therefore, policy makers, businesses, and consumers look to understand its dynamics and predict its movements. A key metric that stakeholders track is sale prices. Houses have certain features, all of which have an impact on the price. Morevoer, as a city evolves, different areas emerge, with some being more premium and expensive than others. The aim of this research is to identify which house features have the most variable effect on the price across Melbourne's council areas. We hypothesize that the importance of house features is heterogeneous across space, meaning that features have varying value across Melbourne's geography.
 
 ### Data
+*[Move: figure reference inline → observation → value in parentheses inline → interpretation → "In contrast" for direct cross-variable comparison.]*
 Next, we examine correlations among the variables in the dataset. The heatmap (see Figure 1 in the Appendix) highlights notable relationships: \texttt{Rooms}, \texttt{Bedroom2}, \texttt{Bathroom}, and \texttt{Car} exhibit positive correlations, suggesting that properties with more rooms tend to have additional bedrooms, bathrooms, and car spaces, which aligns with expectations for larger properties. \texttt{Landsize} and \texttt{Building Area} also display a moderate positive correlation, indicating that larger lands typically have bigger buildings. \texttt{Price} correlates moderately with \texttt{Building Area} and \texttt{Rooms}, suggesting these factors significantly influence property prices. In contrast, \texttt{Year Built} shows weak correlations, likely due to variations in design, features, and external factors like location and renovations.
 
 ### Method
+*[Move: "To address this limitation" as the canonical pivot from problem to contribution; followed by explicit assumptions listed as "Namely, (i)...(ii)..." within a single paragraph.]*
 To address this limitation and satisfy our research goal, we employ the following approach: ...
 
 This approach requires some assumptions. Namely, (i) that slope random effects across different features are uncorrelated, (ii) that month-specific intercept random effects don't interact with slope random effects, (iii) that fixed effects estimates $\beta$ remain stable regardless of which feature has random slopes, (iv) that CAR prior spatial relationships between councils are feature-independent, and (v) that errors are homoscedastic between the models. 
 
 ### Results
+*[Move: observation → value in parentheses inline → interpretation ("indicating..."). "In contrast" marks direct cross-variable comparison. Always in this order.]*
 The largest standard deviation is observed for \texttt{Distance} (0.3484), indicating significant spatial variability in its impact on house prices, followed by \texttt{Bedroom2} (0.2532), reflecting differing preferences for additional bedrooms across council areas. In contrast, \texttt{Building Area} has the lowest standard deviation (0.0489), suggesting a uniform influence on property values.
 
 ### Conclusion
+*[Move: "Before concluding" meta-signal → limitation acknowledged → paired future directions via "On the one hand / On the other hand."]*
 Before concluding, we would like to identify future research opportunities with regards to spatial heterogeneity. On the one hand, more nuanced models could be explored, for instance with multiple slope random effects or a learnable precision matrix in the CAR component. On the other hand, the dimensionality of the dataset could be expanded, including additional layers of hierarchy and additional factors affecting house prices.  
 
 
 ## Sample 2 – Technical Report
 ### Abstract
+*[Move: domain context → bolded named gap → our approach → positive unhedged outcome ("significantly improving..."). No citations. Never opens with "In this paper."]*
 The 11\textsuperscript{th} Revision of the \emph{International Classification of Diseases} (ICD-11) serves as the global diagnostic standard established by the World Health Organization (WHO). However, \textbf{ICD-11} contains \textbf{limited and sparse descriptions} that challenge effective computational use. Current proprietary biomedical language models, such as Google's Med-PaLM 2, demonstrate the capability to enhance medical textual representation but remain broadly inaccessible. We leverage \textbf{Llama3-OpenBioLLM-70B} to systematically enrich ICD-11 descriptions, significantly improving their completeness and semantic density.
 
 ### Introduction
+*[Move: "To address this limitation" contribution pivot → roadmapping as prose using "first... then... subsequently..." with specific active verbs ("explore," "detail," "outline").]*
 To address this limitation, we leverage Llama3-OpenBioLLM-70B, an open-source biomedical language model known for its robust performance, to systematically enrich ICD-11 descriptions. \cite{Ura2025} In this paper, we first explore existing research in embedding ICD codes and automated medical classification (Section 2). We then detail our method for data extraction, description generation, and validation procedures (Section 3), to emphasize the linguistic, medical, and hierarchical aspects of the newly generated texts. Subsequently, we outline our experimental setup for evaluating various embedding methods, including traditional (TF-IDF, FastText) and contextual transformer models (PubMedBERT, BioBERT, and GatorTron).
 
 ### Method
+*[Move: section roadmap → "First... Then... Next... Finally..." sequential steps. Each step named; each design choice justified inline ("for fair comparison," "maintaining consistent...").]*
 \subsection{Experimental Setup}
 Our embedding generation pipeline consists of several steps. First, we append structured ICD-11 metadata to the generated descriptions, including diagnostic synonyms, related conditions, and hierarchical relationships. Then, we apply text preprocessing using the NLTK package, including lowercase conversion, special character removal, and whitespace normalization. Next, we set up our models. We specify TF-IDF with a vocabulary of 3000 features and apply SVD reduction to match BERT's hidden layer size. We configure FastText with a skip-gram model and a window size of five. For transformer models, we leverage their pre-trained weights. All models process texts in batches, with proper attention masking for transformers. We generate embeddings using mean pooling over the last hidden states, maintaining consistent 768-dimensional vectors across all approaches for fair comparison.
 
 ### Results
+*[Move: measurement description → value → "In contrast" for cross-model comparison. "We measure," "indicating" — active verbs and interpretation-appended observations.]*
 We also measure how often two models predict the same top disease for a symptom. On average, TF-IDF’s predictions match those of other models in only 19.4\% of symptoms, indicating its less aligned behaviour. In contrast, contextual and medical-trained models like PubMedBERT, BioBERT, and GatorTron produce more consistent results, agreeing on the top disease for about 35\% of symptoms.
 
 ### Conclusion
+*[Move: limitation → three future directions enumerated (i)(ii)(iii) in a single sentence → broader-impact closing sentence.]*
 This limitation points to three directions for future work: (i) integrate graph neural networks (GNNs) trained with self-supervised objectives (e.g., link prediction) to capture hierarchical and cross-disease relationships better; (ii) utilize cutting-edge foundation models such as GPT-4.1, Claude Sonnet 4, or Grok 3 to enhance embedding quality; and (iii) explore scaling laws by varying embedding dimensions, model capacity, and input length to optimization effectiveness. \cite{ScalingLaws}
 
 Together, these improvements aim to make ICD-11 embeddings more representative of biological mechanism and disease interactions and adaptable to questions posed in everyday language, ultimately supporting many real-world applications across multiple layers of society.
@@ -42,23 +52,29 @@ Together, these improvements aim to make ICD-11 embeddings more representative o
 
 ## Sample 3 – Technical Report
 ### Abstract
+*[Move: fundamental challenge framed → named method and its mechanism → outcome statement. No citations.]*
 Understanding how to relate objects across egocentric and exocentric viewpoints is a fundamental challenge in multi-camera perception. In this work, we build upon \mbox{O-MaMa}, the state-of-the-art method that reformulates cross-view segmentation as an object mask matching problem, leveraging FastSAM for mask proposals and DINOv2 features for semantic alignment. 
 
 Overall, our analyses expose important trade-offs between efficiency, finetuning stability, and robustness, offering insights toward developing general cross-view perception systems.
 
 ### Introduction
+*[Move: bold key terms at first mention → contrast pair via "Conversely" makes the trade-off explicit → application motivation ("crucial for...").]*
 \textbf{Egocentric and exocentric visual perspectives} provide complementary information about human activities and their surrounding environment. Egocentric (first-person) cameras capture fine-grained details of hand-object interactions, but they suffer from self-occlusion and a restricted field of view. Conversely, exocentric (third-person) cameras provide a global understanding of a scene, but miss subtle interaction details due to distance, object scale variability, and limited resolution. Bridging these two perspectives is crucial for applications in augmented reality, robotics, and multi-camera perception systems.
 
 ### Related Works
+*[Move: "Motivated by its relevance" — reason precedes the action; motivation always before description.]*
 Motivated by its relevance, part of our analysis will inspect the tradeoff between feature representation quality and computational cost by running O-MaMa on two additional backbones: DINOv3~\cite{dino3} and ResNet50-DINOv1. 
 
 ### Data
+*[Move: scope restriction stated first, reason for restriction following ("as it provides...").]*
 We restrict our study to the Health scenario, specifically the "Covid-19 Rapid Antigen Test" task, as it provides 20+ hours of video of consistent scenes with a relatively low variety in object form and high quality annotations on object relations across cameras. 
 
 ### Method
+*[Move: section-opening roadmap sentence naming all topics; purpose of each stated ("Each modification is designed to investigate...").]*
 In this section, we formalize the Exo→Ego correspondence task, summarize the O-MaMa architecture, and detail the methodological explorations ran during our study: feature pre-extraction, finetuning analysis, and feature extractor backbone substitution. Each modification is designed to investigate O-MaMa's capabilities. 
 
 ### Results
+*[Move: named-phenomenon approach — "over-specification" and "easy distraction" coined in quotation marks, then explained mechanistically, then grounded with an analogy.]*
 We inspect the worsening of performance induced by finetuning by plotting masks on individual frames. Looking at situations of high divergence in IoU between predictions of baseline weights and predictions of finetuned weighs (see Appendix \hyperref[fig:delta]{Fig. 7}) we uncover two emergent behaviors: "over-specification" and "easy distraction". 
 
 Over-specification refers to O-MaMa's tendency to reduce the area of the predicted masks by focusing on smaller portions of objects. This is analogous to tuning FastSAM such that it segments details rather than follow object contours. Easy distraction refers to O-MaMa exhibiting a distraction mechanism, segmenting the object that is at the center of the frame under manipulation, rather than sticking to the actual object it should predict. See Appendix Fig. \ref{fig:-emergent-phen} for detailed examples. 
@@ -66,12 +82,14 @@ Over-specification refers to O-MaMa's tendency to reduce the area of the predict
 We provide three conjectures that explain such results.
 
 ### Conclusion
+*[Move: human cognition as structural contrast to machine limitation — recurring rhetorical closing move.]*
 Finally, O-MaMa exhibits robustness over unseen data, but struggles significantly with moderate to heavy occlusion. This emphasizes how the current mask-matching pipeline relies on visible cues in both exo and ego point of view. They ignore information about missing object parts, are unable to leverage scene geometry, and fail to reason around nuanced interactions among objects. In contrast, we humans are able to infer object positions even when complete occlusion appear, because of our ability to track space and time conjunctively, while only relying on the ego point of view. 
 
 These observations suggest several promising directions for future research: 
 
 ## Sample 4 – BSc Thesis
 ### Introduction
+*[Move: universalizing opening claim → shared abstract structure named → growing-complexity limitation → pivot to solution.]*
 \chapter{Introduction}
 Network systems are ubiquitous in the real world, with applications spanning business, science, and beyond. At the heart of biological systems, communication grids, e-commerce websites, and social media platforms lies a common structure: a network of interacting entities.
 
@@ -83,6 +101,7 @@ Graph representation learning deals with converting large-scale graphs into nume
 Over the last decade, Graph Neural Networks (GNNs) have emerged as the leading paradigm for building effective embeddings that enable powerful inference tasks such as node classification or link prediction.
 
 ### Theory
+*[Move: historical status quo → "However," pivot → limitation named → research direction as response. Subsection opens with a motivation sentence before naming the method.]*
 \section{Representation Learning}
 \subsection{Motivation}
 In traditional machine learning, representations are constructed through feature engineering, transforming raw data into more expressive features towards the target variable. In our previous example, a simple feature engineering operation could be computing the ratio between temperature and pressure rather than using the two measures separately. 
@@ -91,6 +110,7 @@ In traditional machine learning, representations are constructed through feature
 However, this process is labour-intensive, relies on domain expertise, and is subject to selection bias. Over the last decade, research has focused on developing algorithms that depend less on feature engineering. The goal is to design algorithms that learn features autonomously in latent spaces. 
 
 ### Method
+*[Move: "Inspired by CNNs" intellectual lineage → "The fundamental idea remains" continuity signal → formula → component-by-component prose explanation with all symbols named.]*
 subsection{Convolutions on Graphs}
 Inspired by CNNs, Kipf et al. (2016) introduced Graph Convolutional Networks (GCN). \cite{Kipf2017} The fundamental idea remains unchanged; a kernel is slid over the graph, and the embeddings are formed as a weighted sum of the embeddings of the neighbours, but now the size of the kernel varies according to each node's 1-hop neighbourhood.
 
@@ -104,6 +124,7 @@ Here, $\tilde{A}=A+I$, with $I \in \mathbb{R}^{N\times N}$ being the identity ma
 The first part inside $\sigma$ is the $AGGREGATE$ function. It is a sum of all the node representations from the previous layer $\ell-1$, weighted by $W^{(\ell)}$ and scaled by entries from the adjacency and degree matrices. The second part is the $COMBINE$ function. It says that the aggregated representations of the neighbours are combined via summation to the weighted and scaled representation of node $i$ from the previous layer. Figure \ref{fig:GCN-how} depicts the propagation rule for GCN. 
 
 ### Experiment
+*[Move: prior work + full author+year → context-setting narrative (domain story) → mathematical formalization with every symbol named inline.]*
 \subsubsection{Problem Setup}
 The global agriculture trade problem, introduced by L. Jiang et al. (2023), is the experiment in the research field that most closely resembles our commodity trade problem. \cite{Jiang2023} Both involve predicting the volumes of commodities traded among countries given past information about trade and other variables such as production and demand. Accurate trade forecasts benefit many parties, from government agencies that can design better policies to companies that can make more precise production plans
 
@@ -114,6 +135,7 @@ Trade occurs in a global and interconnected market that presents both structural
 Agriculture trade can be modelled as a CTDG $\mathcal{G}=(G_0, \mathcal{O})$ with countries as nodes and trades as edges. Each observation $o_t=((i, j), t, \omega_t)\in \mathcal{O}$ indicates that a directed edge with weight $\omega_t \in \mathbb{R}$ between source node $i$ and destination node $j$ occurred at time $t$. The weight indicates the volume that has been traded between country $i$ and country $j$. Moreover, $\mathcal{G}$ has a time varying node set $\mathcal{V}_t$ and edge set $\mathcal{E}_t$. 
 
 ### Conclusion
+*[Move: limitation named ("clear research gap") → named future directions → philosophical closing sentence that exits the technical frame entirely.]*
 \chapter{Conclusions}
 \subsubsection{On the Commodity Trade Problem}
 The results from the previous chapter suggest that the TGN model is a step in the right direction for solving the commodity trade problem. However, they also highlight a clear research gap, as one baseline forecasting method outperformed the GNNs in all but one test condition. These results suggest that current Dynamic Graph Neural Network models may not yet be capable of solving temporal edge regression.
@@ -393,6 +415,7 @@ Therefore, independent samples are not always islands.
 
 ## Sample 7 – Related Works 
 ### BSc Thesis extract
+*[Move: named-set enumeration in prose ("First... Second... Third...") → subsection openings state the cluster's shared property before naming papers → high-impact concrete example closes the final subsection, followed by a forward reference.]*
 \subsection{Inference Tasks}
 There are three categories of inference tasks on graphs, each applicable at different levels. First, \textbf{classification}; given a set of embeddings, predict the class of nodes, of edges, or of the entire graph. Second, \textbf{regression}; given a set of embeddings, predict one or multiple attributes of the nodes or of the edges. Third, \textbf{link prediction}; given a set of embeddings, predict the existence of a link between pairs of nodes. 
 
@@ -435,6 +458,7 @@ Additionally, large-scale graphs can have millions of nodes and billions of edge
 The most effective solution to these challenges is Graph Neural Networks (GNNs). In February 2020, a team of researchers from MIT used GNNs to discover halicin, a novel antibiotic capable of killing the world's worst disease-causing bacteria. \cite{Stokes2020} This achievement highlights just one of the many potential applications driving research in GNNs, which we will explore in detail in the next chapter.
 
 ### Technical Report
+*[Move: each paper described then immediately limited in the same sentence; "Conversely" for genuinely directional contrast; "Overall, existing research underscores..." as synthesis closing that names what the literature achieves and what it leaves open.]*
 \section{Related Works}
 
 Previous efforts in automating ICD coding primarily focus on improving disease representation and retrieval. Feng et al. (2024) demonstrate that straightforward methods like TF-IDF and cosine similarity still effectively match medical narratives to ICD-11 codes, but their approach lacks contextual awareness, limiting semantic precision \cite{feng2024tfidf}. 
@@ -449,6 +473,7 @@ Overall, existing research underscores the importance of specialized biomedical 
 
 ## Sample 8 – Discussion
 ### BSc Thesis extract
+*[Move: "Interestingly" flags notable-but-expected finding; "Strikingly" flags a result that contradicts prior expectations; "in all but one instance, where it was the best" for near-universal results with exactly one exception.]*
 A3T-GCN and the decoder are trained end-to-end with backpropagation and loss metric $||Y-\hat{Y}||_2^2$, where $Y$ are the true values of traffic for the next $T$ time steps. The authors compare the results to Auto-regressive Integrated Moving Average (ARIMA), GCN, and GRU, which capture either the temporal or the spatial dynamics of the graph. A3T-GCN scores the highest in accuracy and lowest in Root Mean Squared Error (RMSE), proving its effectiveness in generating expressive representations. 
 
 TGN and the decoder are trained end-to-end with loss $||Y-\hat{Y}||_2^2$. Interestingly, training with negative sampling proved to be the most effective technique. Negative sampling involves randomly selecting one negative edge for each positive edge during training. \cite{Jiang2023} Negative edges are those that do not exist in the original graph and have a weight of 0. Also, note that the authors do not add additional node and edge features. 
@@ -457,6 +482,7 @@ TGN and the decoder are trained end-to-end with loss $||Y-\hat{Y}||_2^2$. Intere
 Jiang et al. compare TGN's performance against several forecasting techniques, GCN, and two other DGNNs (JODIE and DyRep). TGN consistently outperformed the DGNNs, surpassed the GCN thanks to the added temporal dimension, and achieved the second-lowest Mean Squared Error (MSE) in all but one instance, where it was the best. These findings validate TGN as an effective DGNN architecture. Strikingly, Persistence Average, a simple technique, almost always the best model. This highlights how TGN may not be sophisticated enough to perform well on temporal edge regression.
 
 ### Technical report
+*[Move: "striking result: [fact]" — label before colon, fact after; named-set approach for three criticalities with explicit disposition of each; mechanism-led conjectures; borrowed terms sourced with field of origin; hedged final interpretation ("likely explained by...").]*
 
 \section{Results}
 Next, we run the experiments and discuss the results. In section 5.1, we validate our implementation of O-MaMa's original architecture with on-the-fly feature computation, and then attempt finetune. From section 5.2 onward, we use pre-extracted features, and abbreviate O-MaMa configurations by the feature encoder, since that is the main changing block across the experiments, with the rest of the architecture kept fixed. 

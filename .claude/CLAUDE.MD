@@ -113,14 +113,11 @@ These are non-negotiable — they apply to every chapter file.
 
 **Figures:**
 - Every figure is referenced in text with `\cref{fig:name}` before it appears
-- Captions are standalone and descriptive — a reader should understand the
-  figure without reading surrounding prose
 - Figures live in `/assets/figures/` — never embedded raw in `.tex` files
 
 **Citations:**
-- Inline author+year in prose: "Vaswani et al.~\cite{Vaswani2017}"
-- Pure citation (no inline name): `\cite{key}` at end of clause
-- Never stack citations without surrounding text: no `\cite{A}\cite{B}\cite{C}`
+- Encode all citations as `\cite{key}`. Use keys from `thesis-theory-topics.md` verbatim — never invent.
+- All narrative citation conventions (when to name authors inline, prose embedding format) are governed by `project-guidelines/style-guide.md` § Citations — preserve the approved draft's choices exactly.
 
 **Cross-references:**
 - Use `\cref{}` throughout (not `\ref{}`) — requires `cleveref` package
@@ -130,9 +127,9 @@ These are non-negotiable — they apply to every chapter file.
 
 ## What Claude Code Should Never Do
 
-- Never rephrase or improve prose from an approved draft — convert only
+- Never rephrase or improve prose from an approved draft — convert only. All prose style and voice rules live in `project-guidelines/style-guide.md` and are applied during drafting, not during conversion.
 - Never invent bibtex keys — use only keys from `thesis-theory-topics.md`
-- Never edit files in `/project-guidelines/` — these are read-only references
+- Never edit files in `/project-guidelines/` without explicit instruction — these are reference documents
 - Never commit directly to main without flagging if changes touch `main.tex` structure
 - Never resolve a missing figure by removing the reference — flag it instead
 
