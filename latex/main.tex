@@ -1,11 +1,14 @@
-\documentclass[12pt, a4paper]{report}
+\documentclass[12pt, a4paper, twoside, openright]{report}
 
 % Encoding and fonts
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 
-% Page geometry
-\usepackage[top=2.5cm, bottom=2.5cm, left=3cm, right=2.5cm]{geometry}
+% Times New Roman
+\usepackage{times}
+
+% Page geometry — left/right 2.5 cm as required
+\usepackage[top=2.5cm, bottom=2.5cm, left=2.5cm, right=2.5cm]{geometry}
 
 % Mathematics
 \usepackage{amsmath}
@@ -59,7 +62,17 @@
 
 \begin{document}
 
-\input{style/titlepage}
+% Pages 1–4: required blank/dedication pages (no numbering)
+\pagestyle{empty}
+
+\null\newpage          % page 1 — blank
+\null\newpage          % page 2 — blank
+\null\newpage          % page 3 — dedication / acknowledgements / blank
+\null\newpage          % page 4 — blank
+
+% Body begins on page 5; numbering restarts from 1
+\pagestyle{plain}
+\setcounter{page}{1}
 
 \tableofcontents
 \listoffigures
