@@ -1,44 +1,16 @@
 \chapter{Introduction}
 \label{chap:intro}
 
-Identifying an object from any perspective is a fundamental capability for intelligent vision
-systems that operate with multiple cameras. The ability to match objects across complementary
-viewpoints, which we call cross-view object correspondence, underpins a broad and growing class
-of real-world applications. In human-robot collaboration, an aerial vehicle and a ground-based
-human operator must agree on which object in the scene is being referenced, despite observing it
-from entirely different angles \cite{collab_1, collab_2}. Augmented reality assistants face the
-same requirement: a head-mounted camera captures the user's immediate environment from a
-first-person perspective, while a fixed scene camera provides broader spatial context
-\cite{wearable}. The growing adoption of consumer smart glasses, increasingly paired with fixed
-cameras in home and shared environments, brings the same challenge to everyday personal use,
-enabling applications where a user can be guided to a misplaced object by correlating what the
-glasses see with what a room camera has observed. In multi-robot manipulation, independent agents
-with non-overlapping fields of view must coordinate around shared objects without access to a
-common reference frame \cite{multirobot_1, multirobot_2}. In each of these domains, the cost of
-failure is not merely technical; a robot that cannot identify the same object across views cannot
-collaborate, cannot respond to instruction, and cannot be deployed safely. Cross-view object
-correspondence is therefore essential to enable collaboration across multiple agents, and its
-difficulty grows precisely where its value is highest. Despite steady progress in object
-segmentation from single images, cross-view segmentation remains an open challenge.
+\paragraph{The problem.} Identifying an object from any perspective is a fundamental capability for intelligent vision systems that operate with multiple cameras. \textit{Cross-view object correspondence}, the ability to match objects across complementary viewpoints, powers a broad and growing class of real-world applications. In human-robot collaboration, an aerial vehicle and a ground-based human operator must agree on which object in the scene is being referenced, despite observing it from entirely different angles \cite{collab_1, collab_2}. Augmented reality assistants face the same requirement; a camera mounted on the head captures the user's immediate environment from a first-person perspective, while a fixed camera provides broader context of the scene \cite{wearable}. The growing adoption of consumer smart glasses means that these capabilities can be extended to everyday personal use, for instance an application that helps a user find an object in his/her home by relating what the glasses see with the feed of a house camera. Another application is multi-robot manipulation, where independent agents with non-overlapping fields of view must coordinate around shared objects without access to a common reference frame \cite{multirobot_1, multirobot_2}. In each of these domains, failure is costly, since a system that cannot identify the same object across views cannot collaborate, cannot respond to instruction, and cannot be deployed safely. Despite steady progress in object segmentation on single images, cross-view segmentation in video remains an open challenge.
 
-The most comprehensive public resource for studying this class of problems is \textit{Ego-Exo4D},
-published by Grauman et al.\ in 2024 \cite{grauman2024egoexo4d}. It holds hundreds of multiple
-view video recordings of human activities captured simultaneously from a first-person
+\paragraph{The dataset.} The most comprehensive public resource for studying this problem is \textit{Ego-Exo4D},
+published by Grauman et al.\ in 2024 \cite{grauman2024egoexo4d}. It holds hundreds of video recordings of human activities captured simultaneously from a first-person
 \textit{egocentric} camera worn by the participant and one or more \textit{exocentric} cameras
 fixed around the scene. The dataset enables many novel computer vision tasks, including
 cross-view object correspondence: given a per-frame segmentation mask track for an object in one
 view, predict the mask track for the same object in the other view. The task is particularly
-demanding because the two perspectives focus on different aspects of the same scene. The
-egocentric view captures object detail and manual interactions with high fidelity, but suffers
-from motion blur, frequent hand occlusion, and a narrow field of view that loses scene context.
-Conversely, the exocentric view provides a global picture of the environment and the person's
-body, but sacrifices pixel-level resolution for each individual object. As a result, the same
-object appears in the two views at drastically different scales, angles, positions in the frame,
-and apparent colours due to differing lighting conditions. Moreover, cameras lack geometric
-calibration information, which renders triangulation-based approaches unfeasible. Finally, the
-wide variety of recorded scenes, camera optics, and imaging conditions introduces a broad domain
-shift range that challenges any method developed for a fixed distribution. Representative
-examples of the task are shown in \cref{fig:cross-view-corr}.
+demanding because the two perspectives focus on different aspects of the same scene. On the one hand, the egocentric view captures object detail and manual interactions with high fidelity, but suffers from motion blur, frequent hand occlusion, and a narrow field of view that loses scene context.
+On the other hand, the exocentric view provides a global picture of the environment and the person's body, but sacrifices detailed resolution for each individual object. As a result, the same object appears in the two views at drastically different scales, angles, positions in the frame, and even colour brightness due to differing lighting conditions. Moreover, the cameras lack geometric calibration information, which renders triangulation-based approaches unfeasible. Finally, the wide variety of recorded scenes, camera optics, and imaging conditions introduces a broad domain shift range that challenges any method developed for a fixed distribution. Representative examples of the task are shown in \cref{fig:cross-view-corr}.
 
 \begin{figure}[t]
   \centering
@@ -49,20 +21,35 @@ examples of the task are shown in \cref{fig:cross-view-corr}.
   \label{fig:cross-view-corr}
 \end{figure}
 
-Current state-of-the-art methods address this challenge by learning cross-view feature
-correspondences through trained modules. By the time of writing, Hu et al.\ (2025)
-\cite{hu2025lmeec} achieve the strongest published results by adapting SAM~2 with a
+\paragraph{Existing solutions.} Current state-of-the-art (SOTA) methods address this challenge by abstractly representing objects with embeddings and then learning how to match the representations across  views. By the time of writing, Hu et al.\ (2025) \cite{hu2025lmeec} achieve the strongest published results by adapting SAM~2 with a
 Mixture-of-Experts fusion module and a dual compressed long-term memory system. O-MaMa
 \cite{o-mama}, the winner of the 2025 Ego-Exo4D Correspondences Challenge, generates candidate
 masks in the destination view via FastSAM and selects the best match using pooled DINOv2
 features in a learned cross-view latent space. Pan et al.\ (2025) \cite{pan2025v2sam} take a
 complementary route, adapting SAM~2 with dual prompt generators and a cyclic-consistency
-selector. However, these approaches share two crucial limitations. First, they rely on training
-pipelines that tie each model to the distribution of available cross-view data, preventing
-transfer to novel camera configurations or scenarios without retraining. Second, they lack
-interpretability, in that any inspection of why a particular mask was produced for a particular
-frame is limited to attention maps, which hinders adoption in applications where safety is
-critical, as the ability to localise and audit decisions is a prerequisite \cite{xai-sensors}.
+selector. All related works will be explored in depth in Chapter 3. However, these approaches share two crucial limitations. First, they rely on training pipelines that tie each model to the distribution of available cross-view data, making them inapplicable to novel camera configurations or scenarios without retraining. Second, they lack interpretability, as only attention maps can be used to inspect why a particular object was segmented in a particular frame. This hinders adoption in applications where safety is critical. \cite{xai-sensors}.
+
+\paragraph{Foundation models.} Over the last 5 years, a new paradigm in machine learning took the center stage: foundation models. The emergence of large language models has demonstrated across a wide range of settings that systems trained on broad data and used without task-specific fine-tuning can match or exceed specialist \cite{wu2023exploringtradeoffsunifiedlarge, kim2023languagemodelssolvecomputer,
+gruver2024largelanguagemodelszeroshot}. A similar transition is happening in computer vision. Currently, most problems are addressed by designing task-specific architectures and collecting task-specific supervised data. In contrast, LeCun and others
+\cite{maes2026leworldmodelstableendtoendjointembedding, assran2025vjepa2selfsupervisedvideo, dinov1}
+argue self-supervised learning on video data is the most promising path towards building models that understand the word dynamics at a truly foundational level. While text is already an abstract compression of information, video data inherently captures information about physics, object permanence, causality, and the consequences of action. Therefore, if a model has internalized how the world works, it develops the kind of competence that should transfer across tasks and modalities.
+
+Our work is inspired by this philosophy: if foundation models with vision capabilities have acquired a
+sufficiently general understanding of the visual world, carefully composing them at inference
+time should transfer to novel tasks that none was designed for. Cross-view object correspondence
+on \textit{Ego-Exo4D} is precisely such a task, and we treat it as a principled test of how
+far this hypothesis holds. 
+
+\textcolor{red}{\paragraph{Our Pipeline.} To this end, we propose a fully training-free inference pipeline in which natural language serves as the bridge between viewpoints, illustrated in \cref{fig:pipeline}. Given a
+source-view mask track, we first select the single highest-quality seed frame from the source
+view and pass it to a visual large language model, which generates a
+view- and time- independent description of the target object. That description then drives two coordinated
+processes. First, an open-vocabulary detector scores destination frames by object-text alignment to
+select the most informative anchor frames. Second, a SAM~3 agentic loop localises and segments the
+object in each anchor frame using the same description as the grounding signal. Finally, SAM~2's
+video tracker completes the mask track across all remaining destination frames by propagating predictions conditioned on a memory bank of anchor and recently processed frames. }
+
+Curucially, no component of the pipeline is fine-tuned for the task. The bridge between views is a human-readable JSON description, and any erroneous prediction can be localised to the specific block whose output is at fault. 
 
 \begin{figure*}
   \centering
@@ -74,54 +61,9 @@ critical, as the ability to localise and audit decisions is a prerequisite \cite
   \label{fig:pipeline}
 \end{figure*}
 
-These limitations reflect a broader paradigm in computer vision in which problems are addressed
-by designing task-specific architectures and collecting task-specific supervision. The emergence
-of large language models has demonstrated, across a wide range of settings, that models trained
-on broad data and used without task-specific fine-tuning can match or exceed specialist systems
-\cite{wu2023exploringtradeoffsunifiedlarge, kim2023languagemodelssolvecomputer,
-gruver2024largelanguagemodelszeroshot}. A parallel transition is anticipated in vision. Maes
-et al.\ \cite{maes2026leworldmodelstableendtoendjointembedding, assran2025vjepa2selfsupervisedvideo}
-argue that models trained to develop a general understanding of the world through video, rather
-than to recognise patterns in labelled images, are building the kind of broad visual competence
-that would allow them to transfer across tasks without retraining. At their core, these
-foundation models are not optimised for any single downstream objective, but instead their
-generality is the objective.
-
-Our work is motivated by this hypothesis: if foundation models for vision have acquired a
-sufficiently general understanding of the visual world, carefully composing them at inference
-time should transfer to novel tasks that none was designed for. Cross-view object correspondence
-on \textit{Ego-Exo4D} is precisely such a task, and we treat it as a principled test of how
-far this hypothesis holds.
-
-To this end, we propose a fully training-free inference pipeline in which natural language
-serves as the bridge between viewpoints, illustrated in \cref{fig:pipeline}. Given a
-source-view mask track, we first select the single highest-quality seed frame from the source
-view and pass it to a multimodal large language model, which generates a structured,
-view-independent description of the target object. That description then drives two coordinated
-processes: an open-vocabulary detector scores destination frames by object-text alignment to
-select the most informative anchor frames, and a SAM~3 agentic loop localises and segments the
-object in each anchor frame using the same description as the grounding signal. Finally, SAM~3's
-video propagator completes the mask track across all remaining destination frames by conditioning
-on a memory bank of anchor and recently processed frames. No component of the pipeline is
-fine-tuned for the task. The bridge between views is a human-readable JSON description, and any
-erroneous prediction can be localised to the specific block whose output is at fault. We offer
-two interchangeable strategies for anchor frame selection: one language-grounded, using Grounding
-DINO to rank frames by object detection confidence, and one geometry-based, using the RoMa dense
-feature matcher to count confident correspondences whose source endpoint falls inside the object
-mask.
-
-Our pipeline achieves $37.7$ (\textit{Ego2Exo}) and $40.6$ (\textit{Exo2Ego}) IoU on the
+\textcolor{red}{Our pipeline achieves $37.7$ (\textit{Ego2Exo}) and $40.6$ (\textit{Exo2Ego}) IoU on the
 \textit{Ego-Exo4D} Correspondences v2 test split, representing a relative gain of $9\%$ and
-$62\%$ against the official challenge baselines respectively, and surpassing the ObjectRelator
-method in both directions. These results place our approach within a few percentage points of
-O-MaMa \cite{o-mama}, the 2025 challenge winner, without any cross-view supervision. In this
-paper, we first establish the theoretical foundations that underpin each component of the
-pipeline, covering the architectures for visual representation, segmentation, language grounding,
-and temporal propagation that our method composes (\hyperref[chap:theory]{Chapter~2}). We then
-survey the related literature on ego-exo datasets, correspondence methods, and segmentation
-models, identifying the precise gap our work addresses (\hyperref[chap:related]{Chapter~3}).
-Next, we present the full pipeline, formalising the task and motivating each design choice
-(\hyperref[chap:pipeline]{Chapter~4}). Finally, we report experimental results and a detailed
-ablation study, examining both the gains each pipeline block contributes and the characteristic
-failure modes that emerge when foundation models are composed for a task none of them was
-designed for (\hyperref[chap:experiments]{Chapter~5}).
+$62\%$ against the official challenge baselines respectively.} These results place our approach within a few percentage points of O-MaMa \cite{o-mama}, the 2025 challenge winner, without any cross-view supervision. 
+
+\paragraph{Thesis overview.} In this dissertation, we first establish the theoretical foundations that underpin our pipeline, covering the architectures for visual representation, segmentation, language grounding,
+and video propagation. (\hyperref[chap:theory]{Chapter~2}).  Then, we  build on the theoretical foundation to study the other available methods for cross-view object correspondence, identifying different families of approaches and revealing the gap our work addresses (\hyperref[chap:related]{Chapter~3}). Next, the two biggest contributions. In \hyperref[chap:pipeline]{Chapter~4}, we describe the full pipeline and the experimental set-up, and in \hyperref[chap:experiments]{Chapter~5}, we present the results and a detailed ablation study. We deliberatively  outline the gains but focus mostly on the characteristic failure modes of the foundation models over a task none of them was designed for, making this thesis an essential interpretability contribution relevant for future works. 
