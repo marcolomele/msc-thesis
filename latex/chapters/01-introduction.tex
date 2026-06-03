@@ -3,8 +3,7 @@
 
 \paragraph{The problem.} Identifying an object from any perspective is a fundamental capability for intelligent vision systems that operate with multiple cameras. \textit{Cross-view object correspondence}, the ability to match objects across complementary viewpoints, powers a broad and growing class of real-world applications. In human-robot collaboration, an aerial vehicle and a ground-based human operator must agree on which object in the scene is being referenced, despite observing it from entirely different angles \cite{collab_1, collab_2}. Augmented reality assistants face the same requirement; a camera mounted on the head captures the user's immediate environment from a first-person perspective, while a fixed camera provides broader context of the scene \cite{wearable}. The growing adoption of consumer smart glasses means that these capabilities can be extended to everyday personal use, for instance an application that helps a user find an object in his/her home by relating what the glasses see with the feed of a house camera. Another application is multi-robot manipulation, where independent agents with non-overlapping fields of view must coordinate around shared objects without access to a common reference frame \cite{multirobot_1, multirobot_2}. In each of these domains, failure is costly, since a system that cannot identify the same object across views cannot collaborate, cannot respond to instruction, and cannot be deployed safely. Despite steady progress in object segmentation on single images, cross-view segmentation in video remains an open challenge.
 
-\paragraph{The dataset.} The most comprehensive public resource for studying this problem is \textit{Ego-Exo4D},
-published by Grauman et al.\ in 2024 \cite{grauman2024egoexo4d}. It holds hundreds of video recordings of human activities captured simultaneously from a first-person
+\paragraph{The dataset.} The most comprehensive public resource for studying this problem is \textit{Ego-Exo4D}  \cite{grauman2024egoexo4d}. It holds hundreds of video recordings of human activities captured simultaneously from a first-person
 \textit{egocentric} camera worn by the participant and one or more \textit{exocentric} cameras
 fixed around the scene. The dataset enables many novel computer vision tasks, including
 cross-view object correspondence: given a per-frame segmentation mask track for an object in one
@@ -25,7 +24,7 @@ On the other hand, the exocentric view provides a global picture of the environm
 Mixture-of-Experts fusion module and a dual compressed long-term memory system. O-MaMa
 \cite{o-mama}, the winner of the 2025 Ego-Exo4D Correspondences Challenge, generates candidate
 masks in the destination view via FastSAM and selects the best match using pooled DINOv2
-features in a learned cross-view latent space. Pan et al.\ (2025) \cite{pan2025v2sam} take a
+features in a learned cross-view latent space. \cite{pan2025v2sam} take a
 complementary route, adapting SAM~2 with dual prompt generators and a cyclic-consistency
 selector. All related works will be explored in depth in Chapter 3. However, these approaches share two crucial limitations. First, they rely on training pipelines that tie each model to the distribution of available cross-view data, making them inapplicable to novel camera configurations or scenarios without retraining. Second, they lack interpretability, as only attention maps can be used to inspect why a particular object was segmented in a particular frame. This hinders adoption in applications where safety is critical. \cite{xai-sensors}.
 
