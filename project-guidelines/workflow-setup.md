@@ -5,8 +5,8 @@
 
 | Tool                     | Role                                            |
 | ------------------------ | ----------------------------------------------- |
-| Claude UI (this project) | Drafting prose, voice iteration, chapter directives |
-| Cursor + Claude Code     | File ops, LaTeX conversion, git, compilation    |
+| Claude UI (this project) | Chapter directives, reference, discussion       |
+| Cursor + Claude Code     | Prose drafting, LaTeX, git, compilation         |
 | GitHub (`msc-thesis`)    | Single source of truth                          |
 | Overleaf (GitHub sync)   | Final rendering and manual refinement           |
 
@@ -49,33 +49,19 @@ and fill the fields at the top:
 
 Commit the directive to the repo before drafting begins.
 
-### Step 2 — Draft in Claude UI (new chat in this project)
+### Step 2 — Draft in Cursor
 
-Open a new chat. Paste the entire brief file as your first message.
-Claude reads the project knowledge files and drafts the chapter in your voice,
-following the paper section's order of information.
+Open Cursor in the `msc-thesis` repo. Paste the brief and tell Claude Code
+to draft the chapter directly into `/latex/chapters/[XX-chapter-name].tex`.
 
-Iterate in the same chat until the draft is approved:
+Iterate in the same session until the chapter is approved:
 
 - Flag what sounds off ("too formal here", "wrong explanation of X")
-- Claude revises; repeat until it sounds like you wrote it
+- Claude revises in place; repeat until it reads correctly
+- New citations go into `references.bib` using keys from `thesis-theory-topics.md`
+- Commit when a logical unit is complete
 
-### Step 3 — Hand off to Cursor
-
-Copy the approved draft. Open Cursor in the `msc-thesis` repo.
-Paste the draft and tell Claude Code:
-
-```
-Save this draft to /thesis-drafts/[chapter-name].md,
-convert it to LaTeX and save to /latex/chapters/[XX-chapter-name].tex,
-add any new citations to references.bib using the keys in
-thesis-theory-topics.md, then commit and push.
-```
-
-Claude Code handles file creation, LaTeX conversion, bib updates,
-and git. You do not touch the terminal manually.
-
-### Step 4 — Overleaf
+### Step 3 — Overleaf
 
 Overleaf pulls from GitHub on demand (GitHub sync). Open the project,
 pull changes, compile, and do final visual refinement — spacing, figure
@@ -83,17 +69,16 @@ placement, layout tweaks.
 
 ---
 
-## Multi-Chat Chapters (>8 pages)
+## Multi-Session Chapters (>8 pages)
 
 For long chapters (e.g., Chapter 2 Theory at ~20 pages), split into one
 directive file per subchapter:
 
-- One chat per subchapter, each with its own directive
-- Start each chat with the same project knowledge + the subchapter directive
+- One directive per subchapter, each in its own `[chapter-name]-brief.md`
+- Draft each subchapter in a separate Cursor session, directly into its `.tex` file
 - Reference what was established in previous subchapters explicitly
 in the directive's "Connect back to" field ("Chapter 2a.1 defined the
 CLS token — reference that definition here rather than redefining it")
-- Consolidate all subchapter drafts in Cursor before LaTeX conversion
 
 ---
 
@@ -117,7 +102,6 @@ Never edit directly in Overleaf and push back — keep the flow unidirectional.
 
 ## Key Principle
 
-The Claude UI project is the writing environment.  
-The repo is the source of truth. Changes to the repo are pushed only from Cursor editor.   
-Overleaf is the output layer.  
-These three never overlap in responsibility.
+The repo is the source of truth. All prose drafting happens directly in `/latex/chapters/` via Cursor.  
+Overleaf is the output layer only — pull from GitHub, compile, refine layout.  
+Never edit directly in Overleaf and push back — keep the flow unidirectional.

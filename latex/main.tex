@@ -41,6 +41,8 @@
 
 % Section formatting
 \usepackage{titlesec}
+\titleformat{\chapter}[block]{\normalfont\huge\bfseries}{}{0pt}{}
+\titlespacing*{\chapter}{0pt}{50pt}{40pt}
 
 % Appendix
 \usepackage{appendix}
@@ -49,11 +51,12 @@
 \usepackage{xspace}
 
 % References and links — hyperref must come before cleveref
-\usepackage[colorlinks=true, linkcolor=black, citecolor=black, urlcolor=blue]{hyperref}
+\usepackage[colorlinks=true, linkcolor=black, citecolor=blue, urlcolor=blue]{hyperref}
 \usepackage[capitalise, noabbrev]{cleveref}
 
 % Bibliography
 \usepackage[authoryear, round]{natbib}
+\let\cite\citep   % all \cite produce (Author, Year) parenthetical form
 
 % Custom macros
 \input{style/custom-macros}

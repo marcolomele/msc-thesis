@@ -13,8 +13,8 @@ in computer vision — specifically an inference pipeline for cross-view
 object correspondence in egocentric/exocentric video using foundation models.
 
 The thesis is ~50 pages, written in LaTeX, and compiled via Overleaf
-(GitHub sync). Prose is drafted in markdown via Claude UI and converted
-to LaTeX here.
+(GitHub sync). Prose is drafted directly into LaTeX chapter files via
+Claude Code.
 
 ---
 
@@ -46,25 +46,21 @@ to LaTeX here.
       - thesis.sty
       - custom-macros.tex
 
-/thesis-drafts/
-  - [chapter-name]-draft.md      (approved markdown drafts from Claude UI)
 ```
 
 ---
 
 ## Your Responsibilities in This Repo
 
-### Converting Drafts to LaTeX
-When given an approved markdown draft:
-1. Preserve the prose exactly — do not rephrase, reorder, or improve
-2. Convert markdown formatting to LaTeX equivalents
-3. Wrap display equations in `\begin{equation}...\end{equation}` with `\label{eq:name}`
-4. Wrap inline math in `$...$`
-5. Replace citation placeholders with `\cite{bibtex_key}` using keys from `references.bib`
-6. Convert figure references to `\begin{figure}...\end{figure}` blocks pulling from `/assets/figures/`
-7. Convert tables to `\begin{table}...\end{table}` blocks with `\toprule/\midrule/\bottomrule`
-8. Save output to `/latex/chapters/[XX-chapter-name].tex`
-9. Add `\input{chapters/XX-chapter-name}` to `main.tex` if not already present
+### Drafting in LaTeX
+Write prose directly into `/latex/chapters/[XX-chapter-name].tex`:
+1. Follow all prose style and voice rules from `project-guidelines/style-guide.md`
+2. Wrap display equations in `\begin{equation}...\end{equation}` with `\label{eq:name}`
+3. Wrap inline math in `$...$`
+4. Use `\cite{bibtex_key}` for citations — keys from `thesis-theory-topics.md` only, never invented
+5. Use `\begin{figure}...\end{figure}` blocks pulling from `/assets/figures/`
+6. Use `\begin{table}...\end{table}` blocks with `\toprule/\midrule/\bottomrule`
+7. Add `\input{chapters/XX-chapter-name}` to `main.tex` if not already present
 
 ### Managing references.bib
 When adding new citations:
@@ -76,14 +72,14 @@ When adding new citations:
 ### Git Commits
 Use this commit format:
 ```
-draft: add [chapter name] markdown draft
-latex: convert [chapter name] to tex
+latex: draft [chapter name]
+latex: revise [chapter name] — [brief description]
 refs: add [author] bibtex entries
 fix: [brief description of fix]
 assets: add [figure/table name]
 ```
 
-One logical change per commit. Do not bundle draft + latex conversion in one commit.
+One logical change per commit.
 
 ### Compilation
 When asked to compile:
@@ -127,7 +123,7 @@ These are non-negotiable — they apply to every chapter file.
 
 ## What Claude Code Should Never Do
 
-- Never rephrase or improve prose from an approved draft — convert only. All prose style and voice rules live in `project-guidelines/style-guide.md` and are applied during drafting, not during conversion.
+- Always follow `project-guidelines/style-guide.md` for voice, tone, and citation conventions — do not deviate from the established prose style
 - Never invent bibtex keys — use only keys from `thesis-theory-topics.md`
 - Never edit files in `/project-guidelines/` without explicit instruction — these are reference documents
 - Never commit directly to main without flagging if changes touch `main.tex` structure
@@ -139,15 +135,15 @@ These are non-negotiable — they apply to every chapter file.
 
 Track the current state of each chapter here. Update after each commit.
 
-| Chapter | Directive | Draft | LaTeX | Compiled |
-|---|---|---|---|---|
-| 01 Introduction | ☐ | ☐ | ☐ | ☐ |
-| 02a Visual Representation | ☐ | ☐ | ☐ | ☐ |
-| 02b Segmentation | ☐ | ☐ | ☐ | ☐ |
-| 02c Language Grounding | ☐ | ☐ | ☐ | ☐ |
-| 02d Foundation Models & Agents | ☐ | ☐ | ☐ | ☐ |
-| 02e Addition of Time | ☐ | ☐ | ☐ | ☐ |
-| 03 Related Works | ☐ | ☐ | ☐ | ☐ |
-| 04 Pipeline | ☐ | ☐ | ☐ | ☐ |
-| 05 Experiments | ☐ | ☐ | ☐ | ☐ |
-| 06 Conclusions | ☐ | ☐ | ☐ | ☐ |
+| Chapter | Directive | LaTeX | Compiled |
+|---|---|---|---|
+| 01 Introduction | ☐ | ☐ | ☐ |
+| 02a Visual Representation | ☐ | ☐ | ☐ |
+| 02b Segmentation | ☐ | ☐ | ☐ |
+| 02c Language Grounding | ☐ | ☐ | ☐ |
+| 02d Foundation Models & Agents | ☐ | ☐ | ☐ |
+| 02e Addition of Time | ☐ | ☐ | ☐ |
+| 03 Related Works | ☐ | ☐ | ☐ |
+| 04 Pipeline | ☐ | ☐ | ☐ |
+| 05 Experiments | ☐ | ☐ | ☐ |
+| 06 Conclusions | ☐ | ☐ | ☐ |
