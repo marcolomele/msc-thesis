@@ -54,6 +54,11 @@
 \newcommand{\patch}{\vv{p}}                 % patch token
 \newcommand{\cls}{\vv{z}_{\text{cls}}}      % CLS token
 \newcommand{\iou}{\text{IoU}}               % intersection over union
+\newcommand{\npatch}{N_p}                   % number of patch tokens (not n = seq length)
+\newcommand{\cossim}[2]{\langle #1, #2\rangle}  % cosine similarity: \cossim{\vv{a}}{\vv{b}}
+\newcommand{\warp}{\mm{W}}                   % dense correspondence / warp field (RoMa, §2b)
+\newcommand{\frameidx}{\tau}                 % video frame index (reserve tau for frames, never t)
+\newcommand{\nframes}{T}                     % number of video frames
 
 % ----------------------------------------------------------------
 % Loss Functions and Metrics

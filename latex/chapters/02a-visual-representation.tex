@@ -1,2 +1,227 @@
 \section{Visual Representation}
-% Draft pending.
+\label{sec:visual-representation}
+
+Every component of our pipeline operates on the same primitive object, namely a
+fixed-length vector that encodes what a region of an image contains. How pixels
+become such vectors, and what those vectors come to encode, is therefore the
+natural starting point for the theory that follows. This section builds that
+representation from the ground up, beginning with the sequence model that
+underpins all modern visual backbones, extending it to images, and finally
+showing how the most informative of these representations can be learned without
+any human labels. The notation introduced here, both the attention machinery and
+the patch and token symbols, recurs in every subsequent section, so we define it
+with care.
+
+\subsection{The Transformer}
+\label{subsec:transformer}
+
+Sequence models were long dominated by recurrence, which processes tokens one at a
+time and struggles to relate positions that are far apart. Vaswani et al.\ in 2017
+\cite{vaswani2017attention} dispensed with recurrence entirely and proposed the
+\textit{Transformer}, an architecture built almost exclusively around the attention
+mechanism. At its core, attention lets every element of a sequence look at every
+other element and aggregate information from those it deems relevant, in a single
+parallel operation.
+
+We represent the input as a sequence of $n$ tokens stacked into a matrix
+$\mm{X}\in\R^{n\times\dmodel}$, where $\dmodel$ is the embedding dimension shared
+throughout the model. From $\mm{X}$ the model derives three projections through
+learned weight matrices, the queries $\query=\mm{X}\mm{W}_Q$, the keys
+$\key=\mm{X}\mm{W}_K$, and the values $\val=\mm{X}\mm{W}_V$. Intuitively, each token
+emits a query describing what it is looking for, advertises a key describing what it
+offers, and carries a value holding the content it would pass on if attended to.
+Scaled dot-product attention then compares queries against keys and uses the result
+to take a weighted average of the values,
+
+\begin{equation}
+  \attn(\query,\key,\val)
+  = \softmax\!\left(\frac{\query\key\transpose}{\sqrt{\dkey}}\right)\val .
+  \label{eq:attention}
+\end{equation}
+
+Here, the product $\query\key\transpose$ scores every query against every key, so
+that entry $(i,j)$ measures how strongly token $i$ should attend to token $j$. The
+scaling factor $1/\sqrt{\dkey}$, where $\dkey$ is the dimension of each key, keeps
+these scores from growing with dimension and pushing the softmax into regions of
+vanishing gradient. The row-wise $\softmax$ turns each row of scores into a
+probability distribution over the sequence, and multiplying by $\val$ replaces each
+token with the convex combination of values its distribution selects. The output is
+again an $n\times\dmodel$ sequence in which every token has been rewritten as a
+mixture of the content it found relevant.
+
+A single such operation captures one notion of relevance. To let the model attend to
+several relationships at once, the Transformer runs $h$ attention operations in
+parallel, each with its own projections and each operating on a slice of dimension
+$\dhead=\dmodel/h$. The resulting heads are concatenated and linearly mixed,
+
+\begin{equation}
+  \mhattn(\mm{X})
+  = \big[\,\mathrm{head}_1;\ \dots;\ \mathrm{head}_h\,\big]\,\mm{W}_O,
+  \qquad
+  \mathrm{head}_i=\attn(\query_i,\key_i,\val_i),
+  \label{eq:mha}
+\end{equation}
+
+where each $\mathrm{head}_i$ applies \cref{eq:attention} with head-specific
+projections and $\mm{W}_O$ recombines them into the model dimension. Because
+attention is permutation invariant, the architecture has no inherent sense of order;
+position is injected by adding a positional encoding to the input embeddings, either
+the fixed sinusoidal functions of the original work or a set of learned vectors. Each
+attention block is wrapped in a residual connection and layer normalisation
+\cite{vaswani2017attention} and followed by a position-wise feed-forward network,
+and these blocks are stacked into deep encoders. Two arrangements are common, namely
+an encoder-decoder stack for sequence transduction and an encoder-only stack for
+producing contextual representations, the latter being the one relevant to vision.
+The expressive power of attention carries a cost. Because
+\cref{eq:attention} compares every token with every other, both computation and
+memory grow as $O(n^2)$ in the sequence length, a scaling that will repeatedly
+shape the design choices of the vision models built on top of it.
+
+\subsection{The Vision Transformer}
+\label{subsec:vit}
+
+Attention was conceived for words, yet nothing in \cref{eq:attention} assumes the
+tokens are linguistic. Dosovitskiy et al.\ in 2021 \cite{dosovitskiy2021vit} made
+this explicit with the \textit{Vision Transformer (ViT)}, which applies a standard
+Transformer encoder to images by first turning a picture into a sequence. The image
+$\img$ is partitioned into a grid of $h\times w$ square patches that do not overlap,
+typically of side sixteen pixels, and each patch is flattened and linearly projected
+into a token of dimension $\dmodel$. Writing $\patch_i$ for the $i$-th patch token and
+$\mm{E}$ for the shared projection, the encoder receives
+
+\begin{equation}
+  \mm{Z}_0
+  = \big[\,\cls;\ \mm{E}\patch_1;\ \mm{E}\patch_2;\ \dots;\ \mm{E}\patch_{\npatch}\,\big]
+    + \mm{E}_{\text{pos}},
+  \label{eq:patch-embed}
+\end{equation}
+
+a sequence of $\npatch=h\,w$ patch tokens to which two further elements are added.
+The first is a learnable classification token $\cls$, prepended to the sequence and
+owning no pixels of its own; through the attention layers it aggregates information
+from every patch and serves as a single global summary of the image. The second is
+the matrix of learned positional embeddings $\mm{E}_{\text{pos}}$, which restores the
+spatial arrangement that flattening discarded. From this point the model is an
+ordinary Transformer encoder, and the patch tokens it returns are spatially localised
+descriptors while the final state of $\cls$ is an image-level descriptor. The number
+of patches $\npatch$ grows quadratically with image resolution, so the $O(n^2)$ cost
+of attention ties resolution directly to compute and motivates much later work on
+efficient variants.
+
+This flexibility comes at the price of data. Lacking the spatial inductive biases
+that convolutional networks build in by construction, the Vision Transformer learns
+locality and translation structure only from examples, and Dosovitskiy et al.\ found
+it competitive only after supervised pre-training on very large labelled corpora such
+as \textit{ImageNet-21k} and the proprietary \textit{JFT-300M}. That this scale is
+not strictly necessary was shown soon after by Touvron et al.\ in 2021 with
+\textit{DeiT} \cite{touvron2021deit}, who trained competitive Vision Transformers on
+\textit{ImageNet} alone by combining strong augmentation with a distillation token
+that learns from a convolutional teacher. The architecture is therefore general, but
+its appetite for supervision raised the question that the next section answers,
+namely whether the labels can be removed altogether.
+
+\subsection{Self-Supervised Visual Features}
+\label{subsec:dino}
+
+Supervised pre-training scales only as far as annotation budgets allow, and human
+labels are both expensive and a narrow window onto what an image contains. Self-supervised
+learning sidesteps this constraint by replacing the human label with a pretext task
+defined on the data itself, whose solution forces the network to learn useful
+structure. Several families of pretext task exist, among them predicting an artificial
+transformation of the input, contrasting different views of the same image, and
+reconstructing deliberately corrupted inputs; we focus on the self-distillation
+approach that produces the features our pipeline relies on and treat the others only
+where they reappear later.
+
+\textit{DINO}, introduced by Caron et al.\ in 2021 \cite{dinov1}, frames
+self-supervision as distillation with no labels. Two networks of identical
+architecture are maintained, a student $g_{\theta_s}$ and a teacher $g_{\theta_t}$,
+each mapping an image to a distribution over $K$ abstract prototype dimensions. The
+two networks see different augmented crops of the same image, including small local
+crops given only to the student and larger global crops given to the teacher, and the
+student is trained so that its prediction matches the teacher's across these views.
+The teacher's distribution is formed by a softmax with two deliberate distortions,
+
+\begin{equation}
+  P_t(\img)^{(k)}
+  = \frac{\exp\!\big((g_{\theta_t}(\img)^{(k)}-c^{(k)})/\kappa_t\big)}
+         {\sum_{j=1}^{K}\exp\!\big((g_{\theta_t}(\img)^{(j)}-c^{(j)})/\kappa_t\big)},
+  \label{eq:dino-teacher}
+\end{equation}
+
+and the student is optimised to minimise the cross-entropy
+$-\sum_k P_t(\img)^{(k)}\log P_s(\img)^{(k)}$ against it.\footnote{We write the teacher
+temperature as $\kappa_t$ where the original work uses $\tau$, reserving $\tau$ for the
+video frame index per the notation contract of this chapter.} Here, the vector $c$ is
+a running centre subtracted from the teacher logits, and $\kappa_t$ is a temperature
+that sharpens the teacher distribution. The two together resolve the central danger of
+training without labels, which is representational collapse, where the network maps
+every image to the same output and the loss is trivially minimised. Centering, by
+removing the running mean, prevents any single prototype dimension from dominating and
+absorbing all images; sharpening, through the low temperature $\kappa_t$, keeps the
+teacher distribution from drifting to the uniform one. Because each guards against a
+different collapse mode, neither alone suffices, but applied jointly they keep training
+stable.
+
+The teacher is never trained by gradient descent. Its weights are instead an
+exponential moving average of the student's,
+
+\begin{equation}
+  \theta_t \leftarrow \lambda\,\theta_t + (1-\lambda)\,\theta_s,
+  \label{eq:ema}
+\end{equation}
+
+with momentum $\lambda$ close to one, so that the teacher is a slowly evolving
+ensemble of recent students.\footnote{This is the momentum-encoder update of DINO; the
+centre $c$ is maintained by an analogous moving average over each batch.} This lag
+makes the teacher a more stable target than the student itself and is what allows the
+distillation loop to bootstrap a representation from random initialisation. The
+property that made DINO notable emerges from this procedure without ever being asked
+for. The attention maps of the $\cls$ token attend to coherent object regions, and the
+patch tokens carry enough semantic structure that scene layout and object boundaries can
+be read off them directly, despite no segmentation label ever entering training.
+
+\textit{DINOv2}, presented by Oquab et al.\ in 2023 \cite{oquab2023dinov2}, scales this
+recipe into a general-purpose feature extractor. Rather than scale data
+indiscriminately, the authors assemble a large curated corpus, \textit{LVD-142M}, by
+retrieving images similar to a set of curated sources, and train larger Vision
+Transformers on it with a combined image-level and patch-level objective. They further
+observe that the patch features of a plain ViT are marred by a small number of
+high-norm outlier tokens, and remove them by appending a handful of dedicated register
+tokens to the sequence that absorb this global information and leave the patch
+features clean.\footnote{The original work calls these \emph{register tokens}; they
+carry no positional meaning and are discarded after the encoder.} The resulting
+features are strong enough to be used directly, without adaptation, reaching
+competitive accuracy under a linear probe or even a nearest-neighbour classifier, and
+they remain the visual backbone against which our cross-view experiments are measured.
+The most recent iteration, \textit{DINOv3} \cite{dinov3}, extends this line further
+still and confirms its trajectory.
+
+These representations are useful because they support comparison. The final $\cls$ state
+provides a global descriptor $\feat$ of an image, and once two such descriptors are
+$L_2$-normalised their dot product $\cossim{\feat_a}{\feat_b}$ is exactly their cosine
+similarity, a bounded score of semantic agreement that underlies retrieval and
+re-ranking. The same comparison applies at the patch level, where matching patch
+descriptors across two images yields correspondences between their regions, a property
+we return to in \cref{sec:correspondence-segmentation}.
+
+For completeness we note one further pretext task that reappears downstream. The
+\textit{Masked Autoencoder (MAE)} of He et al.\ in 2022 \cite{he2022mae} masks a large
+fraction of an image's patches, around three quarters, and trains a Vision Transformer
+encoder together with a lightweight decoder to reconstruct the missing pixels from the
+visible ones. The high masking ratio makes reconstruction non-trivial and forces the
+encoder to model the structure of the scene rather than interpolate texture. We do not
+develop MAE further here, but flag it now because the image encoder of the Segment
+Anything Model, central to \cref{sec:correspondence-segmentation}, is a
+Vision Transformer pre-trained in exactly this fashion.
+
+The representations defined in this section are what the rest of the pipeline composes.
+DINOv2 supplies the latent space in which O-MaMa selects candidate masks across views,
+and its patch features give label-free semantic correspondence between viewpoints, a
+mechanism we develop in \cref{sec:correspondence-segmentation}. The cosine retrieval
+scheme on $\cls$ descriptors underpins a frame-diversity selection strategy that we
+retain as the \texttt{MaxInfo} ablation baseline in our experiments. The same Vision
+Transformer encoder reappears throughout what follows, as the image branch of the
+language-grounded models in \cref{sec:language-grounding}, within the multimodal
+backbone of \cref{sec:foundation-models-agents}, and in the video segmenters of
+\cref{sec:addition-of-time}.

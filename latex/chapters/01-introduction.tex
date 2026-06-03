@@ -49,7 +49,8 @@ select the most informative anchor frames. Second, a SAM~3 agentic loop localise
 object in each anchor frame using the same description as the grounding signal. Finally, SAM~2's
 video tracker completes the mask track across all remaining destination frames by propagating predictions conditioned on a memory bank of anchor and recently processed frames. }
 
-Curucially, no component of the pipeline is fine-tuned for the task. The bridge between views is a human-readable JSON description, and any erroneous prediction can be localised to the specific block whose output is at fault. 
+Crucially, no component of the pipeline is fine-tuned for the task. Because it inherits no dependence on the distribution of any cross-view dataset, the pipeline is in principle both camera and dataset agnostic, meaning that it can be applied to novel camera configurations and scenarios without retraining, directly addressing the first limitation of existing solutions. 
+The bridge between views is a human-readable JSON description, and any erroneous prediction can be localised to the specific block whose output is at fault.
 
 \begin{figure*}
   \centering

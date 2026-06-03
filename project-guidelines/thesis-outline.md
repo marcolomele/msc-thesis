@@ -4,18 +4,18 @@ The thesis formally presents the work I completed as an empirical research assis
 First, we will introduce the problem we are trying to solve, highlighting the gap in the field, anticipating our pipeline, and listing our contributions. Because our method leverages the inference capabilities of several state of the art models, we will follow the intruduciton with a theoretical chapter. The aim is to build a mechanistic understanding of the architectures used later in the pipeline. Next, we will move on the actual work done in the last months. First, we define formally the problem and present related works, again underlining the gap in the field in more detail. Second, we will discuss our pipeline, validating choices with empirical analyses, experiments, results, and ablations. Finally, we will wrap up the findings with a conclusion, connecting again to the problem statement, highlighting limitations, and suggesting future research directions.
 
 ## Table of contents 
-1.	Introduction (3-5 pages)
+1.	Introduction (3 pages)
 a.	Problem motivation: object correspondence, motivation.
 b.	Research gap: no inference only, no exploration of language. 
 c.	Research contribution: a fully training-free (camera- and dataset-agnostic) "language as a bridge" pipeline for cross-view object mask transfer on video; two interchangeable anchor-frame selection signals — language-grounded (Grounding DINO) and geometry-based (RoMa); a detailed ablation and interpretability analysis of a stack of foundation models in a setting none were designed for. Results reach within a few points of the 2025 challenge winner (O-MaMa) and surpass the official baselines and ObjectRelator.
 d.	Chapter roadmap.
  
-2.	Theory (~20 pages)
-a.	Visual Representation: Transformer, Vision Transformer, Self-supervised learning with DINOv2.
-b.	Correspondence & Segmentation: feature matching (handcrafted descriptors → detector-free dense matching with RoMa, used for geometry-based anchor selection); previous segmentation approaches, SAM & SAM2.
-c.	Language-grounding: multimodality, Grounding DINO, SAM 3 Promptable Concept Segmentation (PCS) and its agentic interface, PixelRefer.
-d.	Foundation Models & Agents: Qwen Family, ReAct, tool use.
-e.	Addition of time: Video Object Segmentation and Propagation.
+2.	Theory (~15 pages)
+a.	Visual Representation (~4 pages): Transformer, Vision Transformer, Self-supervised learning with DINOv2.
+b.	Correspondence & Segmentation (~2 pages): feature matching (handcrafted descriptors → detector-free dense matching with RoMa, used for geometry-based anchor selection); previous segmentation approaches, SAM & SAM2.
+c.	Language-grounding (~4 pages): multimodality, Grounding DINO, SAM 3 Promptable Concept Segmentation (PCS) and its agentic interface, PixelRefer.
+d.	Foundation Models & Agents (~2 pages): Qwen Family, ReAct, tool use.
+e.	Addition of time (~2 pages): Video Object Segmentation and Propagation.
 
 3.	Related works (~5 pages) — mirrors the paper's four-paragraph structure
 a.	Ego and ego-exo datasets (EPIC-Kitchens, Ego4D, Ego-Exo4D and its Correspondences benchmark).

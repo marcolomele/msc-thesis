@@ -138,7 +138,7 @@ Track the current state of each chapter here. Update after each commit.
 | Chapter | Directive | LaTeX | Compiled |
 |---|---|---|---|
 | 01 Introduction | ☐ | ☐ | ☐ |
-| 02a Visual Representation | ☐ | ☐ | ☐ |
+| 02a Visual Representation | ☑ | ☑ | ☐ |
 | 02b Segmentation | ☐ | ☐ | ☐ |
 | 02c Language Grounding | ☐ | ☐ | ☐ |
 | 02d Foundation Models & Agents | ☐ | ☐ | ☐ |
