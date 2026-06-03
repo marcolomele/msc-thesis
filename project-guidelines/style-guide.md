@@ -28,6 +28,12 @@
 
 **Paragraph assembly — the generative sequence.** Every paragraph follows a four-step logic, in order: (1) open with a claim, named concept, or concrete observation the paragraph will develop — this sentence is never a citation, never a question, and never "We can see that..." — it stakes a position; (2) develop through 2–4 sentences that move by logical connectors ("because," "although," "while," "but," "yet," "However," "Moreover," "Crucially") rather than by em dashes or colons — each sentence advances, none merely restates; (3) ground the claim with an example, a cited result, an equation reference, or an analogy; (4) close with interpretation, implication, or a forward pivot toward the next idea.
 
+**Paragraph splitting at argumentative breaks.** When a paragraph contains two distinct argumentative moves — for example, describing what a class of models does and then stating the author's motivated response to it — split into two paragraphs. The hypothesis, claim, or response that follows a conceptual description always starts a new paragraph rather than being appended to the descriptive one.
+
+**Semicolons over colons for consequence clauses.** When a sentence ends with a claim and the next clause is a direct consequence or elaborating example rather than a formal enumeration, use a semicolon: "the cost of failure is not merely technical; a robot that cannot identify..." A colon implies a list follows; a semicolon implies a closely related elaboration. The distinction matters — do not use a colon where a semicolon is correct.
+
+**"but instead" as a reframing connector within a sentence.** When the second clause of a sentence names the actual thing that replaces what the first clause just negated ("not X; their Y is the objective"), prefer ", but instead" over a semicolon to signal the reframe: "not optimised for any single downstream objective, but instead their generality is the objective." Reserve semicolons for additive elaboration; use "but instead" when the second clause is the corrective.
+
 **Inter-paragraph logic.** Paragraphs chain by tension, not by sequence. The connector between paragraphs names the complication the previous paragraph left open and launches the response: "However," "To address this," "To this end," "In contrast," "Nevertheless." Pure additive chaining — "Moreover" paragraph after "Moreover" paragraph — signals a list rather than an argument and should be avoided. Aim for a consistent and engaging narrative flow.
 
 **"However," is the primary contrast pivot.** Used consistently at the start of sentences to mark a limitation, contrast, or complication. "Moreover," is the additive counterpart. "In contrast," is used for direct side-by-side comparisons (especially in Results). Consider also using "conversely" and "oppositely" when "however" becomes repetitive. Use "Nonetheless" when a weakness, drawback, or negative point is counter-balanced, softened, or reduced by another point.
@@ -104,6 +110,10 @@
 
 **Citation management in Latex** All citations are stored inside `references.bib`; the \cite{} command is called for all citations to track numbering and allow cross-referencing during the text. Following highest standards of academic writing.
 
+**Year integration for publication verbs.** When a citation is introduced via a verb that describes the act of publishing or assembling ("published by," "introduced by," "assembled by," "proposed by"), the year is integrated as "in [year]" rather than appearing parenthetically: "published by Grauman et al. in 2024 \cite{...}" not "Grauman et al. (2024) \cite{...}". When the author name appears in a more neutral role ("Grauman et al. (2024) show that..."), the parenthetical form is retained.
+
+**"By the time of writing" for SOTA citations.** When citing the current state-of-the-art result in a fast-moving field, prefix the sentence with "By the time of writing," to acknowledge temporal uncertainty: "By the time of writing, Hu et al. (2025) achieve the strongest published results..." This hedge is used once per SOTA claim, not on every citation.
+
 ---
 
 ### Prohibited Constructions
@@ -135,6 +145,19 @@
 - Stacked citations without surrounding text — no `\cite{A}\cite{B}\cite{C}`.
 - Mid-sentence em dash "—" to insert a parenthetical, contrast, or elaboration — rewrite as a subordinate clause or a new sentence.
 - Mid-sentence colon ":" to introduce an elaboration or example — rewrite with "namely," "that is," or a relative clause. A colon is only acceptable after a grammatically complete sentence that formally opens an enumeration.
+- **Hyphenated compound adjectives** — never use. Decompose into prose equivalents: "multi-view" → "multiple view"; "safety-critical" → "where safety is critical"; "training-free" → "without training" or "free of any training"; "task-specific" → "specific to the task"; "fine-tuned" → restructure the sentence; "long-term" → restructure. This applies to all compound adjectives that are conventionally hyphenated in ML writing — the rule is unconditional.
+
+**Typographic emphasis:**
+- `\textbf{}` (bold) is never used in body text — not for key concepts, not for emphasis, not for first use of a term. Bold is prohibited entirely in prose.
+- `\textit{}` (italics) is used exclusively for: (a) proper names of datasets and systems at first introduction (*Ego-Exo4D*, *egocentric*, *exocentric*); (b) direction labels (*Ego2Exo*, *Exo2Ego*). It is never used to emphasise an abstract concept or claim.
+
+---
+
+## Figure Placement
+
+**Figures appear after the paragraph that most directly describes their content.** A figure illustrating the task challenge follows the paragraph that defines and explains that challenge — not the opening paragraph of the section, and not before the reader has the conceptual context to interpret it. A figure illustrating the pipeline follows the paragraph about limitations that motivate the pipeline, immediately before the paragraph that describes the pipeline itself. The rule is: first prose, then figure, then the prose that uses the figure as evidence.
+
+**Dataset framing before task framing.** When introducing a benchmark or dataset, frame it as enabling a class of tasks before narrowing to the specific task addressed: "The dataset enables many novel computer vision tasks, including cross-view object correspondence: given..." This avoids making the paper's own contribution the grammatical subject at the moment of introducing the resource.
 
 ---
 
