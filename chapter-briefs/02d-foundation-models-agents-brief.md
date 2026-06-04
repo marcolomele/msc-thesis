@@ -1,4 +1,4 @@
-# Chapter Brief: 2d — Foundation Models & Agents
+# Chapter Brief: 2d — LLM Agents
 
 ---
 
@@ -11,12 +11,12 @@ You are helping me draft Subchapter 2d of my master's thesis. The project
 knowledge files contain my style guide, scope, writing samples, and thesis
 outline. Read them before drafting.
 
-**Chapter**: 2d — Foundation Models & Agents
+**Chapter**: 2d — LLM Agents
 **Target length**: ~2 pages
 **Arc**: C — Our-use first (frame around how the pipeline uses Qwen as a ReAct agent, then ground the mechanisms)
-**Deep treatment**: ReAct interleaved Thought→Action→Observation loop; tool-use / function-calling as a typed JSON action space; multi-turn agent design with history pruning (the pipeline's exact loop)
-**Surface only**: Qwen2 architecture (GQA/RoPE/RMSNorm/SwiGLU, one para); Qwen2-VL dynamic resolution (one para); scaling laws + RLHF/DPO (one para — why instruction tuning gives reliable JSON)
-**Skip**: LLM pretraining mechanics beyond naming next-token + cross-entropy; Toolformer self-supervision detail (contrast in one line vs the supervised schema used here)
+**Deep treatment**: definition of Large Languag Model, definition of Agent, ReAct interleaved Thought→Action→Observation loop; tool-use / function-calling as a typed JSON action space; multi-turn agent design with history pruning (the pipeline's exact loop). Important note here is that model used in final version of pipeline is Qwen 3.5 35B.
+**Surface only**: Qwen3.5 architecture (GQA/RoPE/RMSNorm/SwiGLU, one para); scaling laws + RLHF/DPO (one para — why instruction tuning gives reliable JSON)
+**Skip**: LLM pretraining mechanics beyond naming next-token + cross-entropy; Toolformer self-supervision detail (contrast in one line vs the supervised schema used here), previous versions of Qwen
 **Connect back to**: 2a.1 (attention — causal mask, KV-cache), 2c.3 (SAM3 agentic interface — the planner this chapter formalises)
 **Connect forward to**: 4 (Block 3 implements this ReAct loop: segment_phrase → SAM3 masks → examine_each_mask verification, ≤15 generations with pruning + duplicate rejection)
 
