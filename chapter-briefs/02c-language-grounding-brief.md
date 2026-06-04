@@ -14,7 +14,7 @@ outline. Read them before drafting.
 **Chapter**: 2c — Language-grounding
 **Target length**: ~4 pages
 **Arc**: B — Concept first (multimodal alignment → open-set detection → promptable concept segmentation → mask-conditioned description)
-**Deep treatment**: CLIP dual-encoder + InfoNCE; GroundingDINO cross-modal feature enhancer + language-guided query selection; SAM3 PCS task + agentic interface (planner LLM iteratively invoking SAM3)
+**Deep treatment**: CLIP dual-encoder + InfoNCE; GroundingDINO cross-modal feature enhancer + language-guided query selection; SAM3 PCS task + architecture innovations + agentic interface (planner LLM iteratively invoking SAM3)
 **Surface only**: LLaVA visual instruction tuning (one para); Flamingo (optional, one line); PixelRefer architecture + MiniLM re-ranking (condense — it is a pipeline component, not a backbone)
 **Skip**: DETR full Hungarian-matching derivation (name it, cite, move on); referring-expression-comprehension literature beyond the REG/REC distinction
 **Connect back to**: 2a.1 (attention — cross-modal attention), 2a.2 (ViT — CLIP/GDINO image encoders), 2b.2 (SAM — SAM3 extends it), 2b.3 (SAM2 — SAM3 tracker inherits it)
