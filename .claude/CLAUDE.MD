@@ -133,11 +133,12 @@ These are non-negotiable — they apply to every chapter file.
 
 ## What Claude Code Should Never Do
 
-- Always follow `project-guidelines/style-guide.md` for voice, tone, and citation conventions — do not deviate from the established prose style
+- Never deviate from the established prose style; always follow `project-guidelines/style-guide.md` for voice, tone, and citation conventions.
 - Never invent bibtex keys — use only keys from `thesis-theory-topics.md`
 - Never edit files in `/project-guidelines/` without explicit instruction — these are reference documents
 - Never commit directly to main without flagging if changes touch `main.tex` structure
 - Never resolve a missing figure by removing the reference — flag it instead
+- Never try to compile locally the .tex files; it's not the purpose of this project directory. 
 
 ---
 
@@ -149,10 +150,10 @@ Track the current state of each chapter here. Update after each commit.
 |---|---|---|---|
 | 01 Introduction | ☐ | ☐ | ☐ |
 | 02a Visual Representation | ☑ | ☑ | ☐ |
-| 02b Segmentation | ☐ | ☐ | ☐ |
-| 02c Language Grounding | ☐ | ☐ | ☐ |
-| 02d Foundation Models & Agents | ☐ | ☐ | ☐ |
-| 02e Addition of Time | ☐ | ☐ | ☐ |
+| 02b Segmentation | ☑ | ☑ | ☐ |
+| 02c Language Grounding | ☑ | ☑ | ☐ |
+| 02d Foundation Models & Agents | ☑ | ☑ | ☐ |
+| 02e Addition of Time | ☑ | ☑ | ☐ |
 | 03 Related Works | ☐ | ☐ | ☐ |
 | 04 Pipeline | ☐ | ☐ | ☐ |
 | 05 Experiments | ☐ | ☐ | ☐ |

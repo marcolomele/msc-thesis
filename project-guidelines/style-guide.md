@@ -141,7 +141,7 @@
 - "Very [adjective]" / "extremely [adjective]" — use precise quantifiers or "significantly."
 
 **Voice and register:**
-- Passive voice as the default for describing what the researchers do ("it was found that" instead of "we found"). Passive is reserved for cases where the agent is genuinely irrelevant, or when describing what was done in prior work.
+- Passive voice as the default for describing what the researchers do — "it was found that" is prohibited; use "we found." Passive is reserved for cases where the agent is genuinely irrelevant, or when describing what was done in prior work.
 - "I" in written work — strictly "we" throughout.
 - Exclamation marks in written work.
 - Scare quotes on established terms — quotation marks reserved for coined phenomena at first introduction.
@@ -154,7 +154,7 @@
 - **Hyphenated compound adjectives** — never use. Decompose into prose equivalents: "multi-view" → "multiple view"; "safety-critical" → "where safety is critical"; "training-free" → "without training" or "free of any training"; "task-specific" → "specific to the task"; "fine-tuned" → restructure the sentence; "long-term" → restructure. This applies to all compound adjectives that are conventionally hyphenated in ML writing — the rule is unconditional.
 
 **Typographic emphasis:**
-- `\textbf{}` (bold) is never used in body text — not for key concepts, not for emphasis, not for first use of a term. Bold is prohibited entirely in prose.
+- `\textbf{}` (bold) is never used in body text — not for key concepts, not for emphasis, not for first use of a term. Bold is prohibited entirely in prose outside of Abstract and Introduction, where it is used for key terms at first mention (see those section rules).
 - `\textit{}` (italics) is used exclusively for: (a) proper names of datasets and systems at first introduction (*Ego-Exo4D*, *egocentric*, *exocentric*); (b) direction labels (*Ego2Exo*, *Exo2Ego*); (c) the single defining instance of a core technical term being introduced (*embedding*, *Transformer*), after which the term appears bare. It is never used to emphasise an abstract concept or claim.
 
 ---

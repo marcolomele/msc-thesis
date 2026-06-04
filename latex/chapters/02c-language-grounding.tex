@@ -1,3 +1,213 @@
 \section{Language Grounding}
 \label{sec:language-grounding}
-% Draft pending.
+
+The models of \cref{sec:correspondence-segmentation} segment what a user points at, yet
+our pipeline must segment what a user names. A point or a box specifies a location; a
+noun phrase specifies a concept, and turning the words ``the blue ceramic mug'' into the
+pixels that depict it is the problem of grounding language in vision. This section builds
+that capability in the order the pipeline assembles it. We begin with the alignment of
+images and text in a shared space, narrow from whole-image alignment to detection that
+localises a phrase to a region, extend localisation into the segmentation and tracking of
+every instance of a concept, and close with the inverse operation that turns a mask back
+into the discriminative phrase that names it. Throughout, we reserve the symbol $t$ for a
+text prompt and write $g_\text{txt}$ and $g_\text{img}$ for the text and image encoders
+that map either modality into a common vector space.
+
+\subsection{Aligning Vision and Language}
+\label{subsec:multimodality}
+
+Grounding rests on a shared representation in which an image and a sentence describing it
+land close together. \textit{CLIP}, introduced by Radford et al.\ in 2021
+\cite{radford2021clip}, learns exactly this from raw supervision that requires no manual
+labelling, namely the four hundred million image and caption pairs already paired on the
+web. It couples two encoders, an image encoder $g_\text{img}$ that is the Vision
+Transformer of \cref{subsec:vit} and a text encoder $g_\text{txt}$ that is a Transformer
+of the kind in \cref{subsec:transformer}, each producing a single descriptor that is then
+$L_2$-normalised so that dot products become the cosine similarities of \cref{subsec:dino}.
+The two encoders are trained jointly to agree on matching pairs and disagree on the rest.
+
+Given a batch of $N$ pairs, the model scores every image against every caption and is
+asked to recover which caption belongs to which image. Writing $\cossim{\cdot}{\cdot}$ for
+the cosine similarity of two normalised descriptors, the symmetric contrastive objective is
+
+\begin{equation}
+  \loss
+  = -\frac{1}{2N}\sum_{i=1}^{N}
+    \left[
+      \log\frac{\exp\!\big(\cossim{g_\text{img}(\img_i)}{g_\text{txt}(t_i)}/\kappa\big)}
+               {\sum_{j=1}^{N}\exp\!\big(\cossim{g_\text{img}(\img_i)}{g_\text{txt}(t_j)}/\kappa\big)}
+      +
+      \log\frac{\exp\!\big(\cossim{g_\text{img}(\img_i)}{g_\text{txt}(t_i)}/\kappa\big)}
+               {\sum_{j=1}^{N}\exp\!\big(\cossim{g_\text{img}(\img_j)}{g_\text{txt}(t_i)}/\kappa\big)}
+    \right].
+  \label{eq:clip-infonce}
+\end{equation}
+
+Here, $\img_i$ is the $i$-th image and $t_i$ its true caption, so the diagonal pairs
+$(\img_i,t_i)$ are the positives and every off-diagonal pairing is a negative. The first
+logarithm reads each row of the similarity matrix as a distribution over captions and
+rewards placing the mass on the correct one; the second reads each column as a
+distribution over images and does the same in the other direction, which is why the loss
+is averaged over both.\footnote{The original work calls the temperature $\tau$; we write
+$\kappa$ throughout to keep $\tau$ for the video frame index introduced in
+\cref{subsec:sam}.} The temperature $\kappa$ scales the similarities before the softmax,
+controlling how sharply the model separates the positive from its negatives. This is the
+\textit{InfoNCE} loss, and minimising it pulls each image toward its caption and pushes it
+away from the $N-1$ others in the batch, so that after training a single image embedding
+can be compared against the embedding of any phrase. Classification then needs no
+task-specific head, because an unseen category is recognised by embedding its name as text
+and taking the nearest caption, which is the property that makes the alignment open
+vocabulary.
+
+CLIP aligns whole images with whole sentences, and this is precisely its limit for
+grounding. A high similarity tells us that a mug appears somewhere in the frame but not
+where, because the descriptor has discarded spatial structure in the course of summarising
+the image. Two lines of work extend the alignment toward the pixels. Visual instruction
+tuning, introduced as \textit{LLaVA} by Liu et al.\ in 2023 \cite{liu2023llava}, keeps a
+frozen CLIP image encoder and trains only a lightweight projection that feeds visual
+tokens into a large language model, so that an image becomes an input any instruction
+follower can reason over in natural language, a design we return to in
+\cref{sec:foundation-models-agents}. Earlier, Flamingo had shown that interleaving image
+and text tokens lets a single model condition on several images at once
+\cite{Alayrac2022}. Both make the language richer; neither recovers the location a mask
+requires, which is the gap the next model closes.
+
+\subsection{Open-Vocabulary Detection with Grounding DINO}
+\label{subsec:groundingdino}
+
+Localising a phrase to a region is the task of detection, reframed so that the set of
+recognisable objects is not fixed in advance. Classical detectors predict from a closed
+list of categories baked into a classification head. The \textit{DETR} family removed much
+of the surrounding machinery, with Carion et al.\ in 2020 \cite{carion2020detr} casting
+detection as the direct prediction of a set of boxes by a Transformer with learnable
+object queries, matched to ground truth by a bipartite assignment we do not derive here,
+and the DINO detector of Zhang et al.\ \cite{zhang2023dinodet} sharpening its training and
+convergence. The closed head, however, still ties each query to a fixed vocabulary, so the
+detector cannot name an object it was never trained on.
+
+\textit{Grounding DINO}, presented by Liu et al.\ in 2024 \cite{liu2024groundingdino},
+breaks this constraint by fusing a detector with the language alignment of
+\cref{subsec:multimodality}. It pairs an image backbone with a text backbone and lets the
+two modalities read each other before any box is proposed. Writing $\mm{X}_\text{img}$ for
+the image tokens and $\mm{X}_\text{txt}$ for the tokens of the prompt, a cross-modal
+feature enhancer applies the cross-attention of \cref{subsec:transformer} in both
+directions,
+
+\begin{equation}
+  \tilde{\mm{X}}_\text{img} = \mm{X}_\text{img} + \attn(\mm{X}_\text{img}, \mm{X}_\text{txt}, \mm{X}_\text{txt}),
+  \qquad
+  \tilde{\mm{X}}_\text{txt} = \mm{X}_\text{txt} + \attn(\mm{X}_\text{txt}, \mm{X}_\text{img}, \mm{X}_\text{img}),
+  \label{eq:gdino-enhancer}
+\end{equation}
+
+so that each image token is rewritten with the words it is most compatible with and each
+word with the image regions it most refers to. In \cref{eq:gdino-enhancer} the image
+tokens act as the queries of \cref{eq:attention} while the text tokens supply the keys and
+values, and the residual additions preserve the original features alongside their
+cross-modal refinements. From the enhanced image tokens the model selects those most
+similar to the prompt to initialise its object queries, a step that focuses detection on
+language rather than on a fixed category set, and a cross-modal decoder then emits for each
+query a box together with its alignment to the phrase. Because the score a region receives
+is its similarity to arbitrary text rather than the activation of a class neuron, the same
+detector localises any noun phrase, which is what makes it open vocabulary. The pipeline
+exploits this directly. Running Grounding DINO with a deliberately permissive confidence
+threshold turns its per-region alignment into a signal for ranking candidate destination
+frames by how strongly the named object is present, a use of detection as a frame score
+rather than as a final answer that we develop in \cref{sec:experiments}.
+
+\subsection{Promptable Concept Segmentation with SAM 3}
+\label{subsec:sam3}
+
+A box around a phrase is still coarser than the mask our pipeline carries, and Grounding
+DINO localises one region at a time rather than every instance of a concept at once.
+\textit{SAM 3}, presented by Ravi et al.\ in 2025 \cite{ravi2025sam3}, closes both gaps by
+defining \textit{promptable concept segmentation}, the task of detecting, segmenting, and
+tracking all instances of a concept named by a noun phrase, image exemplars, or both. It
+extends the promptable design of \cref{eq:sam-decoder} by admitting a text prompt where
+SAM accepted only a point or a box. Encoding the phrase with a text encoder $g_\text{txt}$
+in the manner of \cref{subsec:multimodality}, the model returns not a single mask but the
+set of masks that realise the concept,
+
+\begin{equation}
+  \{\mask_1, \dots, \mask_k\} = \text{SAM\,3}\big(\img,\, g_\text{txt}(t)\big),
+  \label{eq:sam3-pcs}
+\end{equation}
+
+where $\img$ is the image, $t$ the noun phrase, and each $\mask_j$ delineates one instance
+matching $t$. The shift from \cref{eq:sam-decoder} is that the prompt is now semantic, so
+the number $k$ of returned masks is itself an output rather than a fixed choice among the
+three candidates SAM produced for an ambiguous click. To segment a concept reliably the
+model must both decide which regions belong to it and separate one instance from the next,
+and SAM 3 couples a detector to a segmenter so that recognition and delineation are learned
+together. Its video module reuses the streaming memory of SAM 2 from \cref{subsec:sam},
+propagating each discovered mask across frames through the same memory attention, a reuse
+that lets the concept be tracked once it is named and that we expand in
+\cref{sec:addition-of-time}.
+
+A noun phrase, however expressive, struggles with the relational descriptions that
+cluttered scenes demand. Asking for ``the mug left of the laptop'' or ``the bottle nearest
+the hand'' presses against what a short phrase can encode, because the target is defined by
+its relation to other objects rather than by its own appearance. To reach these cases SAM 3
+exposes an agentic interface in which a multimodal language model acts as a planner that
+treats segmentation as a tool. The planner proposes a simple phrase, invokes
+\cref{eq:sam3-pcs} to obtain candidate masks, inspects the result against the original
+request, and refines its query, repeating until the masks satisfy the description. This
+loop decomposes a relational expression into discriminative sub-queries that the segmenter
+can handle one at a time, and it is the exact mechanism on which Block 3 of our pipeline is
+built, with the planner role filled by the multimodal model of
+\cref{sec:foundation-models-agents}. The interface also explains why short, discriminative
+phrases matter more than verbose ones. A canonical phrase such as ``blue ceramic mug''
+grounds more accurately than a long sentence, which is why the planner's task is to distil
+a rich description into a compact prompt rather than to elaborate it, a finding that
+directly shapes the prompt design we adopt in our pipeline.
+
+\subsection{Mask-Conditioned Description}
+\label{subsec:pixelrefer}
+
+Segmentation turns a phrase into a mask; the agentic loop above also needs the inverse,
+turning a mask back into a phrase so the planner can judge whether the right object was
+found. This is the distinction between referring expression comprehension, which locates
+the region a phrase denotes, and referring expression generation, which is given a region
+and must produce an expression that identifies it uniquely. Generation is the harder of the
+two, because a useful expression must be discriminative rather than merely accurate; naming
+a region ``a mug'' is correct yet useless when three mugs share the scene.
+
+\textit{PixelRefer}, introduced by Yuan et al.\ in 2025
+\cite{yuan2025pixelreferunifiedframeworkspatiotemporal}, performs this generation by
+conditioning a multimodal model on the pixels of a mask. It builds on a Qwen2-VL backbone,
+the vision and language model of \cref{sec:foundation-models-agents}, and injects the
+binary mask alongside the image so that the model attends to the indicated region while
+describing it, producing text grounded in the specific instance rather than the scene as a
+whole. In the pipeline it provides an alternative source of the object description that
+seeds the search for correspondences, a role we compare against the multimodal model in
+\cref{sec:experiments}.
+
+The descriptions PixelRefer generates are useful only if they can be compared, and the
+agentic loop produces far more candidate masks than the expensive multimodal verifier can
+afford to inspect. A cheap semantic filter solves this. \textit{Sentence-BERT}, proposed by
+Reimers and Gurevych in 2019 \cite{reimers2019sentencebert}, adapts a BERT encoder so that
+a whole sentence collapses into a single vector by mean-pooling its token embeddings,
+trained so that cosine similarity in this space tracks semantic agreement. Encoding both
+the source description and each candidate description with such an encoder $g_\text{sbert}$,
+the pipeline keeps the candidate whose meaning is closest to the source,
+
+\begin{equation}
+  \hat{\jmath} = \arg\max_{j}\, \cossim{g_\text{sbert}(t_\text{src})}{g_\text{sbert}(t_j)},
+  \label{eq:rerank}
+\end{equation}
+
+where $t_\text{src}$ is the description of the object being searched for, each $t_j$ is the
+description of a candidate mask, and $\cossim{\cdot}{\cdot}$ is again the cosine similarity
+of \cref{subsec:dino}. The compact encoder we use is distilled by the attention-transfer of
+\textit{MiniLM} \cite{wang2020minilm}, which compresses a large Transformer into a model
+small enough to score many candidates at negligible cost while retaining most of its
+similarity signal. \Cref{eq:rerank} therefore acts as a pre-filter, discarding
+implausible masks by language alone before the multimodal model is asked to verify the few
+that survive, an ordering that keeps the agentic loop of \cref{subsec:sam3} affordable.
+
+Taken together, the four capabilities of this section form one path from words to pixels
+and back. Alignment makes images and phrases comparable, detection localises a phrase to a
+region, concept segmentation expands that region into the masks of every matching instance
+and tracks them through time, and mask-conditioned description closes the loop by naming
+what was found. The agent that orchestrates this path, and the foundation model that fills
+the planner's role, are the subject of \cref{sec:foundation-models-agents}.

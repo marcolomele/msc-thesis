@@ -1,4 +1,4 @@
-# Chapter Brief: 2e — Addition of Time
+# Chapter Brief: 2e — Video Propagation
 
 ---
 
@@ -11,7 +11,7 @@ You are helping me draft Subchapter 2e of my master's thesis. The project
 knowledge files contain my style guide, scope, writing samples, and thesis
 outline. Read them before drafting.
 
-**Chapter**: 2e — Addition of Time
+**Chapter**: 2e — Video Propagation
 **Target length**: ~2 pages
 **Arc**: A — Problem first (temporal completeness: a single-frame mask must become a full-video masklet)
 **Deep treatment**: SAM2 memory attention (cross-attending stored (frame,mask) pairs) expanded from 2b.3; bi-directional propagation (forward from earliest seed, backward from latest, nearest-seed selection); mask union at shared frames
@@ -30,6 +30,8 @@ STM/XMem memory read/write operators; SAM2 occlusion-head output; `max_cond_fram
 `cheng2022xmem`, `ravi2024sam2`. Pipeline link: bi-directional propagation strategy,
 multi-seed conditioning (cap 4), mask union (pixel-wise OR), temporal-consistency vs
 per-frame-accuracy trade-off (drift over long occlusions).
+
+Note that the final title chosen for this section is different from the file titles and headings you find in this project. This is a deliberate choise done after drafting the section brief and thesis theory topics list. 
 
 Draft the full chapter now. Write in my voice as documented in the style guide.
 Use LaTeX formatting throughout. After the draft, flag any decisions you made.

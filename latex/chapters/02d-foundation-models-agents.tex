@@ -1,3 +1,134 @@
 \section{Foundation Models and Agents}
 \label{sec:foundation-models-agents}
-% Draft pending.
+
+The models of \cref{sec:language-grounding} turn a phrase into masks and a mask back
+into a phrase, yet neither decides which phrase to ask for nor judges whether the
+returned masks are the ones we wanted. Block~3 of our pipeline delegates exactly these
+decisions to a foundation model that does not run as a single forward pass but as an
+\textit{agent}, a system that reasons about a goal, calls the segmenter of
+\cref{subsec:sam3} as a tool, inspects the masks it gets back, and refines its request
+until the right object is found. This is the planner role that the agentic interface of
+\cref{subsec:sam3} leaves open, and our pipeline fills it with Qwen3.5-35B. To make the
+loop precise we first ground what such a model is and what makes its structured outputs
+reliable, then formalise the reasoning loop it executes.
+
+\subsection{Large Language Models}
+\label{subsec:llm}
+
+A large language model is, at its core, a probability distribution over sequences of
+tokens. Given a vocabulary $\set{V}$ and a sequence $x_{1:n}$ drawn from it, the model
+factorises the joint probability of the sequence into a product of next-token
+conditionals and is trained to maximise the likelihood of observed text, equivalently to
+minimise the cross-entropy of each token against the model's prediction of it,
+
+\begin{equation}
+  p_\theta(x_{1:n}) = \prod_{i=1}^{n} p_\theta(x_i \mid x_{<i}),
+  \qquad
+  \loss = -\sum_{i=1}^{n} \log p_\theta(x_i \mid x_{<i}).
+  \label{eq:autoregressive-lm}
+\end{equation}
+
+Here, $x_i$ is the $i$-th token, $x_{<i}$ the tokens that precede it, and
+$p_\theta(x_i \mid x_{<i})$ the model's distribution over the next token given that
+prefix. Each conditional is produced by the Transformer of \cref{subsec:transformer},
+with one modification that enforces the left-to-right factorisation of
+\cref{eq:autoregressive-lm}, namely a causal mask applied inside \cref{eq:attention} that
+sets to zero every attention weight from a token to its successors, so that position $i$
+attends only to $x_{<i}$ and the prediction of $x_i$ cannot see the answer. Because the
+keys and values of \cref{eq:attention} for the prefix do not change as generation
+proceeds, they are computed once and stored in a key-value cache, which turns generation
+of each new token from a recomputation over the whole prefix into a single step against
+the cache. This caching is what makes the long contexts our agent needs affordable, since
+the loop below accumulates an entire history of reasoning and tool results inside the
+context window across many turns.
+
+Trained on next-token likelihood alone, such a model continues text but does not reliably
+follow instructions, and scale is what first makes the behaviour worth steering. Kaplan
+et al.\ in 2020 \cite{Kaplan2020} and Hoffmann et al.\ in 2022 \cite{Hoffmann2022}
+established that loss falls as a power law in parameters, data, and compute, with the
+latter showing that compute is best spent by scaling data and parameters together, which
+is the reasoning that places a 35-billion-parameter model at a practical frontier for
+inference. Raw scale, however, only sharpens the prediction of plausible text; aligning
+that capability with instructions is a separate step. Instruction tuning continues
+training on pairs of an instruction and its response, converting the next-token predictor
+into one that answers a request, and preference alignment then tunes it against human or
+model judgements of which response is better, either through reinforcement learning from
+human feedback as in Ouyang et al.\ (2022) \cite{Ouyang2022} or through the direct
+preference optimisation of Rafailov et al.\ (2023) \cite{Rafailov2023}, which recovers the
+same objective without a separate reward model. For our purposes the consequence matters
+more than the mechanism. An aligned model emits structured outputs, in particular the JSON
+tool calls the agent depends on, far more reliably than a base model, because adherence to
+a requested format is precisely the kind of instruction these stages reward.
+
+Our pipeline uses Qwen3.5-35B \cite{qwen35blog} as this aligned model. The Qwen family,
+introduced by Bai et al.\ in 2023 \cite{BaiQwen2023}, follows the now standard recipe of
+decoder-only Transformers with grouped-query attention, which shares key and value
+projections across heads to shrink the cache described above, rotary position embeddings
+that encode position by rotating queries and keys rather than by adding a positional
+vector, RMSNorm in place of layer normalisation, and SwiGLU feed-forward blocks. Its
+multimodal extension, Qwen2-VL \cite{WangQwen2024}, attaches a Vision Transformer of the
+kind in \cref{subsec:vit} so that an image enters the same token stream as text, the
+property that lets the agent both read a frame and reason over it, and the property
+PixelRefer in \cref{subsec:pixelrefer} builds on. The version we deploy adds a
+configurable reasoning mode that emits an explicit chain of thought before its answer, a
+capability we exploit directly in the loop below.
+
+\subsection{Reasoning and Acting with Tools}
+\label{subsec:react}
+
+An aligned model can answer a question in one turn, but segmenting the right object takes
+several attempts that each depend on what the previous attempt returned. \textit{ReAct},
+proposed by Yao et al.\ in 2023 \cite{Yao2023ReAct}, structures these attempts by
+interleaving reasoning with action, extending the observation that eliciting an explicit
+chain of thought improves the correctness of a model's answers \cite{Wei2022CoT} from
+single answers to a loop that also acts on the world. At step $k$ the agent conditions on
+a history $h_k$ and produces a thought $r_k$ and an action $a_k$, the action is executed
+to yield an observation $o_k$, and the history is extended with the triple before the next
+step,
+
+\begin{equation}
+  (r_k, a_k) \sim p_\theta(\,\cdot \mid h_k), \qquad
+  o_k = \mathrm{exec}(a_k), \qquad
+  h_{k+1} = \mathrm{prune}\big(h_k \,\Vert\, (r_k, a_k, o_k)\big).
+  \label{eq:react-loop}
+\end{equation}
+
+Here, $h_k$ is the conversation history, beginning with a system prompt that states the
+task and the available tools and growing with every turn. The thought $r_k$ is a piece of
+natural-language reasoning the model writes for itself, sampled from the distribution
+$p_\theta$ of \cref{eq:autoregressive-lm}, and $a_k$ is the action it then commits to. The
+operator $\mathrm{exec}$ runs that action outside the model and returns the observation
+$o_k$, the symbol $\Vert$ appends the completed triple to the history, and $\mathrm{prune}$
+is the bookkeeping we describe shortly. Writing the thought before the action is the whole
+point of the loop, because a model that first reasons about which object to segment and why
+chooses better actions than one forced to emit a tool call directly, and the trace it
+leaves makes each decision legible to us when a run fails.
+
+The action $a_k$ is not free text but a call into a typed action space, defined by a JSON
+schema that names each tool and the type of every argument it accepts. Our agent is given
+two tools. The first, \texttt{segment\_phrase}, takes a noun phrase and invokes the
+promptable concept segmentation of \cref{eq:sam3-pcs} to return candidate masks; the
+second, \texttt{examine\_each\_mask}, asks the multimodal model to verify a candidate
+against the description of the object being searched for. The model selects a tool and
+fills its arguments, the runtime parses the JSON and executes the matching function, and
+the result returns as the observation $o_k$. A strongly typed schema is what keeps this
+reliable, because constraining the model to a fixed set of tools and argument types leaves
+far less room for the hallucinated calls a free-form interface invites, and it is here that
+instruction tuning pays off most directly. This supervised contract differs from the
+Toolformer paradigm of Schick et al.\ (2023) \cite{Schick2023}, in which a model
+discovers from self-supervision when and how to call APIs; our tools and their schema are
+fixed in advance, and the agent only decides how to use them.
+
+A loop that grows its history at every step would soon exceed even the long context of
+\cref{subsec:llm}, and left unchecked it also drifts into characteristic failures. The
+$\mathrm{prune}$ operator of \cref{eq:react-loop} addresses the first problem by keeping
+the system prompt and a few anchor turns alongside the most recent tool exchange while
+dropping the middle, which bounds the context without discarding the grounding the agent
+needs. The failures are of three kinds, namely repeating an action that already failed,
+hallucinating arguments outside the schema, and a form of reward hacking in which the agent
+settles for a trivially easy phrase rather than the object actually requested. Our loop
+guards against each, rejecting a phrase it has already tried, aborting after a run of
+consecutive rejections, and degrading gracefully to an empty mask rather than a wrong one,
+all within a budget of at most fifteen generations per frame. This is the loop that Block~3
+of our pipeline implements, and we trace its behaviour on real frames in
+\cref{sec:experiments}.
