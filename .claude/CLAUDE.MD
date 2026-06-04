@@ -62,6 +62,16 @@ Write prose directly into `/latex/chapters/[XX-chapter-name].tex`:
 6. Use `\begin{table}...\end{table}` blocks with `\toprule/\midrule/\bottomrule`
 7. Add `\input{chapters/XX-chapter-name}` to `main.tex` if not already present
 
+### Fixing grammatical errors
+When you encounter a clear grammatical error in prose you are reading or editing —
+a typo, subject-verb disagreement, a dropped or doubled word, a broken sentence
+left from a manual edit — fix it, and tell the user exactly what you changed.
+This applies even outside the section you were asked to work on. Keep the bar at
+unambiguous grammatical correctness: do not rewrite for style, tone, or word
+choice under this license, and do not alter technical meaning. When a fix is not
+purely grammatical (it changes meaning or could be a deliberate choice), flag it
+for review instead of editing.
+
 ### Managing references.bib
 When adding new citations:
 - Use the bibtex keys defined in `thesis-theory-topics.md` exactly — do not invent new keys
