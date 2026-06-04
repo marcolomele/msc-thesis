@@ -1,4 +1,4 @@
-# Chapter Brief: 2b — Correspondence & Segmentation
+# Chapter Brief: 2b — Segmentation & Correspondence
 
 ---
 
@@ -11,12 +11,12 @@ You are helping me draft Subchapter 2b of my master's thesis. The project
 knowledge files contain my style guide, scope, writing samples, and thesis
 outline. Read them before drafting.
 
-**Chapter**: 2b — Correspondence & Segmentation
+**Chapter**: 2b — Segmentation & Correspondence
 **Target length**: ~2 pages
 **Arc**: D — Survey condensing to the key model (matching lineage → RoMa; segmentation lineage → SAM → SAM2)
-**Deep treatment**: RoMa dense warp field $\warp$ with per-match confidence; SAM three-component design (ViT encoder / prompt encoder / two-way mask decoder + IoU head); SAM2 streaming memory + occlusion head
+**Deep treatment**: RoMa dense warp field $\warp$ with per-match confidence; SAM three-component design (ViT encoder / prompt encoder / two-way mask decoder + IoU head); SAM2 streaming memory + occlusion head.
 **Surface only**: handcrafted descriptors (SIFT/SURF/ORB, one para); SuperPoint+SuperGlue, LoFTR (one para each); FCN/U-Net/Mask R-CNN/DeepLab/RITM segmentation lineage (one para survey)
-**Skip**: SAM SA-1B data-engine internals; panoptic-segmentation formalism beyond naming
+**Skip**: SAM SA-1B data-engine internals; panoptic-segmentation formalism beyond naming, SAM 3 data pipeline.
 **Connect back to**: 2a.1 (Transformer/attention — SAM decoder and matchers reuse it), 2a.2 (ViT — SAM/MAE encoder), 2a.3 (DINO patch features for label-free semantic correspondence)
 **Connect forward to**: 2c (SAM3 PCS builds on SAM; tracker inherits SAM2), 2e.2 (expands SAM2 memory architecture for propagation)
 
