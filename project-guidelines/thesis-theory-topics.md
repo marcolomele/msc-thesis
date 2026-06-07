@@ -401,6 +401,42 @@ IoU/LE/CA/VA against GT per-frame annotations.
 
 ---
 
+## Chapter 2f — Related Works
+*Ego-exo datasets → correspondence methods → segmentation methods → ego-exo correspondence methods*
+
+### 2f.1 Ego and Ego-Exo Datasets
+**Theory:**
+- **EPIC-Kitchens:** large-scale egocentric kitchen activity dataset; pixel-level annotations; seminal benchmark for egocentric video understanding.
+- **Ego4D:** 3,670 hours of egocentric video across diverse scenarios; standardised benchmarks for perception, memory, hand-object interaction; introduced the "past, present, future" framing.
+- **Ego-Exo4D:** paired egocentric/exocentric recordings of the same activities; Correspondences benchmark — frame-level object mask transfer task used as the evaluation protocol in this work; annotation protocol and class distribution.
+
+**Key papers (already in `references.bib`):**
+- Grauman, K. et al. *Ego4D: Around the World in 3,000 Hours of Egocentric Video*. CVPR 2022.
+- Grauman, K. et al. *Ego-Exo4D: Understanding Skilled Human Activity from First- and Third-Person Perspectives*. CVPR 2024.
+
+### 2f.2 Learning Correspondences
+**Theory:** Survey of the trajectory from handcrafted local descriptors through learned sparse matchers to detector-free dense methods, and the semantic correspondence setting that underpins ego-exo transfer. Mostly back-references §2b.0; emphasis here on why ego-exo is a stress test (wide-baseline, viewpoint flip, no geometric prior).
+
+**Key papers:** cross-reference §2b.0 keys (`lowe2004sift`, `sarlin2020superglue`, `sun2021loftr`, `roma`, `oquab2023dinov2`).
+
+### 2f.3 Segmentation Models
+**Theory:** Rapid survey of the milestones covered mechanistically in §2b — FCN, Mask R-CNN, SAM/SAM2/SAM3 — reframed here as prior work. Adds language-conditioned segmenters (LISA, GLaMM, PSALM, Sa2VA) and memory-based VOS (XMem) as the directly competing component families.
+
+**Key papers (already in `references.bib`):** `long2015fcn`, `he2017maskrcnn`, `kirillov2023sam`, `ravi2024sam2`, `ravi2025sam3`, `lai2024lisa`, `rasheed2024glamm`, `psalm2024eccv`, `yuan2025sa2va`, `cheng2022xmem`.
+
+### 2f.4 Ego-Exo Correspondence Methods
+**Theory:**
+- **Official baselines:** XSegTx (cross-view segmentation transfer); XMem tracker; XMem+XSegTx combined. All require ego-exo paired supervision.
+- **ObjectRelator:** learns relational visual features for cross-view object matching; supervised on ego-exo pairs.
+- **O-MaMa (challenge winner 2024):** mask matching in a learned DINOv2 latent space; produces top result on the benchmark.
+- **V2-SAM:** adapts SAM for video-to-video correspondence.
+- **LM-EEC (SOTA):** language-mediated ego-exo correspondence; closest prior to our approach in motivation; validates SAM 2's tracker for this task (Hu et al.).
+- **Positioning:** all prior methods learn correspondences from visual features and require paired ego-exo supervision or task-specific fine-tuning; our method treats the task as training-free foundation-model composition with language as the semantic bridge.
+
+**Key papers (already in `references.bib`):** `fu2025objectrelator`; add keys for XSegTx, O-MaMa, V2-SAM, LM-EEC during drafting.
+
+---
+
 ## Cross-Cutting: Evaluation Metrics
 *(Belongs in Chapter 5 setup — listed here for completeness)*
 
@@ -420,7 +456,7 @@ IoU/LE/CA/VA against GT per-frame annotations.
 
 | Pipeline Block | Technique | Thesis Section |
 |---|---|---|
-| Block 1: source frame scoring | Area (0.99) + centrality (0.01) heuristic | §4 Pipeline |
+| Block 1: source frame scoring | Area (0.99) + centrality (0.01) heuristic | §3 Pipeline |
 | Block 2: VLM description | Qwen 3.5 35B multimodal inference | §2d |
 | Block 2 (alt.): description | PixelRefer mask-conditioned | §2c |
 | Block 3a: anchor selection (language) | Grounding DINO confidence top-K | §2c |
@@ -430,7 +466,7 @@ IoU/LE/CA/VA against GT per-frame annotations.
 | Block 3b: pre-filter (ablated) | MiniLM cosine re-ranking | §2c (PixelRefer) |
 | Block 3b: MLLM verification | Qwen 3.5 35B multimodal reasoning | §2d |
 | Block 4: propagation | SAM 2/SAM 3 bi-directional video | §2e |
-| Evaluation | IoU (primary), LE, CA | §5 Experiments |
+| Evaluation | IoU (primary), LE, CA | §4 Experiments |
 
 ---
 

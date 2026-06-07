@@ -10,29 +10,28 @@ b.	Research gap: no inference only, no exploration of language.
 c.	Research contribution: a fully training-free (camera- and dataset-agnostic) "language as a bridge" pipeline for cross-view object mask transfer on video; two interchangeable anchor-frame selection signals — language-grounded (Grounding DINO) and geometry-based (RoMa); a detailed ablation and interpretability analysis of a stack of foundation models in a setting none were designed for. Results reach within a few points of the 2025 challenge winner (O-MaMa) and surpass the official baselines and ObjectRelator.
 d.	Chapter roadmap.
  
-2.	Theory (~15 pages)
+2.	Theory & Related Works (~20 pages)
 a.	Visual Representation (~4 pages): Transformer, Vision Transformer, Self-supervised learning with DINOv2.
 b.	Correspondence & Segmentation (~2 pages): feature matching (handcrafted descriptors → detector-free dense matching with RoMa, used for geometry-based anchor selection); previous segmentation approaches, SAM & SAM2.
 c.	Language-grounding (~4 pages): multimodality, Grounding DINO, SAM 3 Promptable Concept Segmentation (PCS) and its agentic interface, PixelRefer.
 d.	Foundation Models & Agents (~2 pages): Qwen Family, ReAct, tool use.
 e.	Addition of time (~2 pages): Video Object Segmentation and Propagation.
+f.	Related Works (~5 pages) — mirrors the paper's four-paragraph structure
+	i.   Ego and ego-exo datasets (EPIC-Kitchens, Ego4D, Ego-Exo4D and its Correspondences benchmark).
+	ii.  Learning correspondences (handcrafted descriptors, learned matchers, detector-free methods/RoMa, DINO semantic correspondence).
+	iii. Segmentation models (FCN/Mask R-CNN → SAM/SAM2/SAM3, language-conditioned segmenters, memory-based VOS, Grounding DINO).
+	iv.  Ego-exo correspondence methods: official baselines (XSegTx, XMem, XMem+XSegTx), ObjectRelator, O-MaMa (challenge winner), V2-SAM, LM-EEC (SOTA). Positioning: all prior methods learn correspondences from visual features and require paired ego-exo supervision; we treat the task as a test of training-free foundation-model composition with language as the bridge.
 
-3.	Related works (~5 pages) — mirrors the paper's four-paragraph structure
-a.	Ego and ego-exo datasets (EPIC-Kitchens, Ego4D, Ego-Exo4D and its Correspondences benchmark).
-b.	Learning correspondences (handcrafted descriptors, learned matchers, detector-free methods/RoMa, DINO semantic correspondence).
-c.	Segmentation models (FCN/Mask R-CNN → SAM/SAM2/SAM3, language-conditioned segmenters, memory-based VOS, Grounding DINO).
-d.	Ego-exo correspondence methods: official baselines (XSegTx, XMem, XMem+XSegTx), ObjectRelator, O-MaMa (challenge winner), V2-SAM, LM-EEC (SOTA). Positioning: all prior methods learn correspondences from visual features and require paired ego-exo supervision; we treat the task as a test of training-free foundation-model composition with language as the bridge.
-
-4.	Proposed Pipeline (~5 pages)
+3.	Proposed Pipeline (~5 pages)
 a.	Task formulation and the dual problem (cross-view transfer + temporal completeness); preliminary on SAM 3.
 b.	Block by block (1 frame selection, 2 VLM description, 3 SAM 3 agentic grounding = anchor selection + agentic segmentation, 4 propagation), motivation for each design choice. 
 
-5.	Experiments (~10 pages)
+4.	Experiments (~10 pages)
 a.	Setup, metrics
 b.	Results
 c.	Ablations & interpretability
  
-6.	Conclusions (~5 pages)
+5.	Conclusions (~5 pages)
 a.	Summary of findings
 b.	Limitations
 c.	Future work

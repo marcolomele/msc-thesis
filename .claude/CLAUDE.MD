@@ -154,7 +154,7 @@ Track the current state of each chapter here. Update after each commit.
 | 02c Language Grounding | ☑ | ☑ | ☐ |
 | 02d Foundation Models & Agents | ☑ | ☑ | ☐ |
 | 02e Addition of Time | ☑ | ☑ | ☐ |
-| 03 Related Works | ☐ | ☐ | ☐ |
-| 04 Pipeline | ☐ | ☐ | ☐ |
-| 05 Experiments | ☐ | ☐ | ☐ |
-| 06 Conclusions | ☐ | ☐ | ☐ |
+| 02f Related Works | ☐ | ☐ | ☐ |
+| 03 Proposed Pipeline | ☐ | ☐ | ☐ |
+| 04 Experiments | ☐ | ☐ | ☐ |
+| 05 Conclusions | ☐ | ☐ | ☐ |
