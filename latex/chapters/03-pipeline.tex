@@ -1,2 +1,19 @@
 \chapter{Proposed Pipeline}
 % Draft pending.
+
+% Text from section 02 video propagation which is actually linked better to here.
+
+Bidirectional propagation with nearest-seed selection is in large part a defence against this accumulation, shortening the temporal distance any single prediction must travel from a trusted anchor. This is the procedure that Block~4 of our pipeline implements in \texttt{propagation.py}, running SAM~2's video model forward and backward from the seed masks and merging the passes by nearest-seed assignment, and we measure what it costs and recovers frame by frame, through the per-frame intersection over union, location error, and contour accuracy of \cref{sec:experiments}.
+
+
+
+A single forward pass from one seed is enough to fill a clip, but it is not the best use of several seeds, and the pipeline often holds more than one. Block~3 may segment the object on frames scattered through the video, and the masklet should draw on whichever seed is nearest to the frame being filled. We therefore propagate bidirectionally. Writing $\set{S} \subseteq \{1, \dots, \nframes\}$ for the set of seed frames, one pass runs forward from the earliest seed $\min \set{S}$ to the end of the clip and another runs backward from the latest seed $\max \set{S}$ to the start, and each output frame takes its mask from the pass whose originating seed is nearer in time. Conditioning on the nearest seed keeps the memory short, since a prediction is anchored to an annotation a few frames away rather than one at the far end of the video.
+
+The two passes overlap on the frames that lie between seeds, where both a forward and a backward mask exist. On those frames we combine the two by a pixel-wise union,
+
+\begin{equation}
+  \mask_\frameidx = \mask^{\rightarrow}_\frameidx \,\cup\, \mask^{\leftarrow}_\frameidx,
+  \label{eq:mask-union}
+
+\end{equation}
+where $\mask^{\rightarrow}_\frameidx$ is the mask the forward pass assigns to frame $\frameidx$, $\mask^{\leftarrow}_\frameidx$ the mask the backward pass assigns to the same frame, and the union is taken over pixels, so a pixel belongs to the object when either pass claims it. Taking the union rather than an intersection or an average reflects a deliberate bias toward recall; a part of the object recovered by only one pass, perhaps because it was occluded along the other's line of approach, is kept rather than discarded.
