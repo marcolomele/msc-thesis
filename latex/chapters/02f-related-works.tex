@@ -1,16 +1,66 @@
 \section{Related Works}
 \label{sec:related-works}
 
+\subsection{Feature Matching and Dense Correspondence}
+\label{subsec:matching}
+
+Carrying a mask from one camera to another is segmentation given a second view, and it
+turns on a prior question, namely which point in one image corresponds to which point in
+the other. Correspondence was first approached through handcrafted local descriptors.
+The \textit{SIFT} descriptor of Lowe in 2004 \cite{lowe2004sift}, followed by
+\textit{SURF} \cite{bay2008surf} and \textit{ORB} \cite{rublee2011orb}, detects a sparse
+set of keypoints and encodes the neighbourhood of each into a vector built to be
+invariant to scale and rotation; two images are then matched by pairing keypoints whose
+descriptors are nearest in this space. These methods remain remarkably durable, but
+their invariances are designed rather than learned, and they degrade sharply under the
+wide changes in viewpoint and illumination that separate an egocentric from an
+exocentric camera.
+
+Learning replaced design in two stages. SuperPoint \cite{detone2018superpoint} trains a
+single network to detect keypoints and emit descriptors jointly, and SuperGlue
+\cite{sarlin2020superglue} matches two such sets with an attention-based graph network
+that reasons about all candidate pairs at once rather than matching each keypoint in
+isolation. LoFTR \cite{sun2021loftr} then dispensed with detection altogether, applying
+the self-attention and cross-attention of \cref{subsec:transformer} between two images to
+produce dense matches directly, so that correspondences can be recovered even in the
+textureless regions where keypoint detectors find nothing to anchor to.
+
+RoMa, introduced by Edstedt et al.\ in 2024 \cite{roma}, is the model the pipeline
+adopts, and it carries the dense paradigm to its robust extreme. Rather than a list of
+matched points, RoMa predicts a dense \textit{warp field} $\warp$ together with a
+per-coordinate confidence,
+
+\begin{equation}
+  (\warp, c) = f_\theta(\img_a, \img_b),
+  \qquad
+  \warp(\vv{x}) \in \R^2,
+  \quad
+  c(\vv{x}) \in [0,1],
+  \label{eq:warp}
+\end{equation}
+
+where $f_\theta$ is the matcher applied to a source image $\img_a$ and a target image
+$\img_b$. For every coordinate $\vv{x}$ in the source, the warp $\warp(\vv{x})$ returns
+the coordinate in the target that it judges to correspond, so that $\warp$ is a complete
+deformation carrying one image onto the other, and the confidence $c(\vv{x})$ reports how
+reliable that single match is, near one where the geometry is certain and near zero where
+the source point is occluded or has no counterpart. RoMa estimates the field coarsely
+from the self-supervised features of \cref{subsec:dino}, which give it a semantic anchor
+that survives wide changes in viewpoint, and then refines it locally to pixel precision.
+The confidence is what makes the warp field usable as evidence rather than a raw
+prediction; the pipeline ranks candidate frames by the number of confident matches whose
+source coordinate falls inside the object mask $\mask$, turning \cref{eq:warp} into a
+language-free signal for selecting where to look. This same property of matching by
+semantic similarity is what allows the patch features of \cref{subsec:dino} to put two
+images into correspondence without any geometric prior, of which the egocentric to
+exocentric setting is the most demanding instance.
+
 \paragraph{Ego and ego-exo datasets.}
 Large-scale egocentric video collections established first-person perception as a serious research programme.
 EPIC-KITCHENS-100, assembled by Damen et al. (2021) \cite{damen2021epickitchens100}, provides over 100 hours of annotated kitchen activity with dense action labels and per-pixel hand-object masks, anchoring egocentric benchmarks for action recognition and object interaction.
 Ego4D, published by Grauman et al. in 2022 \cite{grauman2022ego4d}, scaled this ambition to 3,670 hours of egocentric footage recorded across 74 worldwide locations, introducing standardised benchmarks covering episodic memory, social interaction, and hand-object contact, and framing the field around past, present, and future reasoning.
 Ego-Exo4D, published by the same group in 2024 \cite{grauman2024egoexo4d}, extended the collection to synchronised multi-camera recordings in which a wearable egocentric camera and multiple fixed exocentric cameras capture the same skilled human activities simultaneously.
 The dataset enables a qualitatively new class of tasks that require relating observations across the two perspectives, including the \textit{Ego-Exo4D Correspondences} benchmark, which defines the cross-view object mask transfer task used as the evaluation protocol throughout this work.
-
-\paragraph{Feature matching and segmentation.}
-The trajectory from handcrafted local descriptors \cite{lowe2004sift, bay2008surf, rublee2011orb} through learned sparse matchers \cite{detone2018superpoint, sarlin2020superglue} and detector-free dense correspondence \cite{sun2021loftr, roma} to semantic feature matching via self-supervised patch descriptors \cite{oquab2023dinov2} is covered mechanistically in \cref{sec:correspondence-segmentation}, together with segmentation milestones spanning fully convolutional networks \cite{long2015fcn} and instance segmenters \cite{he2017maskrcnn} through the SAM family \cite{kirillov2023sam, ravi2024sam2, ravi2025sam3} and language-conditioned decoders \cite{lai2024lisa, rasheed2024glamm, psalm2024eccv, yuan2025sa2va}, and the memory-based video object segmentation paradigm that underpins temporal propagation \cite{oh2019stm, cheng2022xmem}.
-We refer the reader to \cref{sec:correspondence-segmentation,sec:language-grounding,sec:addition-of-time} for full treatment; here we position the ego-exo correspondence methods that build directly on these foundations.
 
 \paragraph{Ego-exo correspondence methods.}
 \label{sec:egoexo-methods}
@@ -43,4 +93,4 @@ Despite the name suggesting language involvement, there is no language component
 \paragraph{Common limitations.} The shared structure across all five prior approaches is that correspondence is reduced to a learned visual matching problem; each method trains a dedicated component on paired ego-exo data, specifically the SegSwap co-segmentation head in XSegTx, the XMem appearance embedding, the XObjAlign consistency loss in ObjectRelator, the contrastive matching head in O-MaMa, the prompt experts in V\textsuperscript{2}-SAM, and the MoE fusion module in LM-EEC, and none of these components transfers to a novel camera configuration or scenario without retraining.
 This design choice also forecloses interpretability; the matching decision is encoded in opaque attention weights, and there is no intermediate representation that a user or auditor can inspect to verify why a particular object was selected.
 
-\paragraph{Our approach.} We take a different route; no component of the pipeline described in \cref{sec:pipeline} is trained for the task. Natural language serves as the semantic bridge between views, so that a mask description generated in the source view can locate the object in the destination view through a composition of foundation models used entirely off the shelf. The bridge is human-readable, so any erroneous prediction can be traced to the specific block whose output is at fault. This framing is the logical conclusion of the theoretical background developed in \cref{sec:correspondence-segmentation,sec:language-grounding,sec:foundation-models,sec:addition-of-time}, and the premise from which \cref{sec:pipeline} proceeds.
+\paragraph{Our approach.} We take a different route; no component of the pipeline described in \cref{sec:pipeline} is trained for the task. Natural language serves as the semantic bridge between views, so that a mask description generated in the source view can locate the object in the destination view through a composition of foundation models used entirely off the shelf. The bridge is human-readable, so any erroneous prediction can be traced to the specific block whose output is at fault. This framing is the logical conclusion of the theoretical background developed in \cref{sec:segmentation,sec:language-grounding,sec:foundation-models}, and the premise from which \cref{sec:pipeline} proceeds.

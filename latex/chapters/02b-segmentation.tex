@@ -1,31 +1,24 @@
-  \section{Segmentation and Correspondence}
-  \label{sec:correspondence-segmentation}
+  \section{Segmentation}
+  \label{sec:segmentation}
 
-  The image embedding produced by the tools described in \cref{sec:visual-representation} can be used for several computer vision tasks, such as classification, instance recognition, and object segmentation. The
-  latter involves predicting a binary mask over the image that indicates the pixels belonging to a given object in a single frame. Cross-view correspondence can be seen as a special case of segmentation, because
-  the goal is to segment an object in one view conditioned on the information from a second camera. Therefore, in the next section, we treat segmentation as the primitive operation and correspondence as the
-  capability built upon it, and in doing so fix the mask and matching symbols that recur throughout the chapters that follow.
+  The image embedding produced by the tools described in \cref{sec:visual-representation} can be used for several computer vision tasks, such as classification, instance recognition, and object segmentation. The latter involves predicting a binary mask over the image that indicates the pixels belonging to a given object in a single frame. We trace the development of this capability in three steps: a survey of the segmentation landscape that establishes the task and its milestones, an account of the Segment Anything Model, which unified the field around a single promptable architecture, and an account of its video extension, which adds temporal propagation and forms the backbone of our pipeline.
 
-  \subsection{Segmentation and the Segment Anything Model}
-  \label{subsec:sam}
+  \subsection{Prior Works}
+  \label{subsec:segmentation-prior}
 
-  Segmentation asks which pixels in an image pertain to a specific object. The key metric guiding this task is the intersection-over-union score, which computes the overlap between a predicted mask $\hat{\mask}$
-  and a reference ground truth $\mask$ as the ratio:
+  Segmentation asks which pixels in an image pertain to a specific object. The key metric guiding this task is the intersection-over-union score, which computes the overlap between a predicted mask $\hat{\mask}$ and a reference ground truth $\mask$ as the ratio:
 
   \begin{equation}
       \iou(\hat{\mask}, \mask) = \frac{\abs{\hat{\mask} \cap \mask}} {\abs{\hat{\mask} \cup \mask}}
   \label{eq:iou}
   \end{equation}
 
-  The first successful deep learning models for segmentation were the fully convolutional network of Long et al.\ in 2015 \cite{long2015fcn}, which assigns a class to every pixel in one forward pass; the
-  \textit{U-Net} of Ronneberger et al.\ in 2015 \cite{ronneberger2015unet}, whose encoder and decoder with skip connections recovers the fine spatial detail lost to downsampling; and \textit{Mask R-CNN} of He et
-  al.\ in 2017 \cite{he2017maskrcnn}, which first proposes candidate regions and then segments within each, separating one instance of a class from another. These works interpret the task in several ways:
-  labelling every pixel with a class, isolating each object instance, or doing both at once. Later, Sofiiuk et al.\ in 2022 introduced RITM \cite{sofiiuk2021revivingiterativetrainingmask}, which brought
-  interactive segmentation, the ability to let a user guide the result by clicking on the target. Until this point, models were heads specific to each task, each achieving state-of-the-art performance in their own
-  narrow applications.
+  The first successful deep learning models for segmentation were the fully convolutional network of Long et al.\ in 2015 \cite{long2015fcn}, which assigns a class to every pixel in one forward pass; the \textit{U-Net} of Ronneberger et al.\ in 2015 \cite{ronneberger2015unet}, whose encoder and decoder with skip connections recovers the fine spatial detail lost to downsampling; and \textit{Mask R-CNN} of He et al.\ in 2017 \cite{he2017maskrcnn}, which first proposes candidate regions and then segments within each, separating one instance of a class from another. These works interpret the task in several ways: labelling every pixel with a class, isolating each object instance, or doing both at once. Later, Sofiiuk et al.\ in 2022 introduced RITM \cite{sofiiuk2021revivingiterativetrainingmask}, which brought interactive segmentation, the ability to let a user guide the result by clicking on the target. Until this point, models were heads specific to each task, each achieving state-of-the-art performance in their own narrow applications.
 
-  This changed in 2023 with the \textit{Segment Anything Model (SAM)}, presented by Kirillov et al.\ \cite{kirillov2023sam}. Fundamentally, it is composed of three components: an image encoder, a prompt encoder,
-  and a mask decoder. The entire orchestration can be summarised in one equation:
+  \subsection{Segment Anything Model}
+  \label{subsec:sam}
+
+  This changed in 2023 with the \textit{Segment Anything Model (SAM)}, presented by Kirillov et al.\ \cite{kirillov2023sam}. Fundamentally, it is composed of three components: an image encoder, a prompt encoder, and a mask decoder. The entire orchestration can be summarised in one equation:
 
   \begin{equation}
   (\hat{\mask}, s) = D\big(E(\img),\, P(\text{prompt})\big),
@@ -34,86 +27,45 @@
 
   where $E$ is the image encoder, $P$ the prompt encoder, $D$ the decoder, $\hat{\mask}$ the predicted binary segmentation mask, and $s$ the decoder's own estimate of the mask's quality.
 
-  \paragraph{Image Encoder.} The image encoder is a Vision Transformer pre-trained as the masked autoencoder of \cref{subsec:dino} that runs once per image to produce a dense feature grid. Concretely, the authors
-  adopt a ViT-H/16 backbone with $14\!\times\!14$ windowed self-attention and four equally-spaced global attention blocks, following the plain-backbone detection work of Li et al.\ \cite{li2022vitdet}. The encoder
-  operates on images rescaled and padded to $1024\!\times\!1024$ pixels, yielding a $64\!\times\!64$ spatial grid of features that is compressed to 256 channels by a $1\!\times\!1$ convolution followed by a
-  $3\!\times\!3$ convolution, each succeeded by layer normalisation. Running once per image, this heavyweight encoder amortises its cost across all subsequent interactions with that image.
+  \paragraph{Image Encoder.} The image encoder is a Vision Transformer pre-trained as the masked autoencoder of \cref{subsec:dino} that runs once per image to produce a dense feature grid. Concretely, the authors adopt a ViT-H/16 backbone with $14\!\times\!14$ windowed self-attention and four equally-spaced global attention blocks, following the plain-backbone detection work of Li et al.\ \cite{li2022vitdet}. The encoder operates on images rescaled and padded to $1024\!\times\!1024$ pixels, yielding a $64\!\times\!64$ spatial grid of features that is compressed to 256 channels by a $1\!\times\!1$ convolution followed by a $3\!\times\!3$ convolution, each succeeded by layer normalisation. Running once per image, this heavyweight encoder amortises its cost across all subsequent interactions with that image.
 
-  \paragraph{Prompt Encoder.} The prompt encoder maps a user signal into a compact set of 256-dimensional token embeddings. The architecture distinguishes sparse prompts (points, boxes, and text) from dense
-  prompts (masks). A foreground or background point is encoded as the sum of a Fourier positional encoding \cite{tancik2020fourier} of its pixel coordinates and one of two learned type embeddings that distinguish
-  foreground from background. A bounding box is encoded as a pair of tokens, one for each corner, each formed by summing the corner's positional encoding with a learned corner-type embedding. Dense mask prompts,
-  supplied at $4\!\times$ lower resolution than the input image, are passed through two $2\!\times\!2$ convolutions with stride 2 (with 4 and 16 output channels, respectively) and a final $1\!\times\!1$
-  convolution to reach 256 channels, then added element-wise to the image embedding. When no mask prompt is provided, a learned ``no-mask'' embedding is added to every spatial location of the image embedding
-  instead.
+  \paragraph{Prompt Encoder.} The prompt encoder maps a user signal into a compact set of 256-dimensional token embeddings. The architecture distinguishes sparse prompts (points, boxes, and text) from dense prompts (masks). A foreground or background point is encoded as the sum of a Fourier positional encoding \cite{tancik2020fourier} of its pixel coordinates and one of two learned type embeddings that distinguish foreground from background. A bounding box is encoded as a pair of tokens, one for each corner, each formed by summing the corner's positional encoding with a learned corner-type embedding. Dense mask prompts, supplied at $4\!\times$ lower resolution than the input image, are passed through two $2\!\times\!2$ convolutions with stride 2 (with 4 and 16 output channels, respectively) and a final $1\!\times\!1$ convolution to reach 256 channels, then added element-wise to the image embedding. When no mask prompt is provided, a learned ``no-mask'' embedding is added to every spatial location of the image embedding instead.
 
-  \paragraph{Mask Decoder.} The final component is a lightweight mask decoder made of a Transformer that lets image features and prompt tokens attend to one another in both directions to produce the output. Each
-  of the two decoder layers executes four sequential operations: (i) self-attention over the prompt tokens; (ii) cross-attention from prompt tokens (as queries) to the $64^2$ image-embedding vectors (as keys and
-  values); (iii) a pointwise MLP that updates each prompt token; and (iv) cross-attention from the image embedding (as queries) back to the tokens (as keys and values), which injects prompt information into the
-  spatial features. To preserve geometric grounding, positional encodings are re-added to the image embedding at every attention step, and the original prompt tokens (including their positional encodings) are
-  re-added to the updated tokens at every attention step.
+  \paragraph{Mask Decoder.} The final component is a lightweight mask decoder made of a Transformer that lets image features and prompt tokens attend to one another in both directions to produce the output. Each of the two decoder layers executes four sequential operations: (i) self-attention over the prompt tokens; (ii) cross-attention from prompt tokens (as queries) to the $64^2$ image-embedding vectors (as keys and values); (iii) a pointwise MLP that updates each prompt token; and (iv) cross-attention from the image embedding (as queries) back to the tokens (as keys and values), which injects prompt information into the spatial features. To preserve geometric grounding, positional encodings are re-added to the image embedding at every attention step, and the original prompt tokens (including their positional encodings) are re-added to the updated tokens at every attention step.
 
-  After the two decoder layers, the image embedding is upsampled $4\!\times$ by two transposed convolutional layers, and an MLP with three layers maps each output token to a dynamic linear classifier that computes
-  mask foreground probability at every spatial location via a pointwise inner product with the upsampled embedding. The entire transformer uses an embedding dimension of 256, eight attention heads, and a
-  cross-attention channel reduction to 128 for efficiency.
+  After the two decoder layers, the image embedding is upsampled $4\!\times$ by two transposed convolutional layers, and an MLP with three layers maps each output token to a dynamic linear classifier that computes mask foreground probability at every spatial location via a pointwise inner product with the upsampled embedding. The entire transformer uses an embedding dimension of 256, eight attention heads, and a cross-attention channel reduction to 128 for efficiency.
 
-  \paragraph{Training.} SAM is designed to handle prompt ambiguity: a point on a shirt may refer to the shirt or the whole person, so the decoder emits three candidate masks corresponding to the three natural
-  levels of detail (whole object, part, and subpart), which Kirillov et al.\ find sufficient to cover common cases. During training, only the branch with the minimum loss receives a gradient signal, following the
-  multiple-choice learning technique of Guzman-Rivera et al.\ \cite{guzman2012multiple}; the IoU head is trained separately with mean squared error loss against the true overlap of each predicted mask with the
-  ground truth. Mask prediction is supervised with a linear combination of focal loss of Lin et al.\ \cite{lin2017focal} and dice loss of Milletari et al.\ \cite{milletari2016vnet} in a 20:1 ratio. Training
-  simulates an interactive setting where 11 rounds of prompting are drawn per training mask, alternating between foreground and background point clicks and bounding-box prompts, with the mask prediction from the
-  previous round fed back as an additional dense prompt. The model is initialised from a MAE pre-trained ViT-H and trained for 90\,000 iterations on SA-1B, a collection of over 1.1 billion masks on 11 million
-  images that was assembled through a three-stage data engine in which an evolving version of SAM assisted human annotators, a bootstrapping procedure that enabled the scale necessary for the model's generality.
+  \paragraph{Training.} SAM is designed to handle prompt ambiguity: a point on a shirt may refer to the shirt or the whole person, so the decoder emits three candidate masks corresponding to the three natural levels of detail (whole object, part, and subpart), which Kirillov et al.\ find sufficient to cover common cases. During training, only the branch with the minimum loss receives a gradient signal, following the multiple-choice learning technique of Guzman-Rivera et al.\ \cite{guzman2012multiple}; the IoU head is trained separately with mean squared error loss against the true overlap of each predicted mask with the ground truth. Mask prediction is supervised with a linear combination of focal loss of Lin et al.\ \cite{lin2017focal} and dice loss of Milletari et al.\ \cite{milletari2016vnet} in a 20:1 ratio. Training simulates an interactive setting where 11 rounds of prompting are drawn per training mask, alternating between foreground and background point clicks and bounding-box prompts, with the mask prediction from the previous round fed back as an additional dense prompt. The model is initialised from a MAE pre-trained ViT-H and trained for 90\,000 iterations on SA-1B, a collection of over 1.1 billion masks on 11 million images that was assembled through a three-stage data engine in which an evolving version of SAM assisted human annotators, a bootstrapping procedure that enabled the scale necessary for the model's generality.
 
-\subsection{Feature Matching and Dense Correspondence}
-\label{subsec:matching}
+\subsection{Video Propagation}
+\label{sec:addition-of-time}
 
-Carrying a mask from one camera to another is segmentation given a second view, and it
-turns on a prior question, namely which point in one image corresponds to which point in
-the other. Correspondence was first approached through handcrafted local descriptors.
-The \textit{SIFT} descriptor of Lowe in 2004 \cite{lowe2004sift}, followed by
-\textit{SURF} \cite{bay2008surf} and \textit{ORB} \cite{rublee2011orb}, detects a sparse
-set of keypoints and encodes the neighbourhood of each into a vector built to be
-invariant to scale and rotation; two images are then matched by pairing keypoints whose
-descriptors are nearest in this space. These methods remain remarkably durable, but
-their invariances are designed rather than learned, and they degrade sharply under the
-wide changes in viewpoint and illumination that separate an egocentric from an
-exocentric camera.
+The models described above produce a mask on a single frame. The full pipeline task requires segmenting an object through an entire video clip, and a mask that exists on frame $\frameidx$ alone leaves the object untracked across the remaining $\nframes - 1$ frames. Closing that gap is the problem of \textit{video object segmentation}, which asks for a complete \textit{masklet}, a mask on every frame that follows one object through motion, deformation, and occlusion. The naive route runs a single-frame segmenter independently on each frame, but it discards the one thing video provides, namely that frame $\frameidx$ and frame $\frameidx + 1$ depict almost the same scene, and so it neither enforces temporal coherence nor recovers an object once it is momentarily hidden.
 
-Learning replaced design in two stages. SuperPoint \cite{detone2018superpoint} trains a
-single network to detect keypoints and emit descriptors jointly, and SuperGlue
-\cite{sarlin2020superglue} matches two such sets with an attention-based graph network
-that reasons about all candidate pairs at once rather than matching each keypoint in
-isolation. LoFTR \cite{sun2021loftr} then dispensed with detection altogether, applying
-the self-attention and cross-attention of \cref{subsec:transformer} between two images to
-produce dense matches directly, so that correspondences can be recovered even in the
-textureless regions where keypoint detectors find nothing to anchor to.
+The task comes in two settings that differ in what they are given. In the semi-supervised setting a mask is supplied on one frame, usually the first, and the model must propagate it through the clip; in the unsupervised setting no mask is given and the model must both discover and track the salient object. Our pipeline is squarely semi-supervised, since Block~3 supplies the seed masks, and we therefore set the unsupervised variant aside.
 
-RoMa, introduced by Edstedt et al.\ in 2024 \cite{roma}, is the model the pipeline
-adopts, and it carries the dense paradigm to its robust extreme. Rather than a list of
-matched points, RoMa predicts a dense \textit{warp field} $\warp$ together with a
-per-coordinate confidence,
+Early solutions to this propagation problem paid for accuracy with time. OSVOS, introduced by Caelles et al.\ in 2017 \cite{caelles2017osvos}, fine-tunes a segmentation network on the first-frame annotation of each individual video before inference, and OnAVOS extends this with online adaptation, so that every clip carries the cost of its own training pass. The memory-based paradigm removed that cost. Space-Time Memory networks (STM), proposed by Oh et al.\ in 2019 \cite{oh2019stm}, encode past frames together with their predicted masks into a memory bank and segment the current frame by reading from it through a soft nearest-neighbour attention, matching the present against everything already seen rather than retraining for each video; XMem \cite{cheng2022xmem} later splits this memory into short and long horizon stores so that the bank does not grow without bound over a long clip. Because the matching happens in a pre-trained feature space, these methods generalise to objects they were never trained on, which is precisely the property the pipeline needs.
+
+SAM~2 \cite{ravi2024sam2} inherits this paradigm and extends the promptable architecture of \cref{eq:sam-decoder} to video. Each frame is encoded once into a feature grid $\mm{F}_\frameidx = E(\img_\frameidx)$, and the frames already segmented are stored in the memory bank $\set{M} = \{(\mm{F}_{\frameidx'}, \mask_{\frameidx'})\}$ as the pairs of a frame's features and the mask predicted on it. A memory attention module conditions the current frame on this bank through the cross-attention of \cref{subsec:transformer},
 
 \begin{equation}
-  (\warp, c) = f_\theta(\img_a, \img_b),
+  \mask_\frameidx = D\big(\, \attn(\mm{F}_\frameidx,\, \set{M}) \,\big),
   \qquad
-  \warp(\vv{x}) \in \R^2,
-  \quad
-  c(\vv{x}) \in [0,1],
-  \label{eq:warp}
+  \set{M} = \big\{ (\mm{F}_{\frameidx'},\, \mask_{\frameidx'}) \big\},
+  \label{eq:mem-attn}
 \end{equation}
 
-where $f_\theta$ is the matcher applied to a source image $\img_a$ and a target image
-$\img_b$. For every coordinate $\vv{x}$ in the source, the warp $\warp(\vv{x})$ returns
-the coordinate in the target that it judges to correspond, so that $\warp$ is a complete
-deformation carrying one image onto the other, and the confidence $c(\vv{x})$ reports how
-reliable that single match is, near one where the geometry is certain and near zero where
-the source point is occluded or has no counterpart. RoMa estimates the field coarsely
-from the self-supervised features of \cref{subsec:dino}, which give it a semantic anchor
-that survives wide changes in viewpoint, and then refines it locally to pixel precision.
-The confidence is what makes the warp field usable as evidence rather than a raw
-prediction; the pipeline ranks candidate frames by the number of confident matches whose
-source coordinate falls inside the object mask $\mask$, turning \cref{eq:warp} into a
-language-free signal for selecting where to look. This same property of matching by
-semantic similarity is what allows the patch features of \cref{subsec:dino} to put two
-images into correspondence without any geometric prior, of which the egocentric to
-exocentric setting is the most demanding instance.
+where the queries of the attention are projected from the current frame's features $\mm{F}_\frameidx$, while the keys and values are projected from the stored (frame, mask) pairs in $\set{M}$, so that each location in the current frame retrieves the memory entries most similar to it and inherits their mask information before the decoder $D$ of \cref{eq:sam-decoder} produces $\mask_\frameidx$. The bank is read, not recomputed, so the cost of an additional frame stays constant rather than growing with the length of the clip. An occlusion head emits a presence score alongside the mask and suppresses the output when the object has left the view, which stops the propagation from hallucinating a mask through a full occlusion. One constraint matters for what follows, namely that the number of conditioning frames memory attention may read is capped at \texttt{max\_cond\_frames\_in\_attn} $=4$ in the implementation we use, so that only a small set of seed frames can directly steer a given prediction.
+
+A single forward pass from one seed is enough to fill a clip, but it is not the best use of several seeds, and the pipeline often holds more than one. Block~3 may segment the object on frames scattered through the video, and the masklet should draw on whichever seed is nearest to the frame being filled. We therefore propagate bidirectionally. Writing $\set{S} \subseteq \{1, \dots, \nframes\}$ for the set of seed frames, one pass runs forward from the earliest seed $\min \set{S}$ to the end of the clip and another runs backward from the latest seed $\max \set{S}$ to the start, and each output frame takes its mask from the pass whose originating seed is nearer in time. Conditioning on the nearest seed keeps the memory short, since a prediction is anchored to an annotation a few frames away rather than one at the far end of the video.
+
+The two passes overlap on the frames that lie between seeds, where both a forward and a backward mask exist. On those frames we combine the two by a pixel-wise union,
+
+\begin{equation}
+  \mask_\frameidx = \mask^{\rightarrow}_\frameidx \,\cup\, \mask^{\leftarrow}_\frameidx,
+  \label{eq:mask-union}
+\end{equation}
+
+where $\mask^{\rightarrow}_\frameidx$ is the mask the forward pass assigns to frame $\frameidx$, $\mask^{\leftarrow}_\frameidx$ the mask the backward pass assigns to the same frame, and the union is taken over pixels, so a pixel belongs to the object when either pass claims it. Taking the union rather than an intersection or an average reflects a deliberate bias toward recall; a part of the object recovered by only one pass, perhaps because it was occluded along the other's line of approach, is kept rather than discarded.
+
+Propagation buys temporal coherence at a measurable price. Because every prediction is conditioned on the masks before it, the masklet is far smoother in time than independent per-frame segmentation, and an object that vanishes briefly is recovered when it reappears near a frame the memory still holds. However, the same conditioning lets error compound, as a mask that drifts slightly on one frame becomes the evidence for the next, and across a long occlusion, where no reliable memory entry sits nearby, the drift accumulates until the mask can wander off the object entirely. Bidirectional propagation with nearest-seed selection is in large part a defence against this accumulation, shortening the temporal distance any single prediction must travel from a trusted anchor. This is the procedure that Block~4 of our pipeline implements in \texttt{propagation.py}, running SAM~2's video model forward and backward from the seed masks and merging the passes by nearest-seed assignment, and we measure what it costs and recovers frame by frame, through the per-frame intersection over union, location error, and contour accuracy of \cref{sec:experiments}.

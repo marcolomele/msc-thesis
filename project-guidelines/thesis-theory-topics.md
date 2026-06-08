@@ -56,7 +56,7 @@ image resolution.
 
 ### Pipeline link
 DINOv2 features underpin the broader cross-view setting (O-MaMa selects masks in a learned
-DINOv2 latent space; DINO patch features give label-free semantic correspondence — §2b.0).
+DINOv2 latent space; DINO patch features give label-free semantic correspondence — §2e.1).
 In the current pipeline, anchor (destination) frame selection is handled by Grounding DINO
 or RoMa rather than DINOv2 CLS-token diversity; the DINOv2 cosine-distance diversity scheme
 was a v1 design retained here for theoretical grounding and as the `MaxInfo`/diversity
@@ -64,40 +64,10 @@ ablation baseline (CLIP-embedding variant, Experiment D.2).
 
 ---
 
-## Chapter 2b — Correspondence & Segmentation
-*Feature matching & dense correspondence (RoMa) → previous segmentation approaches → SAM → SAM2*
+## Chapter 2b — Segmentation
+*Prior segmentation works → Segment Anything Model (SAM) → Video Propagation with SAM 2*
 
-### 2b.0 Feature Matching & Dense Correspondence
-**Theory:**
-- **Handcrafted local descriptors:** SIFT, SURF, ORB — keypoint detection + descriptor
-  matching; robustness limits under large viewpoint and illumination change.
-- **Learned sparse matching:** SuperPoint (trained keypoint detector/descriptor) +
-  SuperGlue (graph-neural-network matcher with attention).
-- **Detector-free dense matching:** LoFTR and RoMa bypass keypoint detection and produce
-  dense correspondences directly. **RoMa** learns a robust warp field between an image pair
-  of a 3D scene, achieving state-of-the-art dense feature matching under wide baseline
-  changes; each match carries a confidence score.
-- **Semantic correspondence without geometry:** DINO/DINOv2 patch features establish
-  correspondences between semantically similar images without geometric priors. Ego-exo
-  correspondence is an extreme case of this setting, stressing all of the above.
-
-**Key papers:**
-- Lowe, D. *Distinctive Image Features from Scale-Invariant Keypoints* (SIFT). IJCV 2004.
-- Bay, H. et al. *SURF: Speeded Up Robust Features*. ECCV 2006.
-- Rublee, E. et al. *ORB: An Efficient Alternative to SIFT or SURF*. ICCV 2011.
-- DeTone, D. et al. *SuperPoint*. CVPRW 2018.
-- Sarlin, P.-E. et al. *SuperGlue*. CVPR 2020.
-- Sun, J. et al. *LoFTR: Detector-Free Local Feature Matching with Transformers*. CVPR 2021.
-- Edstedt, J. et al. *RoMa: Robust Dense Feature Matching*. CVPR 2024.
-
-### Pipeline link
-RoMa provides the **geometry-based, language-free anchor-selection** signal in Block 3
-(Experiment E): the source object mask is matched against every destination frame, and
-frames are ranked by the count of confident matches (confidence > 0.5) whose source
-endpoint falls inside the object mask. It is the alternative to Grounding DINO and reaches
-comparable full-test-set IoU.
-
-### 2b.1 Segmentation Landscape (brief survey)
+### 2b.1 Prior Works
 **Theory:** Semantic vs instance vs panoptic segmentation; fully convolutional
 networks; encoder-decoder skip connections; region proposal networks;
 interactive/click-based segmentation; the "universal segmenter" motivation.
@@ -129,19 +99,37 @@ interactive/click-based segmentation; the "universal segmenter" motivation.
 **Key paper:**
 - Kirillov, A. et al. *Segment Anything*. ICCV 2023.
 
-### 2b.3 SAM2 — Extending to Video
+### 2b.3 Video Propagation (SAM 2)
 **Theory:**
-- **Streaming memory architecture:** per-frame image encoder + lightweight
-  memory encoder that writes selected past frames into a memory bank; memory
-  attention module reads the bank with cross-attention to condition current
-  predictions; avoids re-encoding all frames.
-- **Occlusion head:** explicit binary output for "object not visible"; prevents
-  the model from hallucinating a mask when the object is absent.
-- **Multi-object support and conditioning frame selection.**
-- **SA-V dataset:** 50.9K videos with 642.6K masklets.
-- SAM2 as joint image+video model (image inference = single-frame video).
+- **Task definition:** video object segmentation (VOS) — track and segment a
+  target object across all frames given a seed mask (semi-supervised setting).
+- **Early approaches:** OSVOS (fine-tune per video at test time); OnAVOS
+  (online adaptation); limitations of per-video optimisation at inference cost.
+- **Memory-based VOS (STM paradigm):** space-time memory network; encode past
+  (frame, mask) pairs into a memory bank; retrieve matching features via soft
+  nearest-neighbour attention; XMem extends to long videos with hierarchical
+  memory management.
+- **SAM2 memory architecture:** streaming inference; memory attention cross-attending
+  to stored (frame, mask) pairs; occlusion head that suppresses output when the
+  object is absent.
+- **Bi-directional propagation strategy:** forward pass from earliest seed frame
+  to end; backward pass from latest seed frame to start; for each output frame,
+  select the propagation result from the nearest-seed direction to minimise
+  accumulated temporal drift.
+- **Multi-seed conditioning:** adding multiple annotated frames as memory entries;
+  `max_cond_frames_in_attn=4` cap as a hard computational constraint.
+- **Mask union at shared frames:** pixel-wise OR when forward and backward
+  propagations both produce a non-empty mask at the same frame.
+- **Temporal consistency vs per-frame accuracy trade-off:** why propagation
+  produces temporally smoother masks than independent per-frame segmentation but
+  accumulates drift over long occlusions.
 
-**Key paper:**
+**Key papers:**
+- Caelles, S. et al. *One-Shot Video Object Segmentation* (OSVOS). CVPR 2017.
+- Oh, S. W. et al. *Video Object Segmentation Using Space-Time Memory Networks*
+  (STM). ICCV 2019.
+- Cheng, H. K. & Schwing, A. G. *XMem: Long-Term Video Object Segmentation with
+  an Atkinson-Shiffrin Memory Model*. ECCV 2022.
 - Ravi, N. et al. *SAM 2: Segment Anything in Images and Videos*. arXiv 2024.
   *(SAM3 is the text-prompted extension used in the pipeline; cover SAM2 as the
   base architecture and note text-prompt conditioning as the SAM3 addition)*
@@ -149,7 +137,8 @@ interactive/click-based segmentation; the "universal segmenter" motivation.
 ### Pipeline link
 `sam3_agent.py` invokes `build_sam3_image_model` for per-frame text-to-mask
 proposals inside the agent loop; `propagation.py` uses `build_sam3_video_model`
-for Block 4 bi-directional propagation.
+for Block 4 bi-directional propagation. RoMa (now in §2e/2f) provides the
+geometry-based anchor-selection signal in Block 3.
 
 ---
 
@@ -347,64 +336,40 @@ SAM3 masks, calls `examine_each_mask` for MLLM verification, and iterates up to
 
 ---
 
-## Chapter 2e — Addition of Time
-*Video Object Segmentation → SAM2/SAM3 Propagation*
+## Chapter 2e — Related Works
+*Feature matching and dense correspondence → ego-exo datasets → ego-exo correspondence methods*
 
-### 2e.1 Video Object Segmentation (VOS)
+### 2e.1 Feature Matching and Dense Correspondence
 **Theory:**
-- **Task definition:** track and segment a target object across all frames of a
-  video given a segmentation mask (semi-supervised) or no prior (unsupervised).
-- **Early approaches:** OSVOS (fine-tune per video at test time); OnAVOS
-  (online adaptation); limitations of per-video optimisation at inference cost.
-- **Propagation-based methods:** matching-based tracking using feature similarity
-  (FEELVOS, CFBI).
-- **Memory-based VOS (STM paradigm):** space-time memory network; encode past
-  (frame, mask) pairs into a memory bank; retrieve matching features via soft
-  nearest-neighbour attention; XMem extends to long videos with hierarchical
-  memory management.
-- **Why memory-based methods transfer well:** no per-video fine-tuning; generalise
-  to new categories; scale with the quality of the pre-trained feature space.
+- **Handcrafted local descriptors:** SIFT, SURF, ORB — keypoint detection + descriptor
+  matching; robustness limits under large viewpoint and illumination change.
+- **Learned sparse matching:** SuperPoint (trained keypoint detector/descriptor) +
+  SuperGlue (graph-neural-network matcher with attention).
+- **Detector-free dense matching:** LoFTR and RoMa bypass keypoint detection and produce
+  dense correspondences directly. **RoMa** learns a robust warp field between an image pair
+  of a 3D scene, achieving state-of-the-art dense feature matching under wide baseline
+  changes; each match carries a confidence score.
+- **Semantic correspondence without geometry:** DINO/DINOv2 patch features establish
+  correspondences between semantically similar images without geometric priors. Ego-exo
+  correspondence is an extreme case of this setting, stressing all of the above.
 
 **Key papers:**
-- Caelles, S. et al. *One-Shot Video Object Segmentation* (OSVOS). CVPR 2017.
-- Oh, S. W. et al. *Video Object Segmentation Using Space-Time Memory Networks*
-  (STM). ICCV 2019.
-- Cheng, H. K. & Schwing, A. G. *XMem: Long-Term Video Object Segmentation with
-  an Atkinson-Shiffrin Memory Model*. ECCV 2022.
-- Yang, Z. et al. *Decoupling Features in Hierarchical Propagation for Video
-  Object Segmentation* (DEVA). ICCV 2023. *(optional; relevant for open-vocab VOS)*
-
-### 2e.2 SAM2 for Video and Bi-Directional Propagation
-**Theory:**
-- **SAM2 memory architecture in detail** (expand from §2b.3): streaming inference;
-  memory attention cross-attending to stored (frame, mask) pairs; occlusion head.
-- **Bi-directional propagation strategy:** forward pass from earliest seed frame
-  to end; backward pass from latest seed frame to start; for each output frame,
-  select the propagation result from the nearest-seed direction to minimise
-  accumulated temporal drift.
-- **Multi-seed conditioning:** adding multiple annotated frames as memory entries;
-  `max_cond_frames_in_attn=4` cap as a hard computational constraint.
-- **Mask union at shared frames:** pixel-wise OR when forward and backward
-  propagations both produce a non-empty mask at the same frame.
-- **Temporal consistency vs per-frame accuracy trade-off:** why propagation
-  produces temporally smoother masks than independent per-frame segmentation but
-  accumulates drift over long occlusions.
-
-**Key paper:**
-- Ravi, N. et al. *SAM 2: Segment Anything in Images and Videos*. arXiv 2024.
+- Lowe, D. *Distinctive Image Features from Scale-Invariant Keypoints* (SIFT). IJCV 2004.
+- Bay, H. et al. *SURF: Speeded Up Robust Features*. ECCV 2006.
+- Rublee, E. et al. *ORB: An Efficient Alternative to SIFT or SURF*. ICCV 2011.
+- DeTone, D. et al. *SuperPoint*. CVPRW 2018.
+- Sarlin, P.-E. et al. *SuperGlue*. CVPR 2020.
+- Sun, J. et al. *LoFTR: Detector-Free Local Feature Matching with Transformers*. CVPR 2021.
+- Edstedt, J. et al. *RoMa: Robust Dense Feature Matching*. CVPR 2024.
 
 ### Pipeline link
-`propagation.py` takes the seed masks from Block 3, copies frames to a temp
-video directory, runs SAM3's video model in forward + backward passes from the
-seed frames, then merges results using nearest-seed assignment. Evaluated by
-IoU/LE/CA/VA against GT per-frame annotations.
+RoMa provides the **geometry-based, language-free anchor-selection** signal in Block 3
+(Experiment E): the source object mask is matched against every destination frame, and
+frames are ranked by the count of confident matches (confidence > 0.5) whose source
+endpoint falls inside the object mask. It is the alternative to Grounding DINO and reaches
+comparable full-test-set IoU.
 
----
-
-## Chapter 2f — Related Works
-*Ego-exo datasets → correspondence methods → segmentation methods → ego-exo correspondence methods*
-
-### 2f.1 Ego and Ego-Exo Datasets
+### 2e.2 Ego and Ego-Exo Datasets
 **Theory:**
 - **EPIC-Kitchens:** large-scale egocentric kitchen activity dataset; pixel-level annotations; seminal benchmark for egocentric video understanding.
 - **Ego4D:** 3,670 hours of egocentric video across diverse scenarios; standardised benchmarks for perception, memory, hand-object interaction; introduced the "past, present, future" framing.
@@ -414,17 +379,7 @@ IoU/LE/CA/VA against GT per-frame annotations.
 - Grauman, K. et al. *Ego4D: Around the World in 3,000 Hours of Egocentric Video*. CVPR 2022.
 - Grauman, K. et al. *Ego-Exo4D: Understanding Skilled Human Activity from First- and Third-Person Perspectives*. CVPR 2024.
 
-### 2f.2 Learning Correspondences
-**Theory:** Survey of the trajectory from handcrafted local descriptors through learned sparse matchers to detector-free dense methods, and the semantic correspondence setting that underpins ego-exo transfer. Mostly back-references §2b.0; emphasis here on why ego-exo is a stress test (wide-baseline, viewpoint flip, no geometric prior).
-
-**Key papers:** cross-reference §2b.0 keys (`lowe2004sift`, `sarlin2020superglue`, `sun2021loftr`, `roma`, `oquab2023dinov2`).
-
-### 2f.3 Segmentation Models
-**Theory:** Rapid survey of the milestones covered mechanistically in §2b — FCN, Mask R-CNN, SAM/SAM2/SAM3 — reframed here as prior work. Adds language-conditioned segmenters (LISA, GLaMM, PSALM, Sa2VA) and memory-based VOS (XMem) as the directly competing component families.
-
-**Key papers (already in `references.bib`):** `long2015fcn`, `he2017maskrcnn`, `kirillov2023sam`, `ravi2024sam2`, `ravi2025sam3`, `lai2024lisa`, `rasheed2024glamm`, `psalm2024eccv`, `yuan2025sa2va`, `cheng2022xmem`.
-
-### 2f.4 Ego-Exo Correspondence Methods
+### 2e.3 Ego-Exo Correspondence Methods
 **Theory:**
 - **Official baselines:** XSegTx (cross-view segmentation transfer); XMem tracker; XMem+XSegTx combined. All require ego-exo paired supervision.
 - **ObjectRelator:** learns relational visual features for cross-view object matching; supervised on ego-exo pairs.
@@ -460,12 +415,12 @@ IoU/LE/CA/VA against GT per-frame annotations.
 | Block 2: VLM description | Qwen 3.5 35B multimodal inference | §2d |
 | Block 2 (alt.): description | PixelRefer mask-conditioned | §2c |
 | Block 3a: anchor selection (language) | Grounding DINO confidence top-K | §2c |
-| Block 3a: anchor selection (geometry) | RoMa dense-match count top-K | §2b.0 |
+| Block 3a: anchor selection (geometry) | RoMa dense-match count top-K | §2e.1 |
 | Block 3b: agent loop | ReAct tool-use, Qwen 3.5 35B | §2d |
 | Block 3b: mask proposal | SAM 3 PCS text-to-mask | §2b / §2c |
 | Block 3b: pre-filter (ablated) | MiniLM cosine re-ranking | §2c (PixelRefer) |
 | Block 3b: MLLM verification | Qwen 3.5 35B multimodal reasoning | §2d |
-| Block 4: propagation | SAM 2/SAM 3 bi-directional video | §2e |
+| Block 4: propagation | SAM 2/SAM 3 bi-directional video | §2b.3 |
 | Evaluation | IoU (primary), LE, CA | §4 Experiments |
 
 ---

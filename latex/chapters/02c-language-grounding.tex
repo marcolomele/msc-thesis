@@ -1,7 +1,7 @@
 \section{Language Grounding}
 \label{sec:language-grounding}
 
-The models of \cref{sec:correspondence-segmentation} segment what a user points at, yet
+The models of \cref{sec:segmentation} segment what a user points at, yet
 our pipeline must segment what a user names. A point or a box specifies a location; a
 noun phrase specifies a concept, and turning the words ``the blue ceramic mug'' into the
 pixels that depict it is the problem of grounding language in vision. This section builds
@@ -141,8 +141,7 @@ model must both decide which regions belong to it and separate one instance from
 and SAM 3 couples a detector to a segmenter so that recognition and delineation are learned
 together. Its video module reuses the streaming memory of SAM 2 from \cref{subsec:sam},
 propagating each discovered mask across frames through the same memory attention, a reuse
-that lets the concept be tracked once it is named and that we expand in
-\cref{sec:addition-of-time}.
+that lets the concept be tracked once it is named, a capability covered fully in \cref{sec:addition-of-time}.
 
 A noun phrase, however expressive, struggles with the relational descriptions that
 cluttered scenes demand. Asking for ``the mug left of the laptop'' or ``the bottle nearest

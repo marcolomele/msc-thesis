@@ -12,15 +12,13 @@ d.	Chapter roadmap.
  
 2.	Theory & Related Works (~20 pages)
 a.	Visual Representation (~4 pages): Transformer, Vision Transformer, Self-supervised learning with DINOv2.
-b.	Correspondence & Segmentation (~2 pages): feature matching (handcrafted descriptors → detector-free dense matching with RoMa, used for geometry-based anchor selection); previous segmentation approaches, SAM & SAM2.
+b.	Segmentation (~4 pages): prior segmentation works (FCN, U-Net, Mask R-CNN, RITM); Segment Anything Model (SAM); video propagation with SAM 2 (VOS history, memory-based paradigm, bi-directional propagation).
 c.	Language-grounding (~4 pages): multimodality, Grounding DINO, SAM 3 Promptable Concept Segmentation (PCS) and its agentic interface, PixelRefer.
 d.	Foundation Models & Agents (~2 pages): Qwen Family, ReAct, tool use.
-e.	Addition of time (~2 pages): Video Object Segmentation and Propagation.
-f.	Related Works (~5 pages) — mirrors the paper's four-paragraph structure
-	i.   Ego and ego-exo datasets (EPIC-Kitchens, Ego4D, Ego-Exo4D and its Correspondences benchmark).
-	ii.  Learning correspondences (handcrafted descriptors, learned matchers, detector-free methods/RoMa, DINO semantic correspondence).
-	iii. Segmentation models (FCN/Mask R-CNN → SAM/SAM2/SAM3, language-conditioned segmenters, memory-based VOS, Grounding DINO).
-	iv.  Ego-exo correspondence methods: official baselines (XSegTx, XMem, XMem+XSegTx), ObjectRelator, O-MaMa (challenge winner), V2-SAM, LM-EEC (SOTA). Positioning: all prior methods learn correspondences from visual features and require paired ego-exo supervision; we treat the task as a test of training-free foundation-model composition with language as the bridge.
+e.	Related Works (~5 pages) — feature matching history first, then ego-exo survey
+	i.   Feature matching and dense correspondence (handcrafted descriptors → SuperPoint/SuperGlue → LoFTR → RoMa).
+	ii.  Ego and ego-exo datasets (EPIC-Kitchens, Ego4D, Ego-Exo4D and its Correspondences benchmark).
+	iii. Ego-exo correspondence methods: official baselines (XSegTx, XMem+XSegTx), ObjectRelator, O-MaMa (challenge winner), V2-SAM, LM-EEC (SOTA). Positioning: all prior methods learn correspondences from visual features and require paired ego-exo supervision; we treat the task as a test of training-free foundation-model composition with language as the bridge.
 
 3.	Proposed Pipeline (~5 pages)
 a.	Task formulation and the dual problem (cross-view transfer + temporal completeness); preliminary on SAM 3.
