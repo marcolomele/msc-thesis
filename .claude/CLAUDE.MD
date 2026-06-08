@@ -50,6 +50,25 @@ Claude Code.
 
 ---
 
+## Drafting Workflow
+
+Every prose generation or revision task — whether drafting a new passage, rewriting an existing one, or responding to specific feedback — follows this three-step sequence without exception.
+
+**Step 1 — Draft.** Respond to the content prompt. Focus on argument, structure, and technical accuracy. Do not self-censor for style yet; get the ideas down in the right order with the right logical connectors.
+
+**Step 2 — Audit.** Read the draft against `project-guidelines/style-guide.md` and flag every violation explicitly, grouped by category. Violations to check for, in order:
+
+1. **Voice & register** — "we" throughout; no "I"; no passive as default; no exclamation marks; no banned phrases ("it is important to note," "as mentioned above," etc.)
+2. **Sentence & paragraph structure** — paragraph assembly follows the four-step sequence (claim → develop → ground → close); no paragraph opens with a citation or "We can see that"; inter-paragraph connectors signal tension not addition; paragraph splitting at argumentative breaks
+3. **Method-survey discipline** (Theory sections) — each method described then immediately limited in the same paragraph; the transition between paradigms names the open problem the prior family left
+4. **Connector-rich prose** — no mid-sentence em dash; no mid-sentence colon; no hyphenated compound adjectives; logical connectors used instead of typographic scaffolding
+5. **Citation format** — inline name + year in prose + `\cite{key}`; year integrated as "in [year]" after publication verbs; no stacked citations
+6. **LaTeX conventions** — macros used for math; every equation labelled and referenced; `\cref{}` not `\ref{}`; no invented bibtex keys
+
+**Step 3 — Revise.** Apply every fix identified in Step 2 and output the final version. Do not output the audit list to the user unless they ask for it — deliver only the revised prose.
+
+---
+
 ## Your Responsibilities in This Repo
 
 ### Drafting in LaTeX
