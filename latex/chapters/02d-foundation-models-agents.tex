@@ -17,8 +17,8 @@ reliable, then formalise the reasoning loop it executes.
 
 A large language model is, at its core, a probability distribution over sequences of
 tokens. Given a vocabulary $\set{V}$ and a sequence $x_{1:n}$ drawn from it, the model
-factorises the joint probability of the sequence into a product of next-token
-conditionals and is trained to maximise the likelihood of observed text, equivalently to
+factorises the joint probability of the sequence into a product of conditionals over the
+next token and is trained to maximise the likelihood of observed text, equivalently to
 minimise the cross-entropy of each token against the model's prediction of it,
 
 \begin{equation}
@@ -31,26 +31,26 @@ minimise the cross-entropy of each token against the model's prediction of it,
 Here, $x_i$ is the $i$-th token, $x_{<i}$ the tokens that precede it, and
 $p_\theta(x_i \mid x_{<i})$ the model's distribution over the next token given that
 prefix. Each conditional is produced by the Transformer of \cref{subsec:transformer},
-with one modification that enforces the left-to-right factorisation of
+with one modification that enforces the factorisation from left to right in
 \cref{eq:autoregressive-lm}, namely a causal mask applied inside \cref{eq:attention} that
 sets to zero every attention weight from a token to its successors, so that position $i$
 attends only to $x_{<i}$ and the prediction of $x_i$ cannot see the answer. Because the
 keys and values of \cref{eq:attention} for the prefix do not change as generation
-proceeds, they are computed once and stored in a key-value cache, which turns generation
+proceeds, they are computed once and stored in a cache of keys and values, which turns generation
 of each new token from a recomputation over the whole prefix into a single step against
-the cache. This caching is what makes the long contexts our agent needs affordable, since
+that cache. This caching is what makes the long contexts our agent needs affordable, since
 the loop below accumulates an entire history of reasoning and tool results inside the
 context window across many turns.
 
-Trained on next-token likelihood alone, such a model continues text but does not reliably
+Trained on the likelihood of the next token alone, such a model continues text but does not reliably
 follow instructions, and scale is what first makes the behaviour worth steering. Kaplan
-et al.\ in 2020 \cite{Kaplan2020} and Hoffmann et al.\ in 2022 \cite{Hoffmann2022}
+et al.\ (2020) \cite{Kaplan2020} and Hoffmann et al.\ (2022) \cite{Hoffmann2022}
 established that loss falls as a power law in parameters, data, and compute, with the
 latter showing that compute is best spent by scaling data and parameters together, which
 is the reasoning that places a 35-billion-parameter model at a practical frontier for
 inference. Raw scale, however, only sharpens the prediction of plausible text; aligning
 that capability with instructions is a separate step. Instruction tuning continues
-training on pairs of an instruction and its response, converting the next-token predictor
+training on pairs of an instruction and its response, converting the predictor of the next token
 into one that answers a request, and preference alignment then tunes it against human or
 model judgements of which response is better, either through reinforcement learning from
 human feedback as in Ouyang et al.\ (2022) \cite{Ouyang2022} or through the direct
@@ -62,10 +62,10 @@ a requested format is precisely the kind of instruction these stages reward.
 
 Our pipeline uses Qwen3.5-35B \cite{qwen35blog} as this aligned model. The Qwen family,
 introduced by Bai et al.\ in 2023 \cite{BaiQwen2023}, follows the now standard recipe of
-decoder-only Transformers with grouped-query attention, which shares key and value
+Transformers built on the decoder alone, with grouped query attention that shares key and value
 projections across heads to shrink the cache described above, rotary position embeddings
 that encode position by rotating queries and keys rather than by adding a positional
-vector, RMSNorm in place of layer normalisation, and SwiGLU feed-forward blocks. Its
+vector, RMSNorm in place of layer normalisation, and SwiGLU feedforward blocks. Its
 multimodal extension, Qwen2-VL \cite{WangQwen2024}, attaches a Vision Transformer of the
 kind in \cref{subsec:vit} so that an image enters the same token stream as text, the
 property that lets the agent both read a frame and reason over it, and the property
@@ -113,7 +113,7 @@ against the description of the object being searched for. The model selects a to
 fills its arguments, the runtime parses the JSON and executes the matching function, and
 the result returns as the observation $o_k$. A strongly typed schema is what keeps this
 reliable, because constraining the model to a fixed set of tools and argument types leaves
-far less room for the hallucinated calls a free-form interface invites, and it is here that
+far less room for the hallucinated calls an interface without a fixed form invites, and it is here that
 instruction tuning pays off most directly. This supervised contract differs from the
 Toolformer paradigm of Schick et al.\ (2023) \cite{Schick2023}, in which a model
 discovers from self-supervision when and how to call APIs; our tools and their schema are
