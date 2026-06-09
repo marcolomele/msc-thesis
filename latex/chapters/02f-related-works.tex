@@ -1,5 +1,12 @@
-\section{Cross-View Object Correspondence Related Works}
+\section{Related Works in Cross-View Object Correspondence}
 \label{sec:related-works}
+
+\subsection{Datasets.}
+Large-scale egocentric video collections established first-person perception as a serious research programme.
+EPIC-KITCHENS-100, assembled by Damen et al. (2021) \cite{damen2021epickitchens100}, provides over 100 hours of annotated kitchen activity with dense action labels and per-pixel hand-object masks, anchoring egocentric benchmarks for action recognition and object interaction.
+Ego4D, published by Grauman et al. in 2022 \cite{grauman2022ego4d}, scaled this ambition to 3,670 hours of egocentric footage recorded across 74 worldwide locations, introducing standardised benchmarks covering episodic memory, social interaction, and hand-object contact, and framing the field around past, present, and future reasoning.
+Ego-Exo4D, published by the same group in 2024 \cite{grauman2024egoexo4d}, extended the collection to synchronised multi-camera recordings in which a wearable egocentric camera and multiple fixed exocentric cameras capture the same skilled human activities simultaneously.
+The dataset enables a qualitatively new class of tasks that require relating observations across the two perspectives, including the \textit{Ego-Exo4D Correspondences} benchmark, which defines the cross-view object mask transfer task used as the evaluation protocol throughout this work.
 
 \subsection{Feature Matching and Dense Correspondence}
 \label{subsec:matching}
@@ -55,14 +62,7 @@ semantic similarity is what allows the patch features of \cref{subsec:dino} to p
 images into correspondence without any geometric prior, of which the egocentric to
 exocentric setting is the most demanding instance.
 
-\paragraph{Ego and ego-exo datasets.}
-Large-scale egocentric video collections established first-person perception as a serious research programme.
-EPIC-KITCHENS-100, assembled by Damen et al. (2021) \cite{damen2021epickitchens100}, provides over 100 hours of annotated kitchen activity with dense action labels and per-pixel hand-object masks, anchoring egocentric benchmarks for action recognition and object interaction.
-Ego4D, published by Grauman et al. in 2022 \cite{grauman2022ego4d}, scaled this ambition to 3,670 hours of egocentric footage recorded across 74 worldwide locations, introducing standardised benchmarks covering episodic memory, social interaction, and hand-object contact, and framing the field around past, present, and future reasoning.
-Ego-Exo4D, published by the same group in 2024 \cite{grauman2024egoexo4d}, extended the collection to synchronised multi-camera recordings in which a wearable egocentric camera and multiple fixed exocentric cameras capture the same skilled human activities simultaneously.
-The dataset enables a qualitatively new class of tasks that require relating observations across the two perspectives, including the \textit{Ego-Exo4D Correspondences} benchmark, which defines the cross-view object mask transfer task used as the evaluation protocol throughout this work.
-
-\paragraph{Ego-exo correspondence methods.}
+\subsection{Ego-exo correspondence methods.}
 \label{sec:egoexo-methods}
 The \textit{Ego-Exo4D Correspondences} benchmark \cite{grauman2024egoexo4d} defines the task as predicting the mask of a designated object in either an ego or exo destination view, given its annotated mask in a source frame of the other view.
 The annotation protocol combines automated mask proposals with human verification across a curated set of object categories spanning tools, containers, and food items, producing per-frame ground-truth masks for both \textit{Ego2Exo} and \textit{Exo2Ego} transfer directions.
