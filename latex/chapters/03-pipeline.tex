@@ -1,4 +1,5 @@
 \chapter{Proposed Pipeline}
+\label{chap:pipeline}
 % Draft pending.
 
 % Text from section 02 video propagation which is actually linked better to here.
@@ -17,3 +18,12 @@ The two passes overlap on the frames that lie between seeds, where both a forwar
 
 \end{equation}
 where $\mask^{\rightarrow}_\frameidx$ is the mask the forward pass assigns to frame $\frameidx$, $\mask^{\leftarrow}_\frameidx$ the mask the backward pass assigns to the same frame, and the union is taken over pixels, so a pixel belongs to the object when either pass claims it. Taking the union rather than an intersection or an average reflects a deliberate bias toward recall; a part of the object recovered by only one pass, perhaps because it was occluded along the other's line of approach, is kept rather than discarded.
+
+
+The confidence is what makes the warp field usable as evidence rather
+than a raw prediction; the pipeline ranks candidate frames by the number of confident
+matches whose source coordinate falls inside the object mask $\mask$, turning
+\cref{eq:warp} into a signal free of language for selecting where to look. This same
+property of matching by semantic similarity is what allows the patch features of
+\cref{subsec:dino} to put two images into correspondence without any geometric prior, of
+which the egocentric to exocentric setting is the most demanding instance.
