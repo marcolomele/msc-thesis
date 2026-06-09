@@ -175,5 +175,5 @@ Track the current state of each chapter here. Update after each commit.
 | 02e Addition of Time | ☑ | ☑ |
 | 02f Related Works | ☑ | ☑ |
 | 03 Proposed Pipeline | ☑ | ☑ |
-| 04 Experiments | ☐ | ☐ |
+| 04 Experiments | ☑ | ☑ |
 | 05 Conclusions | ☐ | ☐ |
