@@ -1,8 +1,7 @@
 \section{Related Works in Cross-View Object Correspondence}
 \label{sec:related-works}
 
-The previous sections assembled the components our pipeline draws on. Here, we examiine the work that has already addressed cross-view object correspondence. 
-Cross-view object correspondence asks us to take an object segmented in one view of a scene and recover the same object in another view, despite the wide gap that separates an egocentric from an exocentric camera. We begin with the datasets that defined the problem and made it measurable, then trace two families of solutions. Geometric matching aligns the two views point by point, while trained feature fusion learns a joint embedding from labelled correspondences. We close on the limitation these approaches share, which motivates the different route taken in the chapters that follow.
+Before collecting all components from the previous sections into our pipeline, we examine related work that has already addressed cross-view object correspondence. We begin with the datasets that defined the problem and made it measurable, then trace two families of solutions. Geometric matching aligns the two views pixel by pixel, while trained feature fusion architectures learn generate masks from purely object embeddings. We conclude with  the common limitations that all these approaches share, which motivates the new paradigm introduced by our pipeline.
 
 \subsection{Datasets}
 \label{subsec:datasets}
