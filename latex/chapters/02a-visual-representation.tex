@@ -26,7 +26,9 @@ tired'', where producing a correct translation requires linking the pronoun ``it
 
 We represent the input as a sequence of $n$ tokens stacked into a matrix
 $\mm{X}\in\R^{n\times\dmodel}$, where $\dmodel$ is the embedding dimension shared
-throughout the model. From $\mm{X}$ the model derives three projections through
+throughout the model. The largest number of tokens $n$ the model can hold at once is its
+\textit{context window}, the budget within which every later use of the architecture must
+operate. From $\mm{X}$ the model derives three projections through
 learned weight matrices, the queries $\query=\mm{X}\mm{W}_Q$, the keys
 $\key=\mm{X}\mm{W}_K$, and the values $\val=\mm{X}\mm{W}_V$. Intuitively, each token
 emits a query for describing what it is looking for,  a key for describing what it
