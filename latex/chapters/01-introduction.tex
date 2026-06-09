@@ -39,7 +39,7 @@ time should transfer to novel tasks that none was designed for. Cross-view objec
 on \textit{Ego-Exo4D} is precisely such a task, and we treat it as a principled test of how
 far this hypothesis holds. 
 
-\textcolor{red}{\paragraph{Our Pipeline.} To this end, we propose a fully training-free inference pipeline in which natural language serves as the bridge between viewpoints, illustrated in \cref{fig:pipeline}. Given a
+\textcolor{red}{\paragraph{Our Pipeline.} To this end, we propose a pipeline with ``two eyes and one mouth''. Two cameras observe the scene from complementary perspectives, and a single natural language description mediates the object correspondence between them, illustrated in \cref{fig:pipeline}. Given a
 source-view mask track, we first select the single highest-quality seed frame from the source
 view and pass it to a visual large language model, which generates a
 view- and time- independent description of the target object. That description then drives two coordinated

@@ -1,29 +1,72 @@
 \chapter{Proposed Pipeline}
 \label{chap:pipeline}
-% Draft pending.
 
-% Text from section 02 video propagation which is actually linked better to here.
+The previous chapter built a mechanistic understanding of each foundation model our work relies on. It closed on a limitation common to the field, namely that every prior approach to cross-view object correspondence trains a dedicated fusion component on paired ego-exo data, which neither transfers to a new camera configuration nor exposes why a given mask was chosen (\cref{subsec:common-limitations}). We now take the opposite route, composing those same models, each frozen at the weights it ships with, into a single inference pipeline in which natural language is the only signal that crosses between the two views. Before describing how the blocks fit together, we state the task they solve and fix the notation carried through the rest of the chapter.
 
-Bidirectional propagation with nearest-seed selection is in large part a defence against this accumulation, shortening the temporal distance any single prediction must travel from a trusted anchor. This is the procedure that Block~4 of our pipeline implements in \texttt{propagation.py}, running SAM~2's video model forward and backward from the seed masks and merging the passes by nearest-seed assignment, and we measure what it costs and recovers frame by frame, through the per-frame intersection over union, location error, and contour accuracy of \cref{sec:experiments}.
+% ------------------------------------------------------------
+\section{Task Formulation}
+\label{sec:task-formulation}
+% ------------------------------------------------------------
 
+A take in \textit{Ego-Exo4D} is a single activity recorded simultaneously by several cameras synchronised in time, so that each instant of the scene is observed from two or more viewpoints at once (\cref{subsec:datasets}). We fix one camera as the source $S$ and another as the destination $D$, and write the two synchronised videos as $\vv{I}^S = (I^S_1, \ldots, I^S_\nframes)$ and $\vv{I}^D = (I^D_1, \ldots, I^D_\nframes)$, where $\frameidx \in \{1, \ldots, \nframes\}$ indexes the frame and the synchronisation guarantees that $I^S_\frameidx$ and $I^D_\frameidx$ capture the same moment. A target object is annotated in the source view by a sparse track of binary masks $\{\mask^S_\frameidx\}_{\frameidx \in \set{T}}$, where each $\mask^S_\frameidx \in \{0,1\}^{H \times W}$ marks the object pixels and $\set{T} \subseteq \{1, \ldots, \nframes\}$ is the small set of annotated frames. Given this input, the pipeline must predict the corresponding mask track in the destination view, namely a mask $\hat{\mask}^D_\frameidx$ for every frame $\frameidx$, whether or not the object is annotated or even visible there. Each run therefore addresses one triplet of a take, a target object, and a direction, the latter fixing which view is source and which is destination, either \textit{Ego2Exo} or \textit{Exo2Ego}.
 
+This single objective hides two problems of very different character, and separating them is what organises the pipeline. The first is cross-view transfer, namely relating the object across the extreme change in viewpoint, scale, and surrounding context that divides an egocentric from an exocentric camera. The same mug may fill the frame in one view and shrink to a handful of pixels in the other. The second is temporal completeness, namely assigning a mask to every destination frame, including the many frames where the object is partially occluded, blurred by motion, or only marginally visible. Cross-view transfer is the harder and the more specific of the two, because no geometric or photometric regularity reliably survives the viewpoint gap. Temporal completeness, by contrast, is a tracking problem that memory-based video segmentation already solves well once a few reliable masks exist, as we saw with SAM~2 in \cref{sec:addition-of-time}.
 
-A single forward pass from one seed is enough to fill a clip, but it is not the best use of several seeds, and the pipeline often holds more than one. Block~3 may segment the object on frames scattered through the video, and the masklet should draw on whichever seed is nearest to the frame being filled. We therefore propagate bidirectionally. Writing $\set{S} \subseteq \{1, \dots, \nframes\}$ for the set of seed frames, one pass runs forward from the earliest seed $\min \set{S}$ to the end of the clip and another runs backward from the latest seed $\max \set{S}$ to the start, and each output frame takes its mask from the pass whose originating seed is nearer in time. Conditioning on the nearest seed keeps the memory short, since a prediction is anchored to an annotation a few frames away rather than one at the far end of the video.
+Our design follows this split. Most of the pipeline is devoted to cross-view transfer, producing a small set of trustworthy masks in the destination view, while temporal completeness is delegated to SAM~2's native video tracker, which spreads those masks across the remaining frames. The bridge that carries the object across the viewpoint gap is built from SAM~3, whose three capabilities map directly onto our needs. Its promptable concept segmentation turns a short noun phrase into masks for all matching instances in a frame, its agentic interface places a multimodal language model in a reasoning loop around that segmenter, and its tracker inherits the memory architecture of SAM~2 (\cref{subsec:sam3}). The blocks below assemble these capabilities, together with a language description and a signal for selecting frames, into the full transfer.
 
-The two passes overlap on the frames that lie between seeds, where both a forward and a backward mask exist. On those frames we combine the two by a pixel-wise union,
+% ------------------------------------------------------------
+\section{Method Overview}
+\label{sec:method-overview}
+% ------------------------------------------------------------
+
+The pipeline processes each triplet through four sequential blocks, illustrated in \cref{fig:pipeline}. First, a set of seed frames is selected from the source video $\vv{I}^S$, choosing the frames in which the target object is most clearly visible (Block~1). Then, a vision-language model reads those seed frames and writes a description of the object that is meant to hold independently of viewpoint and time (Block~2). Next, this description guides the selection of a set of anchor frames in the destination video $\vv{I}^D$, and an independent SAM~3 agent loop segments the object on each of them (Block~3). Finally, the resulting anchor masks are propagated across the remaining frames of $\vv{I}^D$ by the video tracker (Block~4). The entire system is implemented in Python with PyTorch and Hugging Face libraries, and developed and run on NVIDIA H200 GPUs, with every model kept frozen at inference. The first three blocks carry out the cross-view transfer; the last completes the track in time.
+
+\subsection{Block 1: Source Frame Selection}
+\label{subsec:block1}
+
+The quality of the object description produced in Block~2 depends directly on how clearly the target is shown to the language model. That dependence makes the choice of source frames the first thing the pipeline must get right. Rather than pass the model every annotated frame, which is redundant and costly, we score each annotated frame $I^S_\frameidx$ from its ground-truth mask $\mask^S_\frameidx$ and keep only the best. The score is a weighted combination of two geometric cues read off the mask,
 
 \begin{equation}
-  \mask_\frameidx = \mask^{\rightarrow}_\frameidx \,\cup\, \mask^{\leftarrow}_\frameidx,
-  \label{eq:mask-union}
-
+  q(\frameidx) = w_a \, a(\mask^S_\frameidx) + w_c \, c(\mask^S_\frameidx),
+  \qquad \frameidx \in \set{T},
+  \label{eq:frame-score}
 \end{equation}
-where $\mask^{\rightarrow}_\frameidx$ is the mask the forward pass assigns to frame $\frameidx$, $\mask^{\leftarrow}_\frameidx$ the mask the backward pass assigns to the same frame, and the union is taken over pixels, so a pixel belongs to the object when either pass claims it. Taking the union rather than an intersection or an average reflects a deliberate bias toward recall; a part of the object recovered by only one pass, perhaps because it was occluded along the other's line of approach, is kept rather than discarded.
 
+where $a(\mask^S_\frameidx)$ is the normalised mask area, the fraction of the frame occupied by the object, and $c(\mask^S_\frameidx)$ is centrality, defined as the complement of the normalised distance between the mask centroid and the frame centre, so that it approaches one when the object sits at the middle of the image. The weights are set to $w_a = 0.99$ and $w_c = 0.01$, making area the dominant factor and leaving centrality as a marginal tie-breaker that prefers an object nearer the frame centre only when two frames are otherwise comparable. This ordering reflects a simple observation, namely that a large object gives the language model far more to describe than a small but perfectly centred one. The frames that score highest form the seed set $\set{S} \subseteq \set{T}$, and their masks $\{\mask^S_\frameidx\}_{\frameidx \in \set{S}}$ are used to build the annotated images passed to Block~2. We validate this formulation against a more elaborate alternative in the ablations of \cref{chap:experiments}.
 
-The confidence is what makes the warp field usable as evidence rather
-than a raw prediction; the pipeline ranks candidate frames by the number of confident
-matches whose source coordinate falls inside the object mask $\mask$, turning
-\cref{eq:warp} into a signal free of language for selecting where to look. This same
-property of matching by semantic similarity is what allows the patch features of
-\cref{subsec:dino} to put two images into correspondence without any geometric prior, of
-which the egocentric to exocentric setting is the most demanding instance.
+\subsection{Block 2: Object Description}
+\label{subsec:block2}
+
+With the clearest source frames in hand, the pipeline builds the bridge itself, namely a textual description of the object generated by a vision-language model. For the bridge to carry the object across the viewpoint gap, the description must satisfy two properties at once. It must hold under \emph{view independence}, remaining valid when the object is seen from the radically different viewpoint of camera $D$, and under \emph{time independence}, holding for every destination frame $I^D_\frameidx$ rather than only those moments close in time to the seed frames. The second property is what makes the description usable for selecting anchor frames in Block~3. The extreme change in viewpoint gives no guarantee that the destination frames synchronised with the seed frames are themselves good places to segment, and the object's surroundings may change entirely over the course of the take. In short, there is no reliable symmetry in quality between the two views, so a description tied to one moment in the source view would mislead the search in the destination view.
+
+To meet both properties, we instruct the model to report only intrinsic attributes of the object, namely its colour, canonical identity, material, and structural parts, all of which stay constant under changes of viewpoint and time. For each seed frame $I^S_\frameidx$ with $\frameidx \in \set{S}$, the model receives two images, one with the mask $\mask^S_\frameidx$ overlaid as a translucent red region outlined by a contour, and one in raw form, so that it can locate the target without losing the unaltered appearance around it. The model returns a description $w_\frameidx$ for each seed frame, the object half of the language bridge that the next block grounds in the destination view. We confirm in \cref{chap:experiments} that descriptions satisfying both properties lead to better anchor selection downstream, and that a general model writes them more reliably than one specialised to describing image regions.
+
+\subsection{Block 3: SAM 3 Agentic Grounding}
+\label{subsec:block3}
+
+Grounding the description in the destination view is the hard half of the task, and Block~3 approaches it in two stages, first choosing where to look and then segmenting what is there. The first stage scores every destination frame by how likely it is to contain the target, using either of two interchangeable signals. Grounding DINO scores each frame $I^D_\frameidx$ by running open-vocabulary detection with the description $w_\frameidx$ as the query, which gives a visibility signal grounded in language (\cref{subsec:groundingdino}). RoMa offers the geometric alternative, scoring each frame by how many pixels of the source object find a confident match within it,
+
+\begin{equation}
+  s(\frameidx) = \sum_{\vv{x} \,:\, \mask^S(\vv{x}) = 1} \mathbb{1}\!\left[\, c_\frameidx(\vv{x}) > \delta \,\right],
+  \label{eq:roma-score}
+\end{equation}
+
+where $(\warp_\frameidx, c_\frameidx)$ is the warp field of \cref{eq:warp} estimated between the source frame and the destination frame $I^D_\frameidx$, the sum runs over the source pixels $\vv{x}$ that lie inside the object mask $\mask^S$, and the indicator counts a pixel only when its match confidence $c_\frameidx(\vv{x})$ exceeds a threshold $\delta$. A frame thus scores highly when much of the source object is confidently visible somewhere within it, a visibility signal free of any language. In both cases the frames that score highest form the anchor set $\set{A} \subseteq \{1, \ldots, \nframes\}$.
+
+Each anchor frame is then segmented independently by a SAM~3 agent loop, with the same model from Block~2 acting as its orchestrator (\cref{subsec:react,subsec:sam3}). The model first simplifies the rich description $w_\frameidx$ into a short noun phrase, since SAM~3 grounds a discriminative phrase far more reliably than a paragraph of attributes. SAM~3 then segments every instance matching that phrase in the anchor frame, and the model inspects the resulting masks one by one, accepting or rejecting each against the original description. When every candidate is rejected, the loop restarts with a differently simplified phrase, so that a single poor prompt does not abort the frame. The mask accepted at convergence on each anchor frame yields the anchor mask set $\{\hat{\mask}^D_\frameidx\}_{\frameidx \in \set{A}}$, which anchors the propagation of Block~4 by supplying concrete examples of the object's appearance and location in the destination view.
+
+\subsection{Block 4: Mask Propagation}
+\label{subsec:block4}
+
+A handful of anchor masks scattered through the destination video do not yet make a complete track, which is the temporal completeness problem we deferred to the tracker. We propagate the anchor masks $\{\hat{\mask}^D_\frameidx\}_{\frameidx \in \set{A}}$ across the remaining frames using SAM~2's video model, which conditions each new prediction on a memory bank rather than on the immediately preceding frame alone (\cref{sec:addition-of-time}). The bank holds both the anchor frames, to which masks have been assigned, and the frames most recently processed during propagation. At each frame $I^D_\frameidx$ with $\frameidx \notin \set{A}$, the model attends over this entire memory through cross-attention and predicts the mask from whichever stored frame best matches the current appearance of the object. This design suits egocentric video in particular. Rapid camera motion and frequent brief occlusions mean the frame just before $I^D_\frameidx$ is often not the most informative reference, and attending over the whole memory lets the tracker reach back to a distant anchor when the nearby frames fail.
+
+A single anchor would suffice to fill the video in one pass, but the pipeline usually holds several, and each frame should draw on the anchor nearest to it in time. We therefore propagate bidirectionally, running one pass forward from the earliest anchor $\min \set{A}$ to the end of the video and another backward from the latest anchor $\max \set{A}$ to the start, so that the memory any single prediction depends on stays short. The two passes overlap on the frames lying between anchors, where both produce a mask, and there we combine them by a union taken pixel by pixel,
+
+\begin{equation}
+  \hat{\mask}^D_\frameidx = \hat{\mask}^{\rightarrow}_\frameidx \,\cup\, \hat{\mask}^{\leftarrow}_\frameidx,
+  \label{eq:mask-union}
+\end{equation}
+
+where $\hat{\mask}^{\rightarrow}_\frameidx$ is the mask assigned by the forward pass, $\hat{\mask}^{\leftarrow}_\frameidx$ the mask assigned by the backward pass, and a pixel belongs to the object whenever either pass claims it. Taking the union rather than an intersection reflects a deliberate bias toward recall, since a part of the object recovered by only one pass, perhaps because it was occluded along the other's line of approach, is kept rather than discarded. Any non-empty predicted mask at a frame is recorded as the pipeline's prediction for the target object there, completing the destination track.
+
+The four blocks together turn a sparse source annotation into a full destination track without training any component for the task, and every intermediate output remains open to inspection, from the seed frames to the description to the anchor masks. This readability is what lets us decompose the pipeline's errors in \cref{chap:experiments}, where we measure how much of the final accuracy each block determines, weigh the two anchor signals, grounded in language and in geometry, against random selection, and trace the dominant failure modes back to the block that produced them.

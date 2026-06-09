@@ -165,15 +165,15 @@ These are non-negotiable — they apply to every chapter file.
 
 Track the current state of each chapter here. Update after each commit.
 
-| Chapter | Directive | LaTeX | Compiled |
-|---|---|---|---|
-| 01 Introduction | ☐ | ☐ | ☐ |
-| 02a Visual Representation | ☑ | ☑ | ☐ |
-| 02b Segmentation | ☑ | ☑ | ☐ |
-| 02c Language Grounding | ☑ | ☑ | ☐ |
-| 02d Foundation Models & Agents | ☑ | ☑ | ☐ |
-| 02e Addition of Time | ☑ | ☑ | ☐ |
-| 02f Related Works | ☐ | ☐ | ☐ |
-| 03 Proposed Pipeline | ☐ | ☐ | ☐ |
-| 04 Experiments | ☐ | ☐ | ☐ |
-| 05 Conclusions | ☐ | ☐ | ☐ |
+| Chapter | Directive | LaTeX |
+|---|---|---|
+| 01 Introduction | ☑ | ☑ |
+| 02a Visual Representation | ☑ | ☑ |
+| 02b Segmentation | ☑ | ☑ |
+| 02c Language Grounding | ☑ | ☑ |
+| 02d Foundation Models & Agents | ☑ | ☑ |
+| 02e Addition of Time | ☑ | ☑ |
+| 02f Related Works | ☑ | ☑ |
+| 03 Proposed Pipeline | ☑ | ☑ |
+| 04 Experiments | ☐ | ☐ |
+| 05 Conclusions | ☐ | ☐ |
