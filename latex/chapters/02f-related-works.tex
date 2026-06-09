@@ -1,6 +1,9 @@
 \section{Related Works in Cross-View Object Correspondence}
 \label{sec:related-works}
 
+The previous sections assembled the components our pipeline draws on. Here, we examiine the work that has already addressed cross-view object correspondence. 
+Cross-view object correspondence asks us to take an object segmented in one view of a scene and recover the same object in another view, despite the wide gap that separates an egocentric from an exocentric camera. We begin with the datasets that defined the problem and made it measurable, then trace two families of solutions. Geometric matching aligns the two views point by point, while trained feature fusion learns a joint embedding from labelled correspondences. We close on the limitation these approaches share, which motivates the different route taken in the chapters that follow.
+
 \subsection{Datasets}
 \label{subsec:datasets}
 Datasets for cross-view object correspondence emerged from research in first-person video understanding. This field became a prominent research direction in computer vision over the last decade, primarily motivated by the advancement of personal devices with augmented reality capabilities. The first major dataset was released in 2021 under the name EPIC-KITCHENS-100 \cite{damen2021epickitchens100}. It provides over 100 hours of annotated kitchen activity with dense action labels and narrations, together with hand and object bounding-box annotations, enabling tasks like action recognition and object interaction on the egocentric point of view. The following year, Ego4D \cite{grauman2022ego4d} brought 3,670 hours of egocentric footage recorded across 74 worldwide locations across multiple scenarios, including shopping, gardening, sports, and doing the laundry. It also introduced standardized benchmarks for novel tasks like episodic memory, social interaction, and action forecasting. This established the necessary diverse and robust foundation among which the field could build. 
@@ -36,7 +39,7 @@ reliable that single match is, with values near one where the geometry is certai
 \subsection{Trained Feature Fusion Architectures}
 \label{subsec:feature-fusion}
 Matching objects at the pixel value is inefficient because of the extreme viewpoint changes between egocentric and exocentric videos, which result in severe distortions in color, shape, and position. Therefore,
-most methods that address the \textit{Ego-Exo4D Correspondence} share a common paradigm; building an architecture that fuses source and destination features and training that fusion on the labeled data of Ego-Exo4D.
+most methods that address the ego-exo4D correspondence challenge share a common paradigm; building an architecture that fuses source and destination features and training that fusion on the labeled data of Ego-Exo4D.
 
 The official Ego-Exo4D work presents two baselines: XSegTx and XView-XMem \cite{grauman2024egoexo4d}.
 XSegTx adapts SegSwap \cite{segswap}, a co-segmentation model trained to locate shared objects across image pairs, by conditioning it on the object of interest, passing the query mask alongside the two frames as a third input and training the co-segmentation head on the labelled correspondence data. It operates on individual frame pairs with no temporal state.
