@@ -1,25 +1,18 @@
 \section{Foundation Models and Agents}
 \label{sec:foundation-models-agents}
 
-The models of \cref{sec:language-grounding} turn a phrase into masks and a mask back
-into a phrase, yet neither decides which phrase to ask for nor judges whether the
-returned masks are the ones we wanted. Block~3 of our pipeline delegates exactly these
-decisions to a foundation model that does not run as a single forward pass but as an
-\textit{agent}, a system that reasons about a goal, calls the segmenter of
-\cref{subsec:sam3} as a tool, inspects the masks it gets back, and refines its request
-until the right object is found. This is the planner role that the agentic interface of
-\cref{subsec:sam3} leaves open, and our pipeline fills it with Qwen3.5-35B. To make the
-loop precise we first ground what such a model is and what makes its structured outputs
-reliable, then formalise the reasoning loop it executes.
+In \cref{sec:language-grounding} we reviewed models that use text to localise an object in an image, and concluded with SAM 3's agent loop that allows us to segment from complex relational text prompts. The key component enabling this advanced capability is a multimodal large language model (MLLM). In this section, we define what such a model is, describe the key architectural innovations of Qwen \cite{qwen35blog}, our MLLM of choice for our pipeline, and formalise its reasoning loop with ReAct \cite{yao2023react}.
 
 \subsection{Large Language Models}
 \label{subsec:llm}
 
-A large language model is, at its core, a probability distribution over sequences of
+Fundamentally, a large language model estimates a probability distribution over sequences of
 tokens. Given a vocabulary $\set{V}$ and a sequence $x_{1:n}$ drawn from it, the model
-factorises the joint probability of the sequence into a product of conditionals over the
-next token and is trained to maximise the likelihood of observed text, equivalently to
-minimise the cross-entropy of each token against the model's prediction of it,
+first factorises the joint probability of the sequence into a product of conditionals over the
+next token and then is trained to maximise the likelihood of observed text. 
+Since the cross-entropy of a distribution against a prediction is defined as the negative log
+of the probability the prediction assigns to the true outcome, maximising the likelihood of each 
+token is equivalent to minimising its cross-entropy:
 
 \begin{equation}
   p_\theta(x_{1:n}) = \prod_{i=1}^{n} p_\theta(x_i \mid x_{<i}),
@@ -29,63 +22,46 @@ minimise the cross-entropy of each token against the model's prediction of it,
 \end{equation}
 
 Here, $x_i$ is the $i$-th token, $x_{<i}$ the tokens that precede it, and
-$p_\theta(x_i \mid x_{<i})$ the model's distribution over the next token given that
-prefix. Each conditional is produced by the Transformer of \cref{subsec:transformer},
-with one modification that enforces the factorisation from left to right in
-\cref{eq:autoregressive-lm}, namely a causal mask applied inside \cref{eq:attention} that
+$p_\theta(x_i \mid x_{<i})$ the model's conditional distribution over the next token given that
+prefix. Each conditional is estimated by a Transformer from \cref{subsec:transformer}.
+The key modification that enforces the causal structure of text from left to right in
+\cref{eq:autoregressive-lm} is a causal mask applied inside \cref{eq:attention} that
 sets to zero every attention weight from a token to its successors, so that position $i$
-attends only to $x_{<i}$ and the prediction of $x_i$ cannot see the answer. Because the
-keys and values of \cref{eq:attention} for the prefix do not change as generation
+attends only to $x_{<i}$ and the prediction of $x_i$ cannot see the answer, which resembles how we naturally read text. Because the keys and values of \cref{eq:attention} for the prefix do not change as generation
 proceeds, they are computed once and stored in a cache of keys and values, which turns generation
-of each new token from a recomputation over the whole prefix into a single step against
-that cache. This caching is what makes the long contexts our agent needs affordable, since
+of each new token from a recomputation task over the whole prefix into a single prediction step against
+that cached information. This caching is what makes the long contexts affordable, since
 the loop below accumulates an entire history of reasoning and tool results inside the
 context window across many turns.
 
-Trained on the likelihood of the next token alone, such a model continues text but does not reliably
-follow instructions, and scale is what first makes the behaviour worth steering. Kaplan
-et al.\ (2020) \cite{Kaplan2020} and Hoffmann et al.\ (2022) \cite{Hoffmann2022}
-established that loss falls as a power law in parameters, data, and compute, with the
-latter showing that compute is best spent by scaling data and parameters together, which
-is the reasoning that places a 35-billion-parameter model at a practical frontier for
-inference. Raw scale, however, only sharpens the prediction of plausible text; aligning
-that capability with instructions is a separate step. Instruction tuning continues
-training on pairs of an instruction and its response, converting the predictor of the next token
-into one that answers a request, and preference alignment then tunes it against human or
-model judgements of which response is better, either through reinforcement learning from
-human feedback as in Ouyang et al.\ (2022) \cite{Ouyang2022} or through the direct
-preference optimisation of Rafailov et al.\ (2023) \cite{Rafailov2023}, which recovers the
-same objective without a separate reward model. For our purposes the consequence matters
-more than the mechanism. An aligned model emits structured outputs, in particular the JSON
-tool calls the agent depends on, far more reliably than a base model, because adherence to
-a requested format is precisely the kind of instruction these stages reward.
+\paragraph{Training.} The ``Large'' in Large Language Model (LLM) is a direct reference to the number of parameters, the volume of training data, and the compute needed to achieve high quality in language generation. Kaplan et al.\ (2020) \cite{Kaplan2020} established that loss falls as a power law in each of these three quantities independently, and Hoffmann et al.\ (2022) \cite{Hoffmann2022} showed that neither parameters nor training data should grow faster than the other at a fixed compute budget. Two phases compromise the training of an LLM. The first is pre-training, where the objective is to encode a broad prior over language, world knowledge, and structured formats, achieved by with the loss  \cref{eq:autoregressive-lm}  over a large corpora spanning the open web, books, and code. The second phase is called fine-tuning, where the model is optimised  for any specific  downstream task. Brown et al.\ (2020) \cite{Brown2020GPT3} demonstrated that at sufficient scale, this prior knowledge supports solving new tasks without any weight update. 
 
-Our pipeline uses Qwen3.5-35B \cite{qwen35blog} as this aligned model. The Qwen family,
-introduced by Bai et al.\ in 2023 \cite{BaiQwen2023}, follows the now standard recipe of
-Transformers built on the decoder alone, with grouped query attention that shares key and value
-projections across heads to shrink the cache described above, rotary position embeddings
-that encode position by rotating queries and keys rather than by adding a positional
-vector, RMSNorm in place of layer normalisation, and SwiGLU feedforward blocks. Its
-multimodal extension, Qwen2-VL \cite{WangQwen2024}, attaches a Vision Transformer of the
-kind in \cref{subsec:vit} so that an image enters the same token stream as text, the
-property that lets the agent both read a frame and reason over it, and the property
-PixelRefer in \cref{subsec:pixelrefer} builds on. The version we deploy adds a
-configurable reasoning mode that emits an explicit chain of thought before its answer, a
-capability we exploit directly in the loop below.
+Training on the prediction of the next token alone yields a model that generates text plausibly. However, this alone does not provide reliable instruction following and image processing capabilities. Solving the first problem means aligning the LLM with human intent, done in two further training stages. The first is instruction tuning, which continues training on curated pairs of an instruction and its response, converting the predictor of the next token into one that answers requests. Ouyang et al.\ (2022) \cite{Ouyang2022} showed that a model tuned in this way is preferred by human raters over a base model an order of magnitude larger, demonstrating that the quality of alignment matters more than raw scale for practical use. Instruction tuning, however, provides a signal about what a correct response looks like but not about which of several plausible responses is better. The second stage provides that ranking signal. Preference alignment trains the model against human or model judgements of which among several candidate responses is better. The judgment is provided either through reinforcement learning from human feedback, as in \cite{Ouyang2022}, or through direct preference optimisation of Rafailov et al.\ (2023) \cite{Rafailov2023}, which recovers the same objective without a separate reward model. Instruction following is particularly relevant for our pipeline, because we seek object descriptions of consistent format and length. 
 
-\subsection{Reasoning and Acting with Tools}
+\paragraph{Vision Language Models.} To enable visual understanding, the second problem, a LLM requires a separate architectural extension. 
+Alayrac et al.\ introduced Flamingo in 2022 \cite{Alayrac2022}, connecting a frozen visual encoder to a pre-trained LLM through cross-attention layers. They demonstrate that such a model can perform  few-shot visual reasoning over images and video without fine-tuning for any specific task.  Liu et al.\ introduced LLaVA in 2023 \cite{liu2023llava}, simplifying this design by replacing cross-attention with a lightweight projection that maps visual tokens directly into the LLM's input space, a paradigm now known as visual instruction tuning.  Today, models of this family are named as either \textit{visual language models} (VLMs) or \textit{multimodal large
+language models} (MLLMs). The latter naming is used more frequently because new emerging architectures are able fully multimodal, able to understand other forms of information like audio. Novertheless, we will adop VLM for this work, because it emphasises the capability our pipeline depends
+on: the ability to reason jointly over an image and a text prompt.
+
+\paragraph{Qwen Family.} To date, the most powerful openly available VLM belongs to the Qwen family. Bai et al.\ introduced the original Qwen language model in 2023 \cite{BaiQwen2023}, following the standard recipe of a
+Transformer built on the decoder alone, with grouped query attention that shares key and
+value projections across heads, rotary embeddings that encode position by revolting queries and keys 
+rather than by adding a positional vector, RMSNorm \cite{zhang2019rootmeansquarelayer} in place of layer normalisation,  and SwiGLU feedforward blocks \cite{shazeer2020gluvariantsimprovetransformer}. 
+This backbone fixes the language competence, yet on its own can process only text.
+
+The authors closed this gap in the same year with Qwen-VL, the first multimodal member of
+the family \cite{bai2023qwenvl}, by attaching a Vision Transformer from \cref{subsec:vit} that embeds images and streams them 
+into the token flow of the text. Qwen-VL's visual encoder splits a frame into patches with a stride of
+14 and produces a long sequence of image features. Naively, they would overwhelm the context
+window. To solve this, Qwen-VL inserts a single cross-attention layer as adapter whose queries are a fixed group of trainable vectors and whose keys are the image features. This compresses the image embeddings sequence to a fixed length of $256$ tokens and manages context cost. The compressed tokens, wrapped by two special markers that delimit the image, are then fed to the language model together with the text. The authors train on region descriptions to further instruct the model on how to read and emit bounding boxes in a
+normalised string format. These improvements allow the model to both view an image and reason over it. Thus,  Qwen-VL grounds language an image within a single pass and allows for object localization. 
+
+Two years after Qwen-VL, Qwen 3 was published \cite{yang2025qwen3technicalreport, qwen35blog}, an evolution aimed at tasks demanding prolonged reasoning, in which the model generates an explicit chain of intermediate inference before  committing to an answer, and the agentic tool use, which we formalise in \cref{subsec:react}.  Both stretch the token sequence, since every reasoning step and every tool call produces additional text that is appended to the history.  As a result, the attention cache of \cref{eq:attention} grows quadratically. The authors address this problem on three fronts.  First, the grouped query attention carried over from the backbone lets several attention heads share one copy of the keys and values, so the cache of past tokens from \cref{subsec:llm} grows slowly as the history lengthens. Second, they train the model on sequences of $32{,}000$ tokens and raise the base frequency of the rotary position embeddings from $10{,}000$ to $1{,}000{,}000$, which spreads positions far enough apart that the model can still tell them apart over long inputs. They also add two further techniques at inference time, namely YaRN \cite{peng2023yarn}  and Dual Chunk Attention \cite{an2024dca}, that together let the model read sequences four times longer than any it saw in training.  Finally, a thinking budget caps how many tokens the model may spend reasoning, halting it at the limit so that  it answers from the thinking accumulated so far, limiting the context a long chain of thought can consume.
+
+\subsection{Reasoning, Acting with Tools, and SAM 3 Agent}
 \label{subsec:react}
 
-An aligned model can answer a question in one turn, but segmenting the right object takes
-several attempts that each depend on what the previous attempt returned. \textit{ReAct},
-proposed by Yao et al.\ in 2023 \cite{Yao2023ReAct}, structures these attempts by
-interleaving reasoning with action, extending the observation that eliciting an explicit
-chain of thought improves the correctness of a model's answers \cite{Wei2022CoT} from
-single answers to a loop that also acts on the world. At step $k$ the agent conditions on
-a history $h_k$ and produces a thought $r_k$ and an action $a_k$, the action is executed
-to yield an observation $o_k$, and the history is extended with the triple before the next
-step,
-
+An well-trained model can answer a question in one shot, but segmenting the right object in cluttered environments takes several attempts and requires a principled approach. \textit{ReAct}, proposed by Yao et al.\ in 2023 \cite{Yao2023ReAct}, structures these attempts by alternating between reasoning and action. This framework was built upon the observation that asking for an explicit chain of thought improves the correctness of answers \cite{Wei2022CoT}  with respect to a single answer without any additional training. We call an LLM placed in such a loop an \textit{agent}, namely a language model that, rather than answering in a single pass, repeatedly reasons, acts on its environment through tools, and conditions its next step on what those actions return. At step $k$ the agent conditions on a history $h_k$ and produces a thought $r_k$ and an action $a_k$. The action is executed to yield an observation $o_k$, and the history is extended with the triple before the next step. In essence,
 \begin{equation}
   (r_k, a_k) \sim p_\theta(\,\cdot \mid h_k), \qquad
   o_k = \mathrm{exec}(a_k), \qquad
@@ -93,42 +69,31 @@ step,
   \label{eq:react-loop}
 \end{equation}
 
-Here, $h_k$ is the conversation history, beginning with a system prompt that states the
-task and the available tools and growing with every turn. The thought $r_k$ is a piece of
-natural-language reasoning the model writes for itself, sampled from the distribution
-$p_\theta$ of \cref{eq:autoregressive-lm}, and $a_k$ is the action it then commits to. The
-operator $\mathrm{exec}$ runs that action outside the model and returns the observation
-$o_k$, the symbol $\Vert$ appends the completed triple to the history, and $\mathrm{prune}$
-is the bookkeeping we describe shortly. Writing the thought before the action is the whole
-point of the loop, because a model that first reasons about which object to segment and why
-chooses better actions than one forced to emit a tool call directly, and the trace it
-leaves makes each decision legible to us when a run fails.
+where the symbol $\Vert$ appends the completed triple to the history. $h_k$ begins with a system prompt that states the task and the available tools available at every turn. The thought $r_k$ is a piece of natural-language reasoning the model writes for itself, and $a_k$ is the action it then commits to. In particular, action $a_k$ is not free text, but rather a structured call defined by a JSON schema that names the specific tool and the arguments that are passed. This JSON schema is then processed and an actual external software program is activated. The term $\mathrm{exec}$ stands for a any operation run outside the model's control, and returns the observation $o_k$,  while $\mathrm{prune}$ is a bookkeeping step at the end of the loop. The key point of ReAct is saving the model's thought right before the action, because a model that first reasons about which object to segment and why chooses better actions than one forced to use a tool directly. Additionally, the trace stored in the history makes each decision legible and every failure interpretable.
 
-The action $a_k$ is not free text but a call into a typed action space, defined by a JSON
-schema that names each tool and the type of every argument it accepts. Our agent is given
-two tools. The first, \texttt{segment\_phrase}, takes a noun phrase and invokes the
-promptable concept segmentation of \cref{eq:sam3-pcs} to return candidate masks; the
-second, \texttt{examine\_each\_mask}, asks the multimodal model to verify a candidate
-against the description of the object being searched for. The model selects a tool and
-fills its arguments, the runtime parses the JSON and executes the matching function, and
-the result returns as the observation $o_k$. A strongly typed schema is what keeps this
-reliable, because constraining the model to a fixed set of tools and argument types leaves
-far less room for the hallucinated calls an interface without a fixed form invites, and it is here that
-instruction tuning pays off most directly. This supervised contract differs from the
-Toolformer paradigm of Schick et al.\ (2023) \cite{Schick2023}, in which a model
-discovers from self-supervision when and how to call APIs; our tools and their schema are
-fixed in advance, and the agent only decides how to use them.
+\paragraph{SAM 3 Agent.} Now that we have covered the fundamentals of VLMs and defined what
+an agent is, we can describe the interface that SAM 3 provides. Rather than expose segmentation 
+as a single forward pass, SAM 3 Agent places a VLM in a ReAct loop with a series of tools
+The tool \texttt{segment\_phrase} takes a simple noun phrase and returns every candidate mask the model produces for it. 
+\texttt{examine\_each\_mask} renders each candidate in isolation so the VLM can verify a small or overlapping region it could not separate at a glance. 
+The remaining two tools end the loop; \texttt{select\_masks\_and\_return} commits a chosen subset, and
+\texttt{report\_no\_mask} declares that nothing in the frame matches the request. At
+every turn the runtime lists the available masks, the model writes its thought,
+commits to exactly one tool, and stops, after which the observation $o_k$ returns.
 
-A loop that grows its history at every step would soon exceed even the long context of
-\cref{subsec:llm}, and left unchecked it also drifts into characteristic failures. The
-$\mathrm{prune}$ operator of \cref{eq:react-loop} addresses the first problem by keeping
-the system prompt and a few anchor turns alongside the most recent tool exchange while
-dropping the middle, which bounds the context without discarding the grounding the agent
-needs. The failures are of three kinds, namely repeating an action that already failed,
-hallucinating arguments outside the schema, and a form of reward hacking in which the agent
-settles for a trivially easy phrase rather than the object actually requested. Our loop
-guards against each, rejecting a phrase it has already tried, aborting after a run of
-consecutive rejections, and degrading gracefully to an empty mask rather than a wrong one,
-all within a budget of at most fifteen generations per frame. This is the loop that Block~3
-of our pipeline implements, and we trace its behaviour on real frames in
-\cref{sec:experiments}.
+This approach is robust for several reasons. First, the instruction tuning of \cref{subsec:llm} 
+pays off, because the VLM has been trained to emit exact structured calls. This differs from the 
+Toolformer paradigm of Schick et al.\ (2023) \cite{Schick2023},  in which a model discovers through 
+self-supervision when and how to call an API. Second, the
+$\mathrm{prune}$ operator of \cref{eq:react-loop} retains the system prompt and the opening
+turn alongside the most recent \texttt{segment\_phrase} exchange while discarding the
+middle, holding the context to at most two rendered images.  The remaining failures are of three kinds: repeating a phrase that
+already failed, hallucinating arguments outside the schema, and a form of reward hacking in
+which the agent settles for a trivially easy phrase rather than the requested object. The
+loop guards against each, refusing a \texttt{text\_prompt} it has already tried, aborting
+to an empty mask once the same phrase is rejected twice, and reporting no mask rather than
+returning a wrong region, all within a budget of at most fifteen generations per frame.
+
+With this, we complete the review of every foundation our pipeline builds upon, from visual representation,
+to segmentation, language grounding, and the agent loop that connects all elements together. We are not ready to 
+overview what related works achieved in cross view object correspondence, identify the gaps, and finally present our pipeline. 
