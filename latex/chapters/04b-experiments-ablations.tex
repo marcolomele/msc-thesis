@@ -130,7 +130,7 @@ The same split recurs whenever we slice the data. By scenario (\cref{fig:scenari
 \label{sec:gap-analysis}
 % ------------------------------------------------------------
 
-The performance profile told us that our deficit is concentrated rather than diffuse, but not what produces it. Because every intermediate output of the pipeline is legible, we can do better than report the gap and instead charge each lost case to the block that lost it. We conduct this analysis on 25\% of the validation set, comparing against the two strongest runs of the pipeline in each direction, namely 218 instances of a take, an object, and a direction per run across 45 takes and 172 distinct objects. Every number below is computed against the ground-truth masks, and our offline IoU reproduces the pipeline's own logged score to a mean difference of 0.001, so the decomposition rests on the same metric the benchmark uses.
+The performance profile told us that our deficit is concentrated rather than diffuse, but not what produces it. Because every intermediate output of the pipeline is legible, we can do better than report the gap and instead charge each lost case to the block that lost it. We conduct this analysis on 25\% of the validation split of $\dataset$, comparing against the two strongest runs of the pipeline in each direction, namely 218 triplets $(\take, o, d)$ of a take, an object, and a direction per run across 45 takes and 172 distinct objects. Every number below is computed against the ground-truth masks, and our offline IoU reproduces the pipeline's own logged score to a mean difference of 0.001, so the decomposition rests on the same metric the benchmark uses.
 
 \subsection{The gap is bimodal}
 \label{subsec:bimodal}
