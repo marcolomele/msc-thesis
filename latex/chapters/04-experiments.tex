@@ -1,7 +1,7 @@
 \chapter{Experiments}
 \label{chap:experiments}
 
-The previous chapter assembled four frozen foundation models into a single inference pipeline and promised that its readability would let us trace each error back to the stage that produced it (\cref{chap:pipeline}). This chapter delivers on that promise along three lines. We first place the pipeline against the published state of the art on the official benchmark, asking how far a system that trains nothing can travel on a task every competitor learns end to end. We then isolate the contribution of each design decision through an ablation that turns the stages of \cref{sec:method-overview} on one at a time. We finally open the pipeline at its point of failure and give a mechanistic account of where its accuracy is lost, since the same transparency that organises the method also lets us read its mistakes. The thread running through all three is that the pipeline succeeds and fails for reasons that are legible, which is the property no trained competitor offers.
+In the previous chapter we assembled foundation models into our single inference pipeline. This chapter delivers the result. We first describe the experimental set up in which we tested our pipeline. Then, we place our approach against the published state of the art on the official benchmark, asking how far a system that trains nothing can go on a task against competitors that train end-to-end. We then isolate the contribution of each design decision through an ablation that assembles the stages of \cref{sec:method-overview} on one at a time. Finally, we inspect the performance and  give a mechanistic account of where the accuracy is lost. The common thread is that the pipeline succeeds and fails for reasons that are legible, a property no related work offers.
 
 % ------------------------------------------------------------
 \section{Experimental Setup}
@@ -9,10 +9,10 @@ The previous chapter assembled four frozen foundation models into a single infer
 % ------------------------------------------------------------
 
 \paragraph{Inference only.}
-No component of our pipeline is trained. Every module is taken off the shelf and run in pure inference mode on a single NVIDIA H200, with no finetuning on \textit{Ego-Exo4D} and no supervision specific to the task. This is what makes the pipeline agnostic to both the camera configuration and the test dataset, since nothing in it has been fit to either. The choice separates our method from every competitive baseline, all of which learn a dedicated component on the benchmark itself (\cref{subsec:common-limitations}). To the best of our knowledge, we are the first to attempt a pipeline of this flavour on cross-view object correspondence, and the comparison that follows should be read with that asymmetry in mind.
+No component of our pipeline is trained. Every module is taken off the shelf and run in pure inference mode on a single NVIDIA H200, with no finetuning on \textit{Ego-Exo4D} and no supervision specific to the task. This is what makes the pipeline agnostic to both the camera configuration and the test dataset. The choice separates our method from every competitive baseline, all of which learn a dedicated component on the benchmark itself (\cref{subsec:common-limitations}). To the best of our knowledge, we are the first to attempt a pipeline of this flavour on cross-view object correspondence, and the comparison that follows should be read with that asymmetry in mind.
 
 \paragraph{Evaluation.}
-Following the official Ego-Exo4D Correspondences benchmark, assembled by Grauman et al. in 2024 \cite{grauman2024egoexo4d}, we adopt Intersection over Union (IoU) as the primary metric. For a predicted mask $\hat{\mask}^D_\frameidx$ and its ground truth $\mask^D_\frameidx$ on a destination frame, the score is
+Following the official Ego-Exo4D Correspondences benchmark \cite{grauman2024egoexo4d} we adopt Intersection over Union (IoU) calculated at a frame level as the primary metric. For a predicted mask $\hat{\mask}^D_\frameidx$ and its ground truth $\mask^D_\frameidx$ on a destination frame, the score is
 \begin{equation}
   \iou(\hat{\mask}^D_\frameidx, \mask^D_\frameidx)
   = \frac{\abs{\hat{\mask}^D_\frameidx \cap \mask^D_\frameidx}}
