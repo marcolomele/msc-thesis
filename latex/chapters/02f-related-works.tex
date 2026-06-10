@@ -22,7 +22,6 @@ Learning methods replaced design in two stages. SuperPoint \cite{detone2018super
 single network to detect keypoints and emit descriptors jointly, and SuperGlue \cite{sarlin2020superglue} matches two such sets with a graph network based on attention that reasons about all candidate pairs at once rather than matching each keypoint in isolation. Subsequently, LoFTR \cite{sun2021loftr}  removed detection entirely, applying  self-attention and cross-attention between two images to produce dense matches directly, so that correspondences can be recovered even in the textureless regions where keypoint detectors find nothing to anchor to.
 
 The latest advancement of this group is RoMa, introduced by Edstedt et al.\ in 2024 \cite{roma}, which carries the geometric paradigm to its extreme. Rather than a list of matched points, RoMa predicts a dense \textit{warp field} $\warp$ together with a confidence for each coordinate,
-
 \begin{equation}
   (\warp, c) = f_\theta(\img_a, \img_b),
   \qquad
