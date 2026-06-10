@@ -1,7 +1,7 @@
 \chapter{Experiments}
 \label{chap:experiments}
 
-The previous chapter assembled four frozen foundation models into a single inference pipeline and promised that its readability would let us trace each error back to the block that produced it (\cref{chap:pipeline}). This chapter delivers on that promise along three lines. We first place the pipeline against the published state of the art on the official benchmark, asking how far a system that trains nothing can travel on a task every competitor learns end to end. We then isolate the contribution of each design decision through an ablation that turns the blocks of \cref{sec:method-overview} on one at a time. We finally open the pipeline at its point of failure and give a mechanistic account of where its accuracy is lost, since the same transparency that organises the method also lets us read its mistakes. The thread running through all three is that the pipeline succeeds and fails for reasons that are legible, which is the property no trained competitor offers.
+The previous chapter assembled four frozen foundation models into a single inference pipeline and promised that its readability would let us trace each error back to the stage that produced it (\cref{chap:pipeline}). This chapter delivers on that promise along three lines. We first place the pipeline against the published state of the art on the official benchmark, asking how far a system that trains nothing can travel on a task every competitor learns end to end. We then isolate the contribution of each design decision through an ablation that turns the stages of \cref{sec:method-overview} on one at a time. We finally open the pipeline at its point of failure and give a mechanistic account of where its accuracy is lost, since the same transparency that organises the method also lets us read its mistakes. The thread running through all three is that the pipeline succeeds and fails for reasons that are legible, which is the property no trained competitor offers.
 
 % ------------------------------------------------------------
 \section{Experimental Setup}
@@ -22,7 +22,7 @@ Following the official Ego-Exo4D Correspondences benchmark, assembled by Grauman
 where the numerator counts the pixels the prediction and the truth share and the denominator counts the pixels either of them claims, so that the ratio is one for a perfect match and zero when the two masks are disjoint. A reported figure averages \cref{eq:iou} over every evaluated frame of a take. We report two further metrics that decompose what IoU conflates. Location Error (LE) is the distance between the centroids of the predicted and ground-truth masks, normalised by the image diagonal, and it measures whether the prediction lands in the right place regardless of its shape. Contour Accuracy (CA), introduced by Perazzi et al. in 2016 \cite{perazzi2016benchmark}, compares the two mask boundaries after translation, so it isolates the quality of the predicted outline from any positional offset. Together the three metrics separate the components of an error that a single IoU number hides, a separation we lean on heavily in \cref{sec:gap-analysis}.
 
 \paragraph{Implementation.}
-We set $\abs{\set{S}} = 1$ seed frame and $\abs{\set{A}} = 3$ anchor frames. A single seed frame suffices to produce a reliable description, since the object's intrinsic attributes are stable across a take and the ablation of \cref{sec:ablations} shows that adding further seed frames yields negligible improvement. Three anchor frames balance the stability of propagation against its cost. We report results under both Grounding DINO, proposed by Liu et al. in 2024 \cite{liu2024groundingdino}, and RoMa \cite{roma} as anchor-selection signals, since the two perform comparably on the full test set. We use Qwen~3.5~35B \cite{qwen35blog} as the vision-language backend for both Block~2 and the SAM~3 agent loop, and we instruct it explicitly to restrict its descriptions to colour and canonical object identity, excluding the contextual cues that depend on viewpoint and would inject noise into anchor selection (\cref{subsec:block2}).
+We set $\abs{\set{S}} = 1$ seed frame and $\abs{\set{A}} = 3$ anchor frames. A single seed frame suffices to produce a reliable description, since the object's intrinsic attributes are stable across a take and the ablation of \cref{sec:ablations} shows that adding further seed frames yields negligible improvement. Three anchor frames balance the stability of propagation against its cost. We report results under both Grounding DINO, proposed by Liu et al. in 2024 \cite{liu2024groundingdino}, and RoMa \cite{roma} as signals for anchor selection, since the two perform comparably on the full test set. We use Qwen~3.5~35B \cite{qwen35blog} as the vision-language backend for both Stage~2 and the SAM~3 agent loop, and we instruct it explicitly to restrict its descriptions to colour and canonical object identity, excluding the contextual cues that depend on viewpoint and would inject noise into anchor selection (\cref{subsec:Stage2}).
 
 The entire system is implemented in Python with PyTorch and Hugging Face libraries, and developed and run on NVIDIA H200 GPUs, with every model kept frozen at inference. 
 
@@ -32,11 +32,10 @@ The entire system is implemented in Python with PyTorch and Hugging Face librari
 % ------------------------------------------------------------
 
 \begin{table}[t]
-\centering\scriptsize
-\setlength{\tabcolsep}{2pt}
+\centering
+\setlength{\tabcolsep}{3pt}
 \caption{Results on the Ego-Exo4D Correspondences v2 test split. The three leftmost flags mark whether a method is free of training on the benchmark, agnostic to the camera configuration, and agnostic to the test dataset.}
 \label{tab:main}
-\resizebox{\linewidth}{!}{%
 \begin{tabular}{l ccc ccc ccc}
   \toprule
     & \rotatebox{90}{Training Free\;}
@@ -68,19 +67,19 @@ The entire system is implemented in Python with PyTorch and Hugging Face librari
     & \textbf{54.98} & \textbf{0.017} & \textbf{0.778}
     & \textbf{65.77} & \textbf{0.031} & \textbf{0.774} \\
   \midrule
-  Ours (Language Bridge + G-DINO) & \checkmark & \checkmark & \checkmark & 37.7 & 0.071 & 0.471 & 40.6 & 0.114 & 0.468 \\
-  Ours (Language Bridge + RoMa) & \checkmark & \checkmark & \checkmark & -- & -- & -- & -- & -- & -- \\
+  Ours (G-DINO) & \checkmark & \checkmark & \checkmark & 37.7 & 0.071 & 0.471 & 40.6 & 0.114 & 0.468 \\
+  Ours (RoMa) & \checkmark & \checkmark & \checkmark & -- & -- & -- & -- & -- & -- \\
   \midrule
   \shortstack[l]{Ours (G-DINO) \% change\\ w.r.t.\ O-MaMa}
     & & & & $-11.5\%$ & $-114.4\%$ & $-20.2\%$ & $-7.9\%$ & $-39.0\%$ & $-10.7\%$ \\
   \bottomrule
-\end{tabular}}
+\end{tabular}
 \end{table}
 
 \Cref{tab:main} reports results on the Ego-Exo4D Correspondences v2 test split. The gap to the current state of the art is large and was expected. By the time of writing, LM-EEC of Hu et al. \cite{hu2025lmeec} holds the strongest published numbers, scoring 54.98 and 65.77 IoU in the \textit{Ego2Exo} and \textit{Exo2Ego} directions, against our 37.7 and 40.6. A method that retrains the full SAM~2 backbone on the benchmark videos has access to a signal our pipeline refuses by construction, so trailing it is the price of carrying no learned parameters across the viewpoint gap.
 
 The comparison sharpens once it is restricted to methods that do not retrain a segmentation backbone. Our approach trails O-MaMa \cite{o-mama}, winner of the 2025 Ego-Exo4D Correspondences Challenge, by roughly five IoU points in both directions ($-11.5\%$ on \textit{Ego2Exo}, $-7.9\%$ on \textit{Exo2Ego}), while surpassing ObjectRelator \cite{fu2025objectrelator} in IoU across both settings (37.7 against 35.3 on \textit{Ego2Exo}, 40.6 against 40.3 on \textit{Exo2Ego}). That a pipeline trained for nothing closes to within a few points of the challenge winner, and overtakes a method built on jointly learned cross-view alignment, suggests that much of what the learned components contribute can be recovered by composing strong models around a language bridge.
 
-The error metrics expose a behaviour the IoU alone hides. In the \textit{Ego2Exo} direction our LE of 0.071 is worse than the single-view baseline XMem+XSegTx (0.038), even though our IoU is higher. The pipeline therefore tends to recover the correct object region while placing it with coarser spatial precision than its competitors, a profile distinct from the mask-matching errors of ObjectRelator and O-MaMa and consistent with grounding the object through a language description rather than a learned correspondence (\cref{subsec:block3}). Where the gap to LM-EEC actually comes from, and why the loss concentrates rather than spreads, is the question we take up in \cref{sec:gap-analysis}.
+The error metrics expose a behaviour the IoU alone hides. In the \textit{Ego2Exo} direction our LE of 0.071 is worse than that of XMem+XSegTx (0.038), a baseline that operates within a single view, even though our IoU is higher. The pipeline therefore tends to recover the correct object region while placing it with coarser spatial precision than its competitors, a profile distinct from the errors of mask matching made by ObjectRelator and O-MaMa and consistent with grounding the object through a language description rather than a learned correspondence (\cref{subsec:Stage3}). Where the gap to LM-EEC actually comes from, and why the loss concentrates rather than spreads, is the question we take up in \cref{sec:gap-analysis}.
 
 \input{chapters/04b-experiments-ablations}
