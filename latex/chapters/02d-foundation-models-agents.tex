@@ -61,7 +61,14 @@ Two years after Qwen-VL, Qwen 3 was published \cite{yang2025qwen3technicalreport
 \subsection{Reasoning, Acting with Tools, and SAM 3 Agent}
 \label{subsec:react}
 
-An well-trained model can answer a question in one shot, but segmenting the right object in cluttered environments takes several attempts and requires a principled approach. \textit{ReAct}, proposed by Yao et al.\ in 2023 \cite{Yao2023ReAct}, structures these attempts by alternating between reasoning and action. This framework was built upon the observation that asking for an explicit chain of thought improves the correctness of answers \cite{Wei2022CoT}  with respect to a single answer without any additional training. We call an LLM placed in such a loop an \textit{agent}, namely a language model that, rather than answering in a single pass, repeatedly reasons, acts on its environment through tools, and conditions its next step on what those actions return. At step $k$ the agent conditions on a history $h_k$ and produces a thought $r_k$ and an action $a_k$. The action is executed to yield an observation $o_k$, and the history is extended with the triple before the next step. In essence,
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{latex/chapters/react-scheme.png}
+    \caption{Caption, react blog}
+    \label{fig:placeholder}
+\end{figure}
+
+An well-trained model can answer a question in one shot, but segmenting the right object in cluttered environments takes several attempts and requires a principled approach. \textit{ReAct}, proposed by Yao et al.\ in 2023 \cite{yao2023react}, structures these attempts by alternating between reasoning and action. This framework was built upon the observation that asking for an explicit chain of thought improves the correctness of answers \cite{Wei2022CoT}  with respect to a single answer without any additional training. We call an LLM placed in such a loop an \textit{agent}, namely a language model that, rather than answering in a single pass, repeatedly reasons, acts on its environment through tools, and conditions its next step on what those actions return. At step $k$ the agent conditions on a history $h_k$ and produces a thought $r_k$ and an action $a_k$. The action is executed to yield an observation $o_k$, and the history is extended with the triple before the next step. In essence,
 \begin{equation}
   (r_k, a_k) \sim p_\theta(\,\cdot \mid h_k), \qquad
   o_k = \mathrm{exec}(a_k), \qquad
@@ -74,10 +81,10 @@ where the symbol $\Vert$ appends the completed triple to the history. $h_k$ begi
 \paragraph{SAM 3 Agent.} Now that we have covered the fundamentals of VLMs and defined what
 an agent is, we can describe the interface that SAM 3 provides. Rather than expose segmentation 
 as a single forward pass, SAM 3 Agent places a VLM in a ReAct loop with a series of tools
-The tool \texttt{segment\_phrase} takes a simple noun phrase and returns every candidate mask the model produces for it. 
-\texttt{examine\_each\_mask} renders each candidate in isolation so the VLM can verify a small or overlapping region it could not separate at a glance. 
-The remaining two tools end the loop; \texttt{select\_masks\_and\_return} commits a chosen subset, and
-\texttt{report\_no\_mask} declares that nothing in the frame matches the request. At
+The tool \textit{segment phrase} takes a simple noun phrase and returns every candidate mask the model produces for it. 
+\textit{examine each mask} renders each candidate in isolation so the VLM can verify a small or overlapping region it could not separate at a glance. 
+The remaining two tools end the loop; \textit{select masks and return} commits a chosen subset, and
+\textit{report no mask} declares that nothing in the frame matches the request. At
 every turn the runtime lists the available masks, the model writes its thought,
 commits to exactly one tool, and stops, after which the observation $o_k$ returns.
 
@@ -90,9 +97,16 @@ turn alongside the most recent \texttt{segment\_phrase} exchange while discardin
 middle, holding the context to at most two rendered images.  The remaining failures are of three kinds: repeating a phrase that
 already failed, hallucinating arguments outside the schema, and a form of reward hacking in
 which the agent settles for a trivially easy phrase rather than the requested object. The
-loop guards against each, refusing a \texttt{text\_prompt} it has already tried, aborting
+loop guards against each, refusing a text prompt it has already tried, aborting
 to an empty mask once the same phrase is rejected twice, and reporting no mask rather than
 returning a wrong region, all within a budget of at most fifteen generations per frame.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=1\linewidth]{latex/imgs/ch2/sam3-agent-examples.png}
+    \caption{Caption sam 3 paper}
+    \label{fig:placeholder}
+\end{figure}
 
 With this, we complete the review of every foundation our pipeline builds upon, from visual representation,
 to segmentation, language grounding, and the agent loop that connects all elements together. We are not ready to 

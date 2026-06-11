@@ -15,6 +15,13 @@ mechanism. At its core, attention lets every element of a sequence look at every
 other element and aggregate information from those it deems relevant, in a single
 parallel operation. Consider the translation of the sentence ``the animal did not cross the street because it was too tired'', where producing a correct translation requires linking the pronoun ``it'' to ``animal'' several words earlier.
 
+\begin{figure}
+    \centering
+    \includegraphics[width=1\linewidth]{latex/imgs/ch2/attention-zoom.png}
+    \caption{Caption welsh labs}
+    \label{fig:placeholder}
+\end{figure}
+
 We represent the input as a sequence of $n$ tokens stacked into a matrix
 $\mm{X}\in\R^{n\times\dmodel}$, where $\dmodel$ is the embedding dimension shared
 throughout the model. The largest number of tokens $n$ the model can hold at once is its
@@ -40,9 +47,14 @@ Here, the product $\query\key\transpose$ scores every query against every key, s
 that entry $(i,j)$ measures how strongly token $i$ should attend to token $j$. The
 scaling factor $1/\sqrt{\dkey}$, where $\dkey$ is the dimension of each key, prevents the scores from  growing with dimension, which avoids the softmax going into regions of
 small gradient and therefore enhances training. The row-wise $\softmax$ turns each row of scores into a probability distribution over the sequence, and multiplying by $\val$ replaces each token with the convex combination of values its distribution selects. The output is therefore an $n\times\dval$ sequence in which every token has been rewritten as a
-mixture of the content it found relevant. In our example, the distribution for the token
-``it'' concentrates its mass on ``animal'', so the updated representation of the pronoun
-absorbs the meaning of the noun it refers to. 
+mixture of the content it found relevant. In our example, the distribution for the token ``it'' concentrates its mass on ``animal'', so the updated representation of the pronoun absorbs the meaning of the noun it refers to. 
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=1\linewidth]{latex/imgs/ch2/transformer-multi-head.png}
+  \caption{Caption (original paper + welsh labs)}
+  \label{fig:transformer-arch}
+\end{figure}
 
 A single attention operation captures only one notion of relevance and relationship among inputs. To let the model attend to several relationships at once, the Transformer runs $h$ attention operations inparallel, each with its own projections and each operating on a slice of dimension
 $\dhead=\dmodel/h$, so that every head sets $\dkey=\dval=\dhead$. Returning to the example, one head can resolve the reference of
@@ -78,16 +90,9 @@ while retaining output quality.
 
 \begin{figure}[t]
   \centering
-  % \includegraphics[width=0.88\linewidth]{imgs/transformer-architecture.png}
-  \fbox{\begin{minipage}[c][0.30\textheight][c]{0.86\linewidth}
-    \centering Placeholder --- Transformer architecture diagram.
-  \end{minipage}}
-  \caption{The Transformer architecture. Input embeddings are summed with positional
-    encodings and passed through stacked blocks of multi-head self-attention and
-    position-wise feed-forward networks, each wrapped in a residual connection and layer
-    normalisation. The encoder-decoder arrangement shown here is the original translation
-    model; vision uses the encoder-only variant.}
-  \label{fig:transformer-arch}
+  \includegraphics[width=0.88\linewidth]{latex/imgs/ch2/vit-architecture-attended.png}
+  \caption{Caption, agi lambda}
+  \label{fig:vit-arch}
 \end{figure}
 
 \subsection{The Vision Transformer}
@@ -101,7 +106,6 @@ $\img$ is partitioned into a grid of $h\times w$ square patches that do not over
 typically of side sixteen pixels, and each patch is flattened and linearly projected
 into a token of dimension $\dmodel$. Letting $\patch_i$ denote the $i$-th patch token and
 $\mm{E}$ the shared projection, the encoder receives
-
 \begin{equation}
   \mm{Z}_0
   = \big[\,\cls;\ \mm{E}\patch_1;\ \mm{E}\patch_2;\ \dots;\ \mm{E}\patch_{\npatch}\,\big]
@@ -127,20 +131,6 @@ as \textit{ImageNet-21k} and the proprietary \textit{JFT-300M}. The same year, T
 that this scale is not strictly necessary with \textit{DeiT} \cite{touvron2021deit}. They trained competitive Vision Transformers on \textit{ImageNet} alone by combining strong augmentation with a distillation token
 that learns from a convolutional teacher. While the transformer's application is general, 
 its tendency to supervision and scaling inefficiency raise questions about its applicability in computer vision.
-
-\begin{figure}[t]
-  \centering
-  % \includegraphics[width=0.88\linewidth]{imgs/vit-architecture.png}
-  \fbox{\begin{minipage}[c][0.30\textheight][c]{0.86\linewidth}
-    \centering Placeholder --- Vision Transformer architecture diagram.
-  \end{minipage}}
-  \caption{The Vision Transformer. The image is split into square patches that do not
-    overlap, each flattened and linearly projected into a token. A learnable $\cls$ token is
-    prepended and learned positional embeddings are added, and the sequence is processed by a
-    standard Transformer encoder. The $\cls$ output serves as the image-level descriptor and
-    the patch outputs as descriptors of local regions.}
-  \label{fig:vit-arch}
-\end{figure}
 
 \subsection{Self-Supervised Features}
 \label{subsec:dino}
@@ -173,24 +163,15 @@ every image to the same output and the loss is trivially minimised. The vector $
 represents a running centre, obtained by removing the running mean. This prevents any single prototype dimension from dominating and absorbing all images. The parameter $\kappa_t$ dictates the sharpness of the teacher distribution, keeping it from drifting to a uniform shape. The authors note that each guards against a
 different collapse mode, and the methods keep training stable only when applied jointly.
 
-% rewrote this last paragraph to avoid information repetition. each element in the equation has its associated concept stated only once, along with this consequences and considerations, in a single block; my writing style would allow for other points to build over these concepts, but only with a reference and what enables the connection. also removed irrelevant footnote details.
-
 \begin{figure}[t]
   \centering
-  % \includegraphics[width=0.88\linewidth]{imgs/dino-self-distillation.png}
-  \fbox{\begin{minipage}[c][0.30\textheight][c]{0.86\linewidth}
-    \centering Placeholder --- DINO self-distillation (student and teacher).
-  \end{minipage}}
-  \caption{DINO self-distillation. The student and teacher share the same architecture and
-    see different augmented crops of one image. The teacher output is centred and sharpened
-    to avoid collapse, the student is trained to match it by cross-entropy, and the teacher
-    weights follow an exponential moving average of the student.}
-  \label{fig:dino-architecture}
+  \includegraphics[width=1\linewidth]{latex/imgs/ch2/dino-architecture.png}
+  \caption{Caption + jia-bin huang}
+  \label{fig:dino-attention}
 \end{figure}
 
 The teacher is never trained by gradient descent. Its weights are instead an
 exponential moving average of the student's,
-
 \begin{equation}
   \theta_t \leftarrow \lambda\,\theta_t + (1-\lambda)\,\theta_s,
   \label{eq:ema}
@@ -200,17 +181,6 @@ with momentum $\lambda$ close to one, so that the teacher is a slowly evolving
 ensemble of recent students. This lag makes the teacher a more stable target than the student itself and is what allows the distillation loop to bootstrap a representation from random initialisation. 
 
 This training procedure gives rise to a striking property. The attention maps of the $\cls$ token attend to coherent object regions, and the patch tokens carry enough semantic structure that scene layout and object boundaries can be read off them directly, despite no segmentation label ever entering training, as shown in \cref{fig:dino-attention}.
-
-\begin{figure}[t]
-  \centering
-  % \includegraphics[width=0.88\linewidth]{imgs/dino-attention-maps.png}
-  \fbox{\begin{minipage}[c][0.26\textheight][c]{0.86\linewidth}
-    \centering Placeholder --- DINO self-attention maps and patch correspondences.
-  \end{minipage}}
-  \caption{Self-attention maps of the $\cls$ token in a DINO-trained Vision Transformer.
-    They localise coherent object regions despite no segmentation label entering training.}
-  \label{fig:dino-attention}
-\end{figure}
 
 \textit{DINOv2}, presented by Oquab et al.\ in 2023 \cite{oquab2023dinov2}, elevates this
 architecture into a general-purpose feature extractor. Rather than scaling data
@@ -222,8 +192,6 @@ tokens'' to the sequence whose sole role is to absorb this global information an
 features clean. The resulting features are strong enough to be used directly in downstream classification or prediction tasks, reaching competitive accuracy under a linear probe or even a nearest-neighbour classifier, and they remain the visual backbone against which our cross-view experiments are measured.
 The most recent iteration, \textit{DINOv3} \cite{dinov3}, extends this line further
 still and confirms its trajectory.
-
-% mention that DINOv2 is remarkable in the sense of achieving results close to supervised methods, validating self-supervised learning approach. 
 
 These representations are useful because they support principled mathematical comparisons of abstract information like the meaning of images. The final $\cls$ state
 provides a global descriptor $\feat$ of an image, and once two such descriptors are
@@ -241,4 +209,10 @@ encoder to learn the structure of the scene rather than pixel-level details. MAE
 The elements of our pipeline build on the representations defined here.  DINOv2 defines the latent space in which O-MaMa selects candidate masks using patch features, a mechanism we develop in \cref{sec:segmentation}. The cosine retrieval scheme on $\cls$ descriptors powers a frame-diversity selection strategy that we retain as a baseline in our experiments. The same Vision Transformer encoder reappears as the image branch of the language-grounded models in \cref{sec:language-grounding}, within the multimodal backbone of \cref{sec:foundation-models-agents}, and in the video segmenters of
 \cref{sec:segmentation}.
 
-% minor changes in: words used (preferring simple and straightforward over complex since topic is already difficult), and delivery. 
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=1\linewidth]{latex/imgs/ch2/dinov3-results.png}
+  \caption{Caption + dinov3 official paper}
+  \label{fig:dino-attention}
+\end{figure}
