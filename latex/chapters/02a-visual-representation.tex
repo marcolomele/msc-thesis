@@ -1,13 +1,7 @@
 \section{Visual Representation}
 \label{sec:visual-representation}
 
-In order to segment objects across videos we need to segment objects in individual frames (i.e. images), and in order to segment objects in images, we need to represent them numerically. Mathematically speaking, we aim at representing an image with a vector of fixed length called \textit{embedding}. How pixels
-become such vectors, and what those vectors come to encode, is therefore the
-natural starting point for the theory that follows. 
-
-This section builds that representation from the ground up, beginning with the sequence model that
-underpins all modern visual backbones, extending it to images, and finally
-showing how the most informative of these representations can be learned without
+In order to segment objects across videos we need to segment objects in individual frames (i.e. images), and in order to segment objects in images, we need to encode them numerically. Mathematically speaking, we aim at representing an image with a vector of fixed length called \textit{embedding}. How pixels become such vectors, and what those vectors come to encode, is therefore the natural starting point for the theory that follows.  This section builds that representation from the ground up, beginning with the sequence model that underpins all modern visual backbones, extending it to images, and finally showing how the most informative of these representations can be learned without
 any human input in the form of labels. We define the notation with care because it recurs in every subsequent section.
 
 \subsection{The Transformer}
@@ -17,18 +11,14 @@ In the early days of Machine Learning, sequence models relied on recurrence, whi
 time, but struggles to relate positions that are far apart. Vaswani et al.\ in 2017
 \cite{vaswani2017attention} introduced a novel paradigm with the
 \textit{Transformer}, an architecture built almost exclusively around the attention
-mechanism and designed originally for machine translation. At its core, attention lets every element of a sequence look at every
+mechanism. At its core, attention lets every element of a sequence look at every
 other element and aggregate information from those it deems relevant, in a single
-parallel operation. We ground the explanation that follows in one running example, the
-translation of the sentence ``the animal did not cross the street because it was too
-tired'', where producing a correct translation requires linking the pronoun ``it'' to
-``animal'' several words earlier.
+parallel operation. Consider the translation of the sentence ``the animal did not cross the street because it was too tired'', where producing a correct translation requires linking the pronoun ``it'' to ``animal'' several words earlier.
 
 We represent the input as a sequence of $n$ tokens stacked into a matrix
 $\mm{X}\in\R^{n\times\dmodel}$, where $\dmodel$ is the embedding dimension shared
 throughout the model. The largest number of tokens $n$ the model can hold at once is its
-\textit{context window}, the budget within which every later use of the architecture must
-operate. From $\mm{X}$ the model derives three projections through
+\textit{context window}. This represents the information budget on which the transformer and later layers can operate. From $\mm{X}$ the model derives three projections through
 learned weight matrices, the queries $\query=\mm{X}\mm{W}_Q$, the keys
 $\key=\mm{X}\mm{W}_K$, and the values $\val=\mm{X}\mm{W}_V$. Intuitively, each token
 emits a query for describing what it is looking for,  a key for describing what it
@@ -38,28 +28,21 @@ to take a weighted average of the values,
 
 \begin{equation}
   \attn(\query,\key,\val)
-  = \softmax\!\left(\frac{\query\key\transpose}{\sqrt{\dkey}}\right)\val .
+  = \softmax\!\left(\frac{\query\key\transpose}{\sqrt{\dkey}}\right)\val
   \label{eq:attention}
 \end{equation}
-
 Here, the product $\query\key\transpose$ scores every query against every key, so
 that entry $(i,j)$ measures how strongly token $i$ should attend to token $j$. The
-scaling factor $1/\sqrt{\dkey}$, where $\dkey$ is the dimension of each key, prevents the scores from 
-growing with dimension, which avoids the softmax going into regions of
-small gradient and therefore enhances training. The row-wise $\softmax$ turns each row of scores into a
-probability distribution over the sequence, and multiplying by $\val$ replaces each
-token with the convex combination of values its distribution selects. The output is
-again an $n\times\dmodel$ sequence in which every token has been rewritten as a
+scaling factor $1/\sqrt{\dkey}$, where $\dkey$ is the dimension of each key, prevents the scores from  growing with dimension, which avoids the softmax going into regions of
+small gradient and therefore enhances training. The row-wise $\softmax$ turns each row of scores into a probability distribution over the sequence, and multiplying by $\val$ replaces each token with the convex combination of values its distribution selects. The output is again an $n\times\dmodel$ sequence in which every token has been rewritten as a
 mixture of the content it found relevant. In our example, the distribution for the token
 ``it'' concentrates its mass on ``animal'', so the updated representation of the pronoun
-absorbs the meaning of the noun it refers to.
+absorbs the meaning of the noun it refers to. 
 
-A single attention operation captures only one notion of relevance and relationship among inputs. To let the model attend to several relationships at once, the Transformer runs $h$ attention operations in
-parallel, each with its own projections and each operating on a slice of dimension
+A single attention operation captures only one notion of relevance and relationship among inputs. To let the model attend to several relationships at once, the Transformer runs $h$ attention operations inparallel, each with its own projections and each operating on a slice of dimension
 $\dhead=\dmodel/h$. Returning to the example, one head can resolve the reference of
 ``it'' while another tracks which verb governs each noun, so that a single layer
 represents several such relationships together. The resulting heads are concatenated and linearly mixed,
-
 \begin{equation}
   \mhattn(\mm{X})
   = \big[\,\mathrm{head}_1;\ \dots;\ \mathrm{head}_h\,\big]\,\mm{W}_O,
@@ -67,7 +50,6 @@ represents several such relationships together. The resulting heads are concaten
   \mathrm{head}_i=\attn(\query_i,\key_i,\val_i),
   \label{eq:mha}
 \end{equation}
-
 where each $\mathrm{head}_i$ applies \cref{eq:attention} with head-specific
 projections and $\mm{W}_O$ recombines them into the model dimension. Because
 attention is permutation invariant, the architecture has no inherent sense of order;

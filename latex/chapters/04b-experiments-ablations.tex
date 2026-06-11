@@ -150,22 +150,26 @@ Half of the deficit is a discrete failure and half is ordinary imprecision. Spli
   \end{tabular}
 \end{table}
 
-\paragraph{The loss is born at the anchor, not in propagation}
+\paragraph{The loss is born at the anchor.}
 \label{subsec:born-at-seed}
 
-The dead cases are created at cross-view transfer, not at temporal propagation. The anchor IoU, measured on the anchor frame itself before any propagation, is exactly zero in 37\% of the subset in both directions, and only about one in ten of those ever recovers to a final IoU above 0.1. Naturally, checking anchor IoU is unfeasible since it requires access to ground truth masks in the destination view. Thus, a dead anchor remains dead. The opposite event, a healthy anchor that collapses during propagation, accounts for only 8\% of the subset in \textit{Ego2Exo} and 6\% in \textit{Exo2Ego}. This isolates Stages~2 and~3, the language bridge and its grounding, as the stage that decides the dead mass, and it further validates the design of \cref{subsec:Stage4}; on a good anchor, it rarely looses the object in subsequent and precedent frames. Next, we ask what drives a case into that mass and where across those two stages the loss first lands.
+The dead cases are created at cross-view transfer, not at temporal propagation. The anchor IoU, measured on the anchor frame itself before any propagation, is exactly zero in 37\% of the subset in both directions, and only about one in ten of those ever recovers to a final IoU above 0.1. Naturally, checking anchor IoU is unfeasible since it requires access to ground truth masks in the destination view. Thus, a dead anchor remains dead. The opposite event, a healthy anchor that collapses during propagation, accounts for only 8\% of the subset in \textit{Ego2Exo} and 6\% in \textit{Exo2Ego}.  This isolates Stages~2 and~3, the language bridge and its grounding, as the stage that decides the dead mass, and it further validates the design of \cref{subsec:Stage4}; on a good anchor, it rarely looses the object in subsequent and precedent frames. 
 
-\paragraph{Two upstream drivers, size and naming}
+Two things are worth noting. First, this is a challenging problem because it is a silent failure. A mask is produced in 93\% of the dead cases, so the pipeline almost never abstains. Instead, it commits to a wrong answer. Second, these are not failures of object visibility. Every dead case shows the true object on the destination frame, and none has the object absent from the view entirely. In other words, we are not asking the pipeline something that is not there, but rather the pipeline ``hooks'' on the wrong object, and there is no inherent gate that checks whether the produced mask is on the right object.
+
+Next, we ask what drives a case into that mass and where across those two stages the loss first lands.
+
+\paragraph{Object size and naming are drivers.}
 \label{subsec:drivers}
 
 Two factors push a case into the dead mass, and they act independently. The first is object size. In \textit{Ego2Exo} the rate of anchor failure falls monotonically from 63\% on the smallest size quartile to 18\% on the largest, because the destination camera mounted on the head renders objects small and a small object gives both the detector and the segmenter little to lock onto. In \textit{Exo2Ego} the relationship is flat across the lower three quartiles, near 44\%, and improves only at the largest, so the size effect is real but depends on the direction.
 
-The second driver is the object name the VLM writes, and it hurts on top of size rather than through it. Holding size fixed, a name that does not match the ground-truth object roughly doubles to triples the rate of anchor failure in every size bucket, and marginally it raises that rate from 24\% to 61\% in \textit{Ego2Exo} and from 16\% to 53\% in \textit{Exo2Ego}. Even on large and clearly visible objects a wrong name fails about half the time. The two directions weight the drivers differently, with the \textit{Ego2Exo} dead mass leaning on size and the \textit{Exo2Ego} dead mass leaning on naming, but the single largest cell in both is the object that is at once small and misnamed.
+The second driver is the object name the VLM writes, and it hurts on top of size rather than through it. Holding size fixed, a name that does not match the ground-truth object roughly doubles to triples the rate of anchor failure in every size bucket, and marginally it raises that rate from 24\% to 61\% in \textit{Ego2Exo} and from 16\% to 53\% in \textit{Exo2Ego}. Even on large and clearly visible objects a wrong name fails about half the time. The two directions weight the drivers differently, with the \textit{Ego2Exo} dead mass leaning on size and the \textit{Exo2Ego} dead mass leaning on naming, but the single largest cell in both is the object that is at once small and misnamed. This suggests that SAM 3 agent segmentation is sensible to subtle shifts in meaning that language can have with synonyms or objects of similar look. 
 
-\paragraph{A failure waterfall}
+\paragraph{Failure waterfall.}
 \label{subsec:waterfall}
 
-Charging each dead case to the first stage that fails turns these drivers into an ordering. Walking the pipeline in sequence and stopping at the first stage that breaks, \cref{tab:waterfall} shows that naming in Stage~2 is the single largest cause by a wide margin, accounting for 59\% of the dead mass in \textit{Ego2Exo} and 81\% in \textit{Exo2Ego}. Selecting the anchor frame in Stage~3 is next, and the two together explain 74\% and 92\% of all dead cases. Grounding DINO placing its box off the object and the agent segmenting the wrong thing inside a good box are real but minor by comparison, and propagation is zero by construction, since a dead anchor cannot first have been a good one. The levers that act inside segmentation, which we considered while building the pipeline, therefore reach only the smallest bucket; the bulk of the loss is decided before SAM~3 ever runs.
+Charging each dead case to the first stage that fails turns these drivers into an ordering. We build \cref{tab:waterfall} by walking the pipeline in sequence and stopping at the first stage that breaks. It shows that naming in Stage~2 is the single largest cause by a wide margin, accounting for 59\% of the dead mass in \textit{Ego2Exo} and 81\% in \textit{Exo2Ego}. Selecting the anchor frame in Stage~3 is next, and the two together explain 74\% and 92\% of all dead cases. Grounding DINO placing its box off the object and the agent segmenting the wrong thing inside a good box are real but minor by comparison. Notably, propagation is zero by construction, since an anchor on the wrong object will reliably stay for the entirety of propagation. Therefore, the bulk of the loss is produced before SAM~3 ever runs, pointing to the need for more thorough analysis of VLM descriptions than our approach in \cref{sec:ablations}.
 
 \begin{table}[h]
   \centering
@@ -187,50 +191,45 @@ Charging each dead case to the first stage that fails turns these drivers into a
   \end{tabular}
 \end{table}
 
-Reading the waterfall back through \cref{chap:theory} clarifies why naming dominates. The language bridge of \cref{subsec:Stage2} asks a general VLM to name a target it sees only as a translucent overlay on a full frame, and when that target occupies a fraction of a percent of the image the model does what such models are trained to do, namely describe the salient object it can actually resolve. The bridge is only as good as the noun it carries, and on a tiny object the noun is wrong before grounding begins.
+Reading the waterfall back through \cref{chap:theory} clarifies why naming dominates. The language bridge of \cref{subsec:Stage2} asks a general VLM to name a target it sees only as a translucent overlay on a full frame. When that target occupies a fraction of a percent of the image, is ambiguous, or can have multiple names, the model describe the salient object based on the features it is able to extract. The bridge is only as good as the object description it carries over to the other view.
 
-\paragraph{Why the model names the wrong object}
+\paragraph{Why the model names the wrong object.}
 \label{subsec:Stage2-deepdive}
 
-The naming failure is a perception failure, not a vocabulary or implementation one. On the dead cases the source mask handed to the model is three to six times smaller than on the successful cases (median 1.43\% against 4.05\% of the frame in \textit{Ego2Exo}, and 0.098\% against 0.564\% in \textit{Exo2Ego}), and in \textit{Exo2Ego} half of the failures show the object at under 0.1\% of the frame. When the model misnames, it names a different object that is itself annotated elsewhere in the same take in 38\% of \textit{Ego2Exo} and 24\% of \textit{Exo2Ego} failures, so it is describing a real and clearer neighbour rather than hallucinating. The call runs deterministically and without a description cache, which rules out a software cause, and genuine vocabulary near misses such as a plate read as a bowl are a small minority. The model is simply looking at the wrong region of the frame, the one it can see.
+The naming failure is one of perception, not of vocabulary or implementation. On the dead cases the source mask handed to the model is three to six times smaller than on the successful ones (median 1.43\% against 4.05\% of the frame in \textit{Ego2Exo}, and 0.098\% against 0.564\% in \textit{Exo2Ego}), and in \textit{Exo2Ego} half of the failures show the object at under 0.1\% of the frame. Crucially, when the model misnames it names a different object that is itself annotated in the same take in 38\% of \textit{Ego2Exo} and 24\% of \textit{Exo2Ego} failures, so it describes a real and clearer neighbour rather than hallucinating. The call runs deterministically and without a description cache, which rules out a software cause, and genuine vocabulary near misses such as a plate'' read as a bowl'' form a small minority. The pattern holds once we look past the separately annotated neighbours. Across all dead cases, the model never ``hallucinates'' an absent object but always nominates a real and generally larger structure present alongside the target. \cref{tab:wrong-nomination} reports the split, where a minority are named correctly and die downstream, while of the genuine naming failures roughly a quarter name a separately annotated neighbour and the remainder name an object present in the scene yet outside the annotation set. Typically, this is the dominant container, tool, or surface on which the tiny target rests, with true synonyms and generic categories of the right object forming a small residual.
 
-\paragraph{Cropping the input reverses the expected result}
-\label{subsec:crop}
-
-The obvious remedy is to crop the frame to the object so the model can see it, and the obvious remedy fails. Strikingly, replacing the full frame with a tight crop of the object lowers IoU from 0.411 to 0.180, more than halving it, and the collapse is consistent case by case rather than an average artefact (\cref{tab:crop}). The mechanism is the one the analysis predicts. The only fields the description passes downstream are the colour and the object name, and naming accuracy falls from 58\% to 41\% once the crop removes the surrounding scene, because a small part is identified largely from the context around it. A basketball cropped from its scene is read as a finger, a CPR manikin as a human hand, a pack of noodles as pink paper, each a confident name for a patch torn out of the evidence that would have placed it. Among cases the full frame named correctly, those whose name survives the crop keep a mean IoU of 0.336, while those whose name flips fall to 0.044, so the entire IoU loss travels through the corrupted name.
-
-\begin{table}[h]
-  \centering
-  \setlength{\tabcolsep}{6pt}
-  \caption{Cropping the VLM input to the object, \textit{Ego2Exo} validation.}
-  \label{tab:crop}
-  \begin{tabular}{llc}
-  \toprule
-  Arm & VLM input & Mean IoU \\
-  \midrule
-  Compound  & raw frame, overlay, and crop & 0.411 \\
-  Crop only & object crop alone            & 0.180 \\
-  \bottomrule
-  \end{tabular}
+\begin{table}[t]
+\centering
+\caption{What the VLM nominates on the dead cases ($\mathrm{seed\ IoU}=0$), as a proportion of all such cases per direction.}
+\label{tab:wrong-nomination}
+\begin{tabular}{lcc}
+\toprule
+Nominated object & \textit{Ego2Exo} & \textit{Exo2Ego} \\
+\midrule
+Correct target (failure is downstream) & 41\% & 19\% \\
+A different, separately-annotated object in the take & 25\% & 23\% \\
+A present but unannotated object (container/tool/surface) & 34\% & 58\% \\
+\bottomrule
+\end{tabular}
 \end{table}
 
-The result is worth dwelling on, because it inverts the intuition that a tighter view of the target can only help. The identity of a small object is carried by its surroundings, so a crop that maximises the object's pixels destroys the very evidence the model uses to name it. The one form of cropping that survives is additive, appending a zoom alongside the full frame rather than replacing it, which neither helps nor harms at this threshold. The lesson is not that resolution is irrelevant but that naming a part is an act at the scene level, and any intervention on Stage~2 has to preserve the context the name depends on.
 
-\paragraph{The dead cases are confident mis-groundings}
+\paragraph{Cropping the input is ineffective.}
+\label{subsec:crop}
+
+The logical remedy to the above problem is to crop the seed frame to the target object so it becomes the predominant element of the input of the VLM. Strikingly, replacing the full frame with a tight crop of the object lowers IoU from 0.411 to 0.180, more than halving it, and the collapse is consistent case by case.  (\cref{tab:crop}). The hypothesis is that identity of a small object is carried by its surroundings, so a crop that maximises the object's pixels destroys the very evidence the VLM uses to name it. Looking at some qualitative examples, the VLM reads a cropped basketball as a finger, a CPR manikin as a human hand, and a pack of noodles as pink paper. The one form of cropping that survives is additive, appending a zoom alongside the full frame rather than replacing it, which neither helps nor harms at this threshold. 
+
+\paragraph{Confident mis-groundings.}
 \label{subsec:confident-wrong}
 
-Naming in Stage~2 decides most of the dead mass, but the rest is charged to Stage~3, where Grounding DINO and the SAM~3 agent act on a name that is already correct. Whichever stage seeds the error, the mask the pipeline finally returns shares one signature at the output. The failure is silent, which is what makes it dangerous. A mask is produced in 93\% of the dead cases, so the pipeline almost never abstains; it commits to a wrong answer. Grounding DINO reports high confidence on these cases, with a median top score of 0.53 in \textit{Ego2Exo} and 0.73 in \textit{Exo2Ego} and nothing below 0.30, and the SAM~3 agent marks its own output acceptable on the majority of them. Worse, these confidence values overlap almost completely with those of the successful cases, so no internal signal the pipeline already computes can tell a hit from a miss. We name this failure a ``confident mis-grounding'', because the pipeline is not uncertain and recovering, but certain and wrong.
+Naming in Stage~2 decides most of the dead mass, but the rest is charged to Stage~3, where Grounding DINO and the SAM~3 agent act on a name that is already correct. Grounding DINO reports high confidence on these cases, with a median top score of 0.53 in \textit{Ego2Exo} and 0.73 in \textit{Exo2Ego} and nothing below 0.30, and the SAM~3 agent marks its own output acceptable on the majority of them. Worse, these confidence values overlap almost completely with those of the successful cases, so no internal signal the pipeline already computes can tell a hit from a miss. We call this failure a ``confident mis-grounding'', because the pipeline is not uncertain and recovering, but certain and wrong.
 
-These are not failures of visibility. Every dead case shows the true object on the destination frame, and none has the object absent from the view entirely. The pipeline is not being asked to segment something that is not there; it is looking at the object and grounding something else. An abstention head keyed on visibility would therefore leave the dead mass untouched, because the information needed to reject these cases is not whether the object is present but whether the produced mask is the right one.
-
-What the pipeline grounds instead is revealing. The wrong mask overlaps no annotated object in 78\% of cases in \textit{Ego2Exo} and 64\% in \textit{Exo2Ego}, so it is usually unlabeled background rather than a confusion with a neighbouring object. It sits close to the truth, with a median centroid distance of only 0.13 to 0.20 of the image diagonal. Yet it is far too large. The targets are tiny, at a median 0.04\% to 0.4\% of the frame, while the predicted mask runs 4.2 and 2.7 times larger than the object. Asked for a small part such as a tube, a swab, or a chain link, the segmenter grabs the larger structure that contains it and returns that confidently. We call this the ``over-segmentation'' signature, and it recurs across the whole dead mass.
-
-\paragraph{Extending the target to the imprecise tail}
+\paragraph{Extending the ill cases}
 \label{subsec:ill-cases}
 
-Restricting the analysis to exact zeros understates the prize and hides a second failure mode. Widening the dead target to every case below 0.3 IoU roughly doubles the affected population, to 51\% of cases in \textit{Ego2Exo} and 49\% in \textit{Exo2Ego}, and this band carries about 80\% of the total deficit, so almost everything worth fixing sits below 0.3. The band is not simply a softer copy of the zeros. The share of cases with a dead anchor falls from about 95\% at exact zero to roughly 37\% across the band, while propagation drift, a healthy anchor that collapses downstream, rises from near zero to about 30\% of the added cases. Extending the target therefore surfaces a Stage~4 problem that the dead mass alone hid completely.
+Restricting the analysis to exact zeros understates the prize and hides a second failure mode. Widening the  target to every case below 0.3 IoU,  namely ``ill cases'', roughly doubles the affected population, to 51\% of cases in \textit{Ego2Exo} and 49\% in \textit{Exo2Ego}. Additionally, this band carries about 80\% of the total deficit, so almost everything worth fixing sits below 0.3. The band is not simply a softer copy of the zeros. The share of cases with a dead anchor falls from about 95\% at exact zero to roughly 37\% across the band, while propagation drift rises from near zero to about 30\% of the added cases. Extending the target therefore surfaces a Stage~4 problem that the dead mass alone hid completely.
 
-That drift mode has a clean signature of its own. A drifting case segments the object correctly on its peak frame, reaching an IoU of 0.89 to 0.93 on par with the cases that hold, and then loses the mask entirely on 65\% to 75\% of the remaining frames, with almost nothing in the partial band between. The object is not sliding onto a nearby blob, as it does at a failed seed; it is being dropped, the mask going empty and staying empty. Long clips drift more in both directions, anchors clustered in one short stretch of a long clip drift more in \textit{Ego2Exo}, and in \textit{Exo2Ego} the small exocentric object simply leaves the frame and the tracker does not reacquire it. Unlike the silent dead mass, this failure announces itself, since a long run of empty masks between ones that are not empty is an internal signal available without any ground truth.
+That drift mode has a clean signature of its own. Looking at drifting cases, the segmentation correctly peaks at the anchors and then loses the mask entirely on 65\% to 75\% of the remaining frames. The object is not sliding onto a nearby blob, as it does at a failed seed, but rather the mask goes empty and stays empty. Long clips drift more in both directions, anchors clustered in one short stretch of a long clip drift more in \textit{Ego2Exo}, and in \textit{Exo2Ego} the small exocentric object simply leaves the frame and the tracker does not re-capture it. Unlike the silent dead mass, this failure announces itself, since a long run of empty masks between ones that are not empty is an internal signal that can be exploited.
 
 \paragraph{What the analysis points to}
 \label{subsec:gap-summary}
