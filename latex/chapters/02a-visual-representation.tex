@@ -20,7 +20,12 @@ $\mm{X}\in\R^{n\times\dmodel}$, where $\dmodel$ is the embedding dimension share
 throughout the model. The largest number of tokens $n$ the model can hold at once is its
 \textit{context window}. This represents the information budget on which the transformer and later layers can operate. From $\mm{X}$ the model derives three projections through
 learned weight matrices, the queries $\query=\mm{X}\mm{W}_Q$, the keys
-$\key=\mm{X}\mm{W}_K$, and the values $\val=\mm{X}\mm{W}_V$. Intuitively, each token
+$\key=\mm{X}\mm{W}_K$, and the values $\val=\mm{X}\mm{W}_V$. The weight matrices
+$\mm{W}_Q,\mm{W}_K\in\R^{\dmodel\times\dkey}$ and
+$\mm{W}_V\in\R^{\dmodel\times\dval}$ set the dimensions of these projections, so that
+$\query,\key\in\R^{n\times\dkey}$ share the key dimension $\dkey$ on which they are
+compared, while $\val\in\R^{n\times\dval}$ carries the content in the value dimension
+$\dval$. Intuitively, each token
 emits a query for describing what it is looking for,  a key for describing what it
 offers, and a value for holding the content it would pass on if attended.
 Scaled dot-product attention then compares queries against keys and uses the result
@@ -34,13 +39,13 @@ to take a weighted average of the values,
 Here, the product $\query\key\transpose$ scores every query against every key, so
 that entry $(i,j)$ measures how strongly token $i$ should attend to token $j$. The
 scaling factor $1/\sqrt{\dkey}$, where $\dkey$ is the dimension of each key, prevents the scores from  growing with dimension, which avoids the softmax going into regions of
-small gradient and therefore enhances training. The row-wise $\softmax$ turns each row of scores into a probability distribution over the sequence, and multiplying by $\val$ replaces each token with the convex combination of values its distribution selects. The output is again an $n\times\dmodel$ sequence in which every token has been rewritten as a
+small gradient and therefore enhances training. The row-wise $\softmax$ turns each row of scores into a probability distribution over the sequence, and multiplying by $\val$ replaces each token with the convex combination of values its distribution selects. The output is therefore an $n\times\dval$ sequence in which every token has been rewritten as a
 mixture of the content it found relevant. In our example, the distribution for the token
 ``it'' concentrates its mass on ``animal'', so the updated representation of the pronoun
 absorbs the meaning of the noun it refers to. 
 
 A single attention operation captures only one notion of relevance and relationship among inputs. To let the model attend to several relationships at once, the Transformer runs $h$ attention operations inparallel, each with its own projections and each operating on a slice of dimension
-$\dhead=\dmodel/h$. Returning to the example, one head can resolve the reference of
+$\dhead=\dmodel/h$, so that every head sets $\dkey=\dval=\dhead$. Returning to the example, one head can resolve the reference of
 ``it'' while another tracks which verb governs each noun, so that a single layer
 represents several such relationships together. The resulting heads are concatenated and linearly mixed,
 \begin{equation}
@@ -51,7 +56,9 @@ represents several such relationships together. The resulting heads are concaten
   \label{eq:mha}
 \end{equation}
 where each $\mathrm{head}_i$ applies \cref{eq:attention} with head-specific
-projections and $\mm{W}_O$ recombines them into the model dimension. Because
+projections and $\mm{W}_O\in\R^{\dmodel\times\dmodel}$ recombines the concatenated
+heads back into the model dimension, since the $h$ slices of dimension $\dhead$ together
+restore the width $\dmodel$. Because
 attention is permutation invariant, the architecture has no inherent sense of order;
 position is injected by adding a positional encoding to the input embeddings, either
 the fixed sinusoidal functions of the original work or a set of learned vectors. Without
