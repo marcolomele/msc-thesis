@@ -23,9 +23,9 @@ argue self-supervised learning on video data is the most promising path towards 
 
 Our work is inspired by this philosophy: if foundation models with vision capabilities have acquired a
 sufficiently general understanding of the visual world, carefully composing them at inference
-time should transfer to novel tasks that none was designed for. Cross-view object correspondence
-on \textit{Ego-Exo4D} is precisely such a task, and we treat it as a principled test of how
-far this hypothesis holds. 
+time should transfer to novel tasks that none was designed for.
+
+\paragraph{Language as a bridge.} These observations converge on the question this thesis sets out to answer. We ask whether natural language can serve as a bridge between machine learning architectures, acting as an information-compression medium that transfers a scene from one model to another. The question is compelling for two reasons. First, it mirrors how humans collaborate: we perceive a scene, compress what we see into language, which apart from mathematics is the most compressed information-transfer mechanism available to us, and rely on that compression to coordinate with others who observe the same scene from a different vantage point. Second, a system built on this principle is interpretable by construction, because a pipeline whose modules communicate through a human-readable phrase exposes its own reasoning, so that any prediction can be inspected, and any unsafe or erroneous output traced, without recourse to model weights. Cross-view object correspondence on \textit{Ego-Exo4D} furnishes a concrete instance of this question, since the two views are two perspectives on a single scene and language must carry object identity from one to the other. A secondary motivation follows from the same setup. Because no module is trained for the task, the pipeline additionally tests whether independent foundation models can collaborate on a problem none was designed to solve.
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\linewidth]{latex/imgs/ch2/pipeline-overview.png}
