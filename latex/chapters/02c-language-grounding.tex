@@ -7,17 +7,9 @@ our pipeline is driven by language, and therefore it must segment what a user ``
 \subsection{Aligning Vision and Language}
 \label{subsec:multimodality}
 
-Grounding rests on a shared representation in which an image and a sentence describing it
-land close together. \textit{CLIP}, introduced by Radford et al.\ in 2021
-\cite{radford2021clip}, learns exactly this from raw supervision that requires no manual
-labelling by training on four hundred million image and caption pairs from the web. It couples two encoders, an image encoder $g_\text{img}$ that is the Vision Transformer of \cref{subsec:vit} and a text encoder $g_\text{txt}$ that is a Transformer of the kind in \cref{subsec:transformer}, each producing a single descriptor that is then
+\paragraph{CLIP.} Grounding rests on a shared representation in which an image and a sentence describing it land close together. \textit{CLIP}, introduced by Radford et al.\ in 2021 \cite{radford2021clip}, learns exactly this from raw supervision that requires no manual labelling by training on four hundred million image and caption pairs from the web. It couples two encoders, an image encoder $g_\text{img}$ that is the Vision Transformer of \cref{subsec:vit} and a text encoder $g_\text{txt}$ that is a Transformer of the kind in \cref{subsec:transformer}, each producing a single descriptor that is then
 $L_2$-normalised so that dot products become the cosine similarities of \cref{subsec:dino}.
-The two encoders are trained jointly to agree on matching pairs and disagree on the rest.
-
-Given a batch of $N$ pairs, the model scores every image against every caption and is
-asked to recover which caption belongs to which image. Writing $\cossim{\cdot}{\cdot}$ for
-the cosine similarity of two normalised descriptors, the symmetric contrastive objective is
-
+The two encoders are trained jointly to agree on matching pairs and disagree on the rest. Given a batch of $N$ pairs, the model scores every image against every caption and aims to recover which caption belongs to which image. Writing $\cossim{\cdot}{\cdot}$ for the cosine similarity of two normalised descriptors, the symmetric contrastive objective is
 \begin{equation}
   \begin{split}
   \loss
@@ -41,20 +33,20 @@ distribution over images and does the same in the other direction, which is why 
 is averaged over both.\footnote{The original work calls the temperature $\tau$; we write
 $\kappa$ to keep $\tau$ for the video frame index, \cref{subsec:sam}.} The temperature $\kappa$ scales the similarities before the softmax,
 controlling how sharply the model separates the positive from its negatives. This is the
-\textit{InfoNCE} loss \cite{rusak2025infonceidentifyinggaptheory}, and minimising it pulls each image toward its caption and pushes it away from the others in the batch, so that after training a single image embedding
-can be compared against the embedding of any phrase. 
+\textit{InfoNCE} loss \cite{rusak2025infonceidentifyinggaptheory}, and minimising it pulls each image toward its caption and pushes it away from the others in the batch, so that after training a single image embedding can be compared against the embedding of any phrase. The intuition is illustrated below in \cref{fig:clip-intuition}.
 
 Classification then needs no head specific to the task, because an unseen category is recognised by embedding its name as text and taking the nearest caption, which is what makes the alignment open vocabulary. However, CLIP's limit is that this alignment operates at the level of whole images and whole
 sentences; a high similarity indicates that a concept is present in the frame but reveals nothing about its location, since all spatial structure is lost when compressing the image into a single semantic-rich embedding.
 
 \begin{figure}
     \centering
-    \includegraphics[width=0.8\linewidth]{latex/imgs/ch2/clip-logic.png}
-    \caption{Caption, jia bin huang}
-    \label{fig:placeholder}
+    \includegraphics[width=1\linewidth]{latex/imgs/ch2/clip-logic.png}
+    \caption{CLIP's core idea. Training align matching couples of image-text embeddings close and pushes dissimilar couples apart. From \cite{huangdinov3}.}
+    \label{fig:clip-intuition}
 \end{figure}
 
-Two lines of work extend the alignment toward the pixels, namely visual instruction
+\vspace{1mm}
+\noindent\textbf{Extentions.}\hspace{1mm} Two lines of work extend the alignment toward the pixels, namely visual instruction
 tuning and multimodal token interleaving. Visual instruction tuning, introduced as
 \textit{LLaVA} by Liu et al.\ in 2023 \cite{liu2023llava}, keeps a frozen CLIP image
 encoder and trains only a lightweight projection that feeds visual tokens into a large
@@ -72,19 +64,19 @@ neither recovers the location a mask requires.
 The task of localising a phrase to an image's region is equivalent to open-vocabulary detection. Open-vocabulary means that an object can be detected regardless of whether it was shown at training time. Classical detectors fail in this regard, with each region proposal being compared against a closed list of categories. The DETR family  \cite{carion2020detr} designed a Transformer that
 predicts boxes directly, casting detection as the prediction of a set of boxes through learnable object queries matched to ground truth by a bipartite assignment. \cite{zhang2023dinodet} further
 sharpen the training and convergence with a DINO-based detector. Nonetheless, the vocabulary constraint
-persist; the detector cannot name an object it has never seen before.
+persist, and the detector is unable to name an object it has never seen before.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\linewidth]{latex/imgs/ch2/gdino-architecture-examples.png}
-    \caption{Caption + gdino paper}
-    \label{fig:placeholder}
+    \caption{On the left, Grounding DINO's architecture. On the right, examples of bounding box outputs conditioned on a textual prompt. Both from \cite{liu2024groundingdino}.}
+    \label{fig:gdino-architecture}
 \end{figure}
 
 \textit{Grounding DINO} (G-DINO), presented by Liu et al.\ in 2024 \cite{liu2024groundingdino},
 breaks this constraint by fusing a detector with the language alignment of
 \cref{subsec:multimodality}. It pairs an image backbone with a text backbone and lets the
-two modalities read each other before any box is proposed. Letting $\mm{X}_\text{img}$ for
+two modalities read each other before any box is proposed. The full architecture is displayed in \cref{fig:gdino-architecture}. Letting $\mm{X}_\text{img}$ for
 the image tokens and $\mm{X}_\text{txt}$ for the tokens of the prompt, G-DINO applies the cross-attention of \cref{subsec:transformer} in both directions as a feature enhancer,
 \begin{equation}
   \tilde{\mm{X}}_\text{img} = \mm{X}_\text{img} + \attn(\mm{X}_\text{img}, \mm{X}_\text{txt}, \mm{X}_\text{txt}),
@@ -94,12 +86,8 @@ the image tokens and $\mm{X}_\text{txt}$ for the tokens of the prompt, G-DINO ap
 \end{equation}
 
 so that each image token is rewritten with the words it is most compatible with and each
-word with the image regions it most closely refers to. In \cref{eq:gdino-enhancer} the image
-tokens act as the queries of \cref{eq:attention} while the text tokens supply the keys and
-values. Additionally, G-DINO leverages residual additions to preserve the original features alongside their
-refinements across modalities. 
-
-Having produced the enhanced image tokens, the model selects those most
+word with the image regions it most closely refers to. In \cref{eq:gdino-enhancer} the image tokens act as the queries of \cref{eq:attention} while the text tokens supply the keys and values. Additionally, G-DINO leverages residual additions to preserve the original features alongside their
+refinements across modalities. Having produced the enhanced image tokens, the model selects those most
 similar to the prompt to initialise its object queries. This  focuses detection on
 language rather than on a fixed category set. Next, a multimodal decoder then emits for each
 query a box together with its alignment to the phrase.  Because the score a region receives
@@ -107,20 +95,18 @@ is its similarity to arbitrary text rather than the activation of a class neuron
 detector localises any noun phrase, making it open vocabulary by design. 
 
 Finally, G-DINO output is a bounding box, localizing one phrase at a time. Our pipeline exploits the
-alignment signal directly. We run Grounding DINO with a deliberately permissive confidence
-threshold and exploit the alignment score as a proxy for how likely the named object is present in each frame, which then allows us to rank frames in the destination view ( \cref{sec:experiments}).  While G-DINO surpasses the hurdle of open-vocabulary detection, it still does not achieve segmentation. 
-
-\begin{figure}
+alignment signal directly (\cref{chap:pipeline}). We run Grounding DINO with a deliberately permissive confidence threshold and exploit the alignment score as a proxy for how likely the named object is present in each frame, which then allows us to rank frames in the destination view. While G-DINO surpasses the hurdle of open-vocabulary detection, it still does not achieve segmentation. 
+\begin{figure}[H]
     \centering
-    \includegraphics[width=1\linewidth]{latex/imgs/ch2/sam3-pcs-examples.png}
-    \caption{Caption sam3 paper}
-    \label{fig:placeholder}
+    \includegraphics[width=0.90\linewidth]{latex/imgs/ch2/sam3-pcs.png}
+    \caption{The Promptable Concept Segmentation (PCS) task for video introduced by Segment Anything Model 3. From \cite{ravi2025sam3}.}
+    \label{fig:sam3-pcs}
 \end{figure}
 
 \subsection{Segment Anything Model 3}
 \label{subsec:sam3}
 
-SAM 3, presented by Ravi et al.\ in 2025 \cite{ravi2025sam3} define the \textit{promptable concept segmentation} task. Its goal is to detect, segment, and track all instances of a concept named by a noun phrase, image exemplars, or both. The model adopts the Perception Encoder \cite{bolya2025perceptionencoder}, a recent vision-language backbone, the memory modules of SAM 2, and three innovations: a detector conditioned on the text prompt, a global presence token, and a coupling between the detector and the tracker that prevents mask drift. Together these let the model both decide which regions belong to a concept and delineate every instance, rather than waiting for a user to specify one. In essence, SAM3 receives as input a textual noun phrase and has been trained to returns the set of all masks that realise the concept,
+SAM 3, presented by Ravi et al.\ in 2025 \cite{ravi2025sam3} define the \textit{promptable concept segmentation} task, where the goal is to detect, segment, and track all instances of a concept named by a noun phrase, image exemplars, or both. The model adopts the Perception Encoder \cite{bolya2025perceptionencoder}, a recent vision-language backbone, the memory modules of SAM 2, and three innovations: a detector conditioned on the text prompt, a global presence token, and a coupling between the detector and the tracker that prevents mask drift. Together these let the model both decide which regions belong to a concept and delineate every instance, rather than waiting for a user to specify one. In essence, SAM3 receives as input a textual noun phrase and has been trained to returns the set of all masks that realise the concept,
 \begin{equation}
   \{\mask_1, \dots, \mask_k\} = \text{SAM\,3}\big(\img,\, g_\text{txt}(t)\big),
   \label{eq:sam3-pcs}
@@ -129,13 +115,6 @@ SAM 3, presented by Ravi et al.\ in 2025 \cite{ravi2025sam3} define the \textit{
 where $\img$ is the image, $t$ the noun phrase, and each $\mask_j$ delineates one instance in $\img$
 matching $t$. The number $k$ of returned masks is itself an output rather than a fixed
 choice, because the model has the freedom to decide how many objects in the image are related to the described concept.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=1\linewidth]{latex/imgs/ch2/sam3-architecture-detailed.png}
-    \caption{Caption + sam3 paper}
-    \label{fig:placeholder}
-\end{figure}
 
 \paragraph{Detector with Text Conditioning.} SAM 3 introduces a detector built on the DETR architecture whose image features are conditioned on the text prompt before any box is proposed. A fusion
 encoder takes the image tokens produced by the Perception Encoder and the encoded phrase $g_\text{txt}(t)$
@@ -155,24 +134,29 @@ returns a scalar score $s^\text{pres}$ indicating whether the queried concept ex
 all. On the other hand, the object queries are responsible only for localising the instances they have
 been guided toward. The final confidence for each detected instance is the product of the
 object query's own score and the presence score,
-
 \begin{equation}
   s_j = s_j^\text{query} \cdot s^\text{pres},
   \label{eq:sam3-presence}
 \end{equation}
-
 so that no query can fire on an absent concept even if it finds a locally plausible region.
-This gate substantially reduces false detections in frames where the object is not visible,
-is the dominant failure mode when searching in a long video for a concept present only
-in few isolated frames.
 
-\paragraph{Detector and Tracker Integration.} SAM 3's video module inherits the streaming
-memory of SAM 2, with memory attention, a memory bank, and an occlusion head operating as
-in \cref{eq:mem-attn}. The innovation is in how the detector and the tracker are coupled
-across time. Rather than propagating indefinitely from the last reliable mask, the tracker
-is periodically re-anchored by the detections that the detector produces on each new frame, correcting the tracker's current estimates before error can accumulate. This coupling addresses the drift problem hidden in \cref{eq:mem-attn}, making promptable concept segmentation viable over long clips, thus acting as the segmentation engine of our pipeline.
+\noindent This gate reduces false detections in frames where the object is not visible,
+the dominant failure mode when searching an isolated concept in a long video.
 
-\paragraph{SAM 3 Agent.} One crucial limitation of SAM 3 is that it was trained on maximum 32-token noun phrases. However expressive, these short statements struggles with complex relational descriptions and thus limits SAM 3's applicability. To this end, SAM 3's authors design an agentic loop in which a multimodal language model (MLLM) acts as a planner that orchestrates complex segmentations and treats SAM 3 as a tool. The planner proposes a simple phrase, invokes \cref{eq:sam3-pcs} to obtain candidate masks, inspects the result against the original request, and refines its query, repeating until the masks satisfy the description. This loop decomposes a relational expression into discriminative sub-queries that the segmenter can handle one at a time.
+\vspace{1mm}
+\noindent\textbf{Detector and Tracker Integration.} \hspace{1mm} SAM 3's video module inherits the streaming
+memory of SAM 2. The innovation is in how the detector and the tracker are coupled
+across time. Rather than propagating indefinitely from the last reliable mask, the tracker is periodically re-anchored by the detections that the detector produces on each new frame, correcting the tracker's current estimates before error can accumulate. This coupling addresses the drift problem hidden in \cref{eq:mem-attn}, making promptable concept segmentation viable over long clips, thus acting as the segmentation engine of our pipeline.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=1\linewidth]{latex/imgs/ch2/sam3-architecture-detailed.png}
+    \caption{SAM 3's architecture with its 3 innovations: the text-conditioned detector, the global presence token, and the masklet matcher. From \cite{ravi2025sam3}.}
+    \label{fig:placeholder}
+\end{figure}
+
+\vspace{1mm}
+\noindent\textbf{SAM 3 Agent.} \hspace{1mm} One crucial limitation of SAM 3 is that it was trained on maximum 32-token noun phrases. However expressive, these short statements struggles with complex relational descriptions and thus limits SAM 3's applicability. To this end, SAM 3's authors design an agentic loop in which a multimodal language model (MLLM) acts as a planner that orchestrates complex segmentations and treats SAM 3 as a tool. The planner proposes a simple phrase, invokes \cref{eq:sam3-pcs} to obtain candidate masks, inspects the result against the original request, and refines its query, repeating until the masks satisfy the description. This loop decomposes a relational expression into discriminative sub-queries that the segmenter can handle one at a time.
 
 Taken together, the three capabilities of this section form one path from words to pixels.
 Alignment makes images and phrases comparable, detection localises a phrase to a region,
