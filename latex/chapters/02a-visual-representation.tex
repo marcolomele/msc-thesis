@@ -53,7 +53,7 @@ mixture of the content it found relevant. In our example, the distribution for t
   \label{fig:transformer-arch}
 \end{figure}
 
-A single attention operation captures only one notion of relevance and relationship among inputs. To let the model attend to several relationships at once, the Transformer runs $h$ attention operations inparallel, each with its own projections and each operating on a slice of dimension
+A single attention operation captures only one notion of relevance and relationship among inputs. To let the model attend to several relationships at once, the Transformer runs $h$ attention operations in parallel, each with its own projections and each operating on a slice of dimension
 $\dhead=\dmodel/h$, so that every head sets $\dkey=\dval=\dhead$. Returning to the example, one head can resolve the reference of
 ``it'' while another tracks which verb governs each noun, so that a single layer
 represents several such relationships together. The resulting heads are concatenated and linearly mixed,
@@ -122,7 +122,7 @@ that convolutional networks build in by design, the Vision Transformer can learn
 locality and translation structure only from seeing many examples. Its authors report
 competitive results only after supervised pre-training on very large labelled datasets such
 as \textit{ImageNet-21k} and the proprietary \textit{JFT-300M}. The same year, Touvron et al. proved 
-that this scale is not strictly necessary with \textit{DeiT} \cite{touvron2021deit}. They trained competitive Vision Transformers on \textit{ImageNet} alone by combining strong augmentation with a distillation token that learns from a convolutional teacher. Regardless, the ideas and architectural insights from the transformer continue to implemented across countless works in computer vision \cite{nauen2025transformerfavorcomparativeanalysis}.
+that this scale is not strictly necessary with \textit{DeiT} \cite{touvron2021deit}. They trained competitive Vision Transformers on \textit{ImageNet} alone by combining strong augmentation with a distillation token that learns from a convolutional teacher. Regardless, the ideas and architectural insights from the transformer continue to be implemented across countless works in computer vision \cite{nauen2025transformerfavorcomparativeanalysis}.
 
 \subsection{Self-Supervised Features}
 \label{subsec:dino}
@@ -136,7 +136,7 @@ reconstructing deliberately corrupted inputs. We focus on the self-distillation
 approach because it produces the features our pipeline relies on.
 
 \vspace{1mm}
-\noindent\textbf{DINO.} \hspace{1mm} Self-distillation with no labels (\textit{DINO}), introduced by Caron et al.\ in 2021 \cite{dinov1}, visualized in \cref{fig:dino-architecture}, defines two networks with identical architecture, a student $g_{\theta_s}$ and a teacher $g_{\theta_t}$, each mapping an image to a distribution over $K$ dimensions, set to 4096 in the original paper. While these $K$ dimensions are undefined so the model can establish their abstract meaning during training, conceptually they can be though of as classes describing to which an image can belong to. The two networks see different augmented crops of the same image, like small local crops given only to the student and larger global crops given to the teacher, and the student is trained so that its prediction matches the teacher's across these views. The teacher's distribution is formed by a softmax with two deliberate distortions,
+\noindent\textbf{DINO.} \hspace{1mm} Self-distillation with no labels (\textit{DINO}), introduced by Caron et al.\ in 2021 \cite{dinov1}, visualized in \cref{fig:dino-architecture}, defines two networks with identical architecture, a student $g_{\theta_s}$ and a teacher $g_{\theta_t}$, each mapping an image to a distribution over $K$ dimensions, set to 4096 in the original paper. While these $K$ dimensions are undefined so the model can establish their abstract meaning during training, conceptually they can be thought of as classes to which an image can belong. The two networks see different augmented crops of the same image, like small local crops given only to the student and larger global crops given to the teacher, and the student is trained so that its prediction matches the teacher's across these views. The teacher's distribution is formed by a softmax with two deliberate distortions,
 \begin{equation}
   P_t(\img)^{(k)}
   = \frac{\exp\!\big((g_{\theta_t}(\img)^{(k)}-c^{(k)})/\kappa_t\big)}
@@ -167,7 +167,10 @@ ensemble of recent students. This lag makes the teacher a more stable target tha
 \textit{DINOv2}, presented by Oquab et al.\ in 2023 \cite{oquab2023dinov2}, elevates this
 architecture into a general-purpose feature extractor. Rather than scaling data
 indiscriminately, the authors assemble a large curated corpus, \textit{LVD-142M}, and train larger Vision
-Transformers on it with a combined image-level and patch-level objective. They further observe that the patch features of a plain ViT are corrupted by a small number of high-norm outlier tokens, and remove them by appending a handful of dedicated ``register tokens'' to the sequence whose sole role is to absorb this global information and leave the patch features clean. The resulting features are strong enough to be used directly in downstream classification or prediction tasks, and they remain the visual backbone against which our cross-view experiments are measured. The most recent iteration, \textit{DINOv3} \cite{dinov3}, extends this line further with additional upgrades that make it surpass significantly previous self- and weakly- supervised foundation models.
+Transformers on it with a combined image-level and patch-level objective. They further observe that the patch features of a plain ViT are corrupted by a small number of high-norm outlier tokens, and remove them by appending a handful of dedicated ``register tokens'' to the sequence whose sole role is to absorb this global information and leave the patch features clean. The resulting features are strong enough to be used directly in downstream classification or prediction tasks, and they remain the visual backbone against which our cross-view experiments are measured. 
+
+\newpage
+The most recent iteration, \textit{DINOv3} \cite{dinov3}, extends this line further with additional upgrades that make it surpass significantly previous self- and weakly- supervised foundation models.
 \begin{figure}[t]
   \centering
   \includegraphics[width=1\linewidth]{latex/imgs/ch2/dinov3-results.png}
@@ -183,11 +186,12 @@ re-ranking. The same comparison applies at the patch level, where matching patch
 descriptors across two images yields correspondences between their regions, a valuable property
 for cross-view object correspondence to which we return in \cref{sec:segmentation}.
 
-\noindent\textbf{MAE.} \hspace{1mm} Another pretext task that is relevant for our pipeline is the \textit{Masked Autoencoder (MAE)} \cite{he2022mae}. This method masks a large fraction of an image's patches, around three quarters, and trains a Vision Transformer
+\paragraph{MAE.} Another pretext task that is relevant for our pipeline is the \textit{Masked Autoencoder (MAE)} \cite{he2022mae}. This method masks a large fraction of an image's patches, around three quarters, and trains a Vision Transformer
 encoder together with a lightweight decoder to reconstruct the missing pixels from the
 visible ones. The high masking ratio makes reconstruction non-trivial and forces the
 encoder to learn the structure of the scene rather than pixel-level details. MAE is used to train the image encoder of the Segment Anything Model \cite{kirillov2023sam}, which we will describe in the next section.
 
+\newpage
 The elements of our pipeline build on the representations defined here.  DINOv2 defines the latent space in which O-MaMa selects candidate masks using patch features, a mechanism we develop in \cref{sec:segmentation}. The cosine retrieval scheme on $\cls$ descriptors powers a frame-diversity selection strategy that we retain as a baseline in our experiments. The same Vision Transformer encoder reappears as the image branch of the language-grounded models in \cref{sec:language-grounding}, within the multimodal backbone of \cref{sec:foundation-models-agents}, and in the video segmenters of
 \cref{sec:segmentation}.
 

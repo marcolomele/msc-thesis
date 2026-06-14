@@ -43,7 +43,7 @@ To address the asymmetry in mask quality between the two views, Experiments~D an
 \paragraph{Description quality.}
 We compare the VLM backends for Stage~2 by judging their descriptions with Gemma~4 \cite{gemma4blog}. The judge receives each generated description alongside the source image and the ground-truth label, then scores correctness as a binary outcome across object identity, contextual descriptors, and the attributes that hold independently of viewpoint. \Cref{tab:abl-vlm} reports the result. Qwen~3.5~35B attains the highest judge scores in both directions (77.0\% on \textit{Ego2Exo} and 70.0\% on \textit{Exo2Ego}), which motivates its selection as the backend for Stages~2 and~3. Its batched variant runs 43\% faster but loses 23.4 percentage points of quality on \textit{Ego2Exo}, an unfavourable tradeoff. PixelRefer \cite{yuan2025pixelreferunifiedframeworkspatiotemporal}, a light-weight variant trained to describe image regions with masks as input, also underperforms Qwen, further supporting our case of using general foundation models.
 
-\begin{table}[h]
+\begin{table}
     \centering
     \setlength{\tabcolsep}{4pt}
     \caption{Description quality judged by Gemma~4.}
@@ -66,7 +66,7 @@ We compare the VLM backends for Stage~2 by judging their descriptions with Gemma
 \paragraph{Description content.}
 We then hypothesize whether richer descriptions improve anchor selection. To this end, we fix Stage~3 to Grounding DINO and vary the description it receives across three cumulative conditions, namely object identity alone, identity extended with colour, and the two extended further with attributes independent of viewpoint. We report two ad-hoc metrics alongside IoU; Fully Inside (FI), the fraction of cases in which the ground-truth box lies entirely within the predicted region, and Centroid in Box (CB), the looser fraction in which at least the ground-truth centroid falls inside it. \Cref{tab:abl-desc} tells us how much of the grounding signal is carried by the object name and how much by the attributes layered on top of it.
 
-\begin{table}[h]
+\begin{table}
 \centering
 \setlength{\tabcolsep}{3pt}
 \caption{Description content impact on Grounding DINO.}
@@ -133,7 +133,7 @@ In the previous section we identified a concentrated symptoms of our pipeline. B
 
 Half of the deficit is a discrete failure and half is ordinary imprecision. Splitting the mean IoU into a mass near zero and the rest, the zero mass holds 32\% of cases in \textit{Ego2Exo} and 31\% in \textit{Exo2Ego}, while the mean over the surviving cases climbs to 0.569 and 0.617 (\cref{tab:bimodal}). Removing the zero mass alone would lift the average by roughly 0.18 in both directions reaching the state of the art peformance of LM-EEC \cref{tab:main}. Hence the name ``dead'' mass, since the cases in it are not weak predictions but absent ones. We dissect this in the remaining of this section.
 
-\begin{table}[h]
+\begin{table}
   \centering
   \setlength{\tabcolsep}{6pt}
   \caption{The IoU deficit split into a dead mass and a working mode.}
@@ -171,7 +171,7 @@ The second driver is the object name the VLM writes, and it hurts on top of size
 
 Charging each dead case to the first stage that fails turns these drivers into an ordering. We build \cref{tab:waterfall} by walking the pipeline in sequence and stopping at the first stage that breaks. It shows that naming in Stage~2 is the single largest cause by a wide margin, accounting for 59\% of the dead mass in \textit{Ego2Exo} and 81\% in \textit{Exo2Ego}. Selecting the anchor frame in Stage~3 is next, and the two together explain 74\% and 92\% of all dead cases. Grounding DINO placing its box off the object and the agent segmenting the wrong thing inside a good box are real but minor by comparison. Notably, propagation is zero by construction, since an anchor on the wrong object will reliably stay for the entirety of propagation. Therefore, the bulk of the loss is produced before SAM~3 ever runs, pointing to the need for more thorough analysis of VLM descriptions than our approach in \cref{sec:ablations}.
 
-\begin{table}[h]
+\begin{table}
   \centering
   \setlength{\tabcolsep}{5pt}
   \caption{Failure waterfall over the dead mass per direction, charging each case to the first stage that fails. Cells are shares of the dead mass.}
@@ -198,7 +198,7 @@ Reading the waterfall back through \cref{chap:theory} clarifies why naming domin
 
 The naming failure is one of perception, not of vocabulary or implementation. On the dead cases the source mask handed to the model is three to six times smaller than on the successful ones (median 1.43\% against 4.05\% of the frame in \textit{Ego2Exo}, and 0.098\% against 0.564\% in \textit{Exo2Ego}), and in \textit{Exo2Ego} half of the failures show the object at under 0.1\% of the frame. Crucially, when the model misnames it names a different object that is itself annotated in the same take in 38\% of \textit{Ego2Exo} and 24\% of \textit{Exo2Ego} failures, so it describes a real and clearer neighbour rather than hallucinating. The call runs deterministically and without a description cache, which rules out a software cause, and genuine vocabulary near misses such as a plate'' read as a bowl'' form a small minority. The pattern holds once we look past the separately annotated neighbours. Across all dead cases, the model never ``hallucinates'' an absent object but always nominates a real and generally larger structure present alongside the target. \cref{tab:wrong-nomination} reports the split, where a minority are named correctly and die downstream, while of the genuine naming failures roughly a quarter name a separately annotated neighbour and the remainder name an object present in the scene yet outside the annotation set. Typically, this is the dominant container, tool, or surface on which the tiny target rests, with true synonyms and generic categories of the right object forming a small residual.
 
-\begin{table}[t]
+\begin{table}
 \centering
 \caption{What the VLM nominates on the dead cases ($\mathrm{seed\ IoU}=0$), as a proportion of all such cases per direction.}
 \label{tab:wrong-nomination}
