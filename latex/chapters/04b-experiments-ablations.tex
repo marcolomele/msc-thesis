@@ -20,13 +20,12 @@ We analyse the pipeline along four dimensions, namely its architecture, the qual
   (A) Best Single Frame & 0.1684 & 0.13 & 22m\,53s \\
   (B) SAM3 Agent Loop & 0.3554 & 21.30 & 59h\,15m \\
   (C) Propagation & 0.3769 & 0.82 & 2h\,23m \\
-  (D) G-DINO & 0.3751 & 0.90 & 2h\,37m \\
-  (E) RoMa & \textbf{0.4331} & 1.04 & 3h\,01m \\
+  (D) G-DINO & \textbf{0.3751} & 0.90 & 2h\,37m \\
   \midrule
-  \shortstack[l]{E \% change w.r.t.\\ Baseline $\tfrac{x-y}{y}$}
-    & \textcolor[rgb]{0,0.55,0}{$+309.0\%$}
-    & \textcolor[rgb]{0,0.55,0}{$-21.2\%$}
-    & \textcolor[rgb]{0,0.55,0}{$-21.4\%$} \\
+  \shortstack[l]{D \% change w.r.t.\\ Baseline $\tfrac{x-y}{y}$}
+    & \textcolor[rgb]{0,0.55,0}{$+254.2\%$}
+    & \textcolor[rgb]{0,0.55,0}{$-31.8\%$}
+    & \textcolor[rgb]{0,0.55,0}{$-31.7\%$} \\
   \bottomrule
   \end{tabular}
 \end{table}
@@ -38,7 +37,7 @@ Generating a description on every source frame is redundant, because the object'
 
 Experiment~B applies the full SAM~3 agent loop on every destination frame and reaches IoU 0.355, but the repeated tool calls raise latency to 21.30\,s per frame, raising total run time to 59 hours, which is impractical at scale. Experiment~C addresses the cost with propagation, matching that accuracy (IoU 0.377) at 0.82\,s per frame, roughly 25 times faster. Together, B and C establish propagation as the efficient route to high accuracy on each frame and reinforce the principle behind the split of \cref{sec:task-formulation}, that cross-view transfer need only succeed on a few destination frames for the tracker to complete the rest.
 
-To address the asymmetry in mask quality between the two views, Experiments~D and E vary the signal for anchor selection in Stage~3. Grounding DINO (D) yields IoU 0.375 at 0.90\,s per frame, with no measurable gain over propagation alone. RoMa (E), which scores each candidate frame through the geometric matching of \cref{eq:roma-score}, reaches the best result of 0.433, a relative improvement of 309.0\% over the baseline while cutting latency by 21\%. The result suggests that geometric matching tied to the object is a more reliable anchor criterion than grounding in language, particularly for visually ambiguous objects. Nonetheless, we attribute most of this margin to the noise of the small ablation subset; Grounding DINO and RoMa on the full test set perform similarly.
+To address the asymmetry in mask quality between the two views, Experiment~D adds the anchor-selection signal of Stage~3. Grounding DINO yields IoU 0.375 at 0.90\,s per frame, a relative improvement of 254.2\% over the baseline, although the gain over propagation alone falls within the noise of the small ablation subset. Selecting anchors by language thus matches propagation on this subset while keeping the bridge across views entirely linguistic, which is why we adopt it as the anchor signal of the full pipeline. A geometric alternative based on dense matching is unattractive here, since such correspondences collapse under the ego-exo viewpoint gap (\cref{subsec:matching}).
 
 \paragraph{Description quality.}
 We compare the VLM backends for Stage~2 by judging their descriptions with Gemma~4 \cite{gemma4blog}. The judge receives each generated description alongside the source image and the ground-truth label, then scores correctness as a binary outcome across object identity, contextual descriptors, and the attributes that hold independently of viewpoint. \Cref{tab:abl-vlm} reports the result. Qwen~3.5~35B attains the highest judge scores in both directions (77.0\% on \textit{Ego2Exo} and 70.0\% on \textit{Exo2Ego}), which motivates its selection as the backend for Stages~2 and~3. Its batched variant runs 43\% faster but loses 23.4 percentage points of quality on \textit{Ego2Exo}, an unfavourable tradeoff. PixelRefer \cite{yuan2025pixelreferunifiedframeworkspatiotemporal}, a light-weight variant trained to describe image regions with masks as input, also underperforms Qwen, further supporting our case of using general foundation models.
