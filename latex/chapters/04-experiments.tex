@@ -26,6 +26,8 @@ where $\varsigma(\cdot)$ denotes the centroid of a mask and $d = \sqrt{H^2 + W^2
 \paragraph{Implementation.}
 We set $\abs{\set{S}} = 1$ seed frame and $\abs{\set{A}} = 3$ anchor frames, since a single seed frame already yields a reliable description while three anchors balance the stability of propagation against its cost, as the ablation of \cref{sec:ablations} confirms. We select anchor frames in Stage~3 with Grounding DINO \cite{liu2024groundingdino}, keeping language as the sole bridge across views, and we use Qwen~3.5~35B \cite{qwen35blog} as the VLM backend for both Stage~2 and the SAM~3 agent loop (\cref{subsec:Stage2}). The entire system is implemented in Python with PyTorch and Hugging Face libraries, and its inference is run on a single NVIDIA H200 Graphics Processing Unit with 80GB of Video Random Access Memory. 
 
+
+
 % ------------------------------------------------------------
 \section{Comparison with the State of the Art}
 \label{sec:comparison}

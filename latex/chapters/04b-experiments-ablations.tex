@@ -53,7 +53,7 @@ We compare the VLM backends for Stage~2 by judging their descriptions with Gemma
               & \shortstack{Success Score$\uparrow$\\\textit{Exo2Ego}}
               & \shortstack[c]{Single Call \\ Time\,(s)}$\downarrow$ \\
       \midrule
-      \shortstack[l]{Qwen~3.5~35B\\(batched)} & 53.6\% & 41.3\% & \textbf{4.30} \\
+      Qwen~3.5~35B (batched) & 53.6\% & 41.3\% & \textbf{4.30} \\
       Pixelrefer-Lite-7B  & 53.7\% & 37.2\% & 6.00 \\
       Pixelrefer-7B       & 54.6\% & 39.9\% & 5.23 \\
       Qwen~3.6~35B        & 75.0\% & 58.2\% & 7.55 \\
@@ -65,27 +65,27 @@ We compare the VLM backends for Stage~2 by judging their descriptions with Gemma
 \paragraph{Description content.}
 We then hypothesize whether richer descriptions improve anchor selection. To this end, we fix Stage~3 to Grounding DINO and vary the description it receives across three cumulative conditions, namely object identity alone, identity extended with colour, and the two extended further with attributes independent of viewpoint. We report two ad-hoc metrics alongside IoU; Fully Inside (FI), the fraction of cases in which the ground-truth box lies entirely within the predicted region, and Centroid in Box (CB), the looser fraction in which at least the ground-truth centroid falls inside it. \Cref{tab:abl-desc} tells us how much of the grounding signal is carried by the object name and how much by the attributes layered on top of it.
 
-\begin{table}
-\centering
-\setlength{\tabcolsep}{3pt}
-\caption{Description content impact on Grounding DINO.}
-\label{tab:abl-desc}
-\begin{tabular}{l ccc ccc}
-  \toprule
-  & \multicolumn{3}{c}{\textit{Ego2Exo}}
-  & \multicolumn{3}{c}{\textit{Exo2Ego}} \\
-  \cmidrule(lr){2-4}\cmidrule(lr){5-7}
-  Description & IoU$\uparrow$ & FI$\uparrow$ & CB$\uparrow$ & IoU$\uparrow$ & FI$\uparrow$ & CB$\uparrow$ \\
-  \midrule
-  Object only
-    & -- & -- & -- & -- & -- & -- \\
-  Object\,+\,colour
-    & -- & -- & -- & -- & -- & -- \\
-  \shortstack[l]{Object\,+\,colour\\+\,descriptors}
-    & -- & -- & -- & -- & -- & -- \\
-  \bottomrule
-\end{tabular}
-\end{table}
+% \begin{table}
+% \centering
+% \setlength{\tabcolsep}{3pt}
+% \caption{Description content impact on Grounding DINO.}
+% \label{tab:abl-desc}
+% \begin{tabular}{l ccc ccc}
+%   \toprule
+%   & \multicolumn{3}{c}{\textit{Ego2Exo}}
+%   & \multicolumn{3}{c}{\textit{Exo2Ego}} \\
+%   \cmidrule(lr){2-4}\cmidrule(lr){5-7}
+%   Description & IoU$\uparrow$ & FI$\uparrow$ & CB$\uparrow$ & IoU$\uparrow$ & FI$\uparrow$ & CB$\uparrow$ \\
+%   \midrule
+%   Object only
+%     & -- & -- & -- & -- & -- & -- \\
+%   Object\,+\,colour
+%     & -- & -- & -- & -- & -- & -- \\
+%   \shortstack[l]{Object\,+\,colour\\+\,descriptors}
+%     & -- & -- & -- & -- & -- & -- \\
+%   \bottomrule
+% \end{tabular}
+% \end{table}
 
 \paragraph{Performance profile.}
 We finally compare the full pipeline against LM-EEC \cite{hu2025lmeec} on 30\% of the validation takes in the \textit{Exo2Ego} direction, counting a segmentation as successful when its IoU exceeds 0.5. \Cref{fig:iou-dist} shows that our IoU distribution is bimodal rather than spread. A large mass sits at zero, and a second mode concentrates above 0.7, where it matches or exceeds LM-EEC. The zero mass marks the cases where anchor selection or segmentation fails outright, which we will name from now on as ``dead cases''. It is this discrete population, not a uniform loss of precision, that separates us from the state of the art. We expand the analysis of these cases in \cref{sec:gap-analysis}.
@@ -97,27 +97,6 @@ The same split recurs whenever we slice the data. By scenario (\cref{fig:scenari
     \includegraphics[width=\linewidth]{imgs/iou-distr.png}
     \caption{Ours vs LM-EEC IoU distribution.}
     \label{fig:iou-dist}
-\end{figure}
-
-\begin{figure}
-    \centering
-    \includegraphics[width=\linewidth]{imgs/scenario-iou.png}
-    \caption{Ours vs LM-EEC success by scenario.}
-    \label{fig:scenario}
-\end{figure}
-
-\begin{figure}
-    \centering
-    \includegraphics[width=\linewidth]{imgs/size-iou.png}
-    \caption{Ours vs LM-EEC success by object size.}
-    \label{fig:obj-size}
-\end{figure}
-
-\begin{figure}
-    \centering
-    \includegraphics[width=\linewidth]{imgs/anchor-iou.png}
-    \caption{Ours vs LM-EEC success by anchor quality.}
-    \label{fig:anchor-iou}
 \end{figure}
 
 % ------------------------------------------------------------
