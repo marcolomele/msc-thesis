@@ -77,7 +77,8 @@ A well-trained model can answer a question in one shot, but segmenting the right
 \end{equation}
 where the symbol $\Vert$ appends the completed triple to the history. $h_k$ begins with a system prompt that states the task and the tools available at every turn. The thought $r_k$ is a piece of natural-language reasoning the model writes for itself, and $a_k$ is the action it then commits to. In particular, action $a_k$ is not free text, but rather a structured call defined by a JSON schema that names the specific tool and the arguments that are passed. This JSON schema is then processed and an actual external software program is activated. The term $\mathrm{exec}$ stands for any operation run outside the model's control, and returns the observation $o_k$,  while $\mathrm{prune}$ is a bookkeeping step at the end of the loop. 
 
-ReAct's key point is saving the model's thought right before the action, because a model that first reasons about which object to segment and why chooses better actions than one forced to use a tool directly. Additionally, the trace stored in the history makes each decision legible and every failure interpretable.
+\newpage
+\noindent ReAct's key point is saving the model's thought right before the action, because a model that first reasons about which object to segment and why chooses better actions than one forced to use a tool directly. Additionally, the trace stored in the history makes each decision legible and every failure interpretable.
 
 \begin{figure}
     \centering

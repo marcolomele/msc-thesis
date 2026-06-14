@@ -16,13 +16,23 @@ tasks, including cross-view object correspondence: given a per-frame segmentatio
 \cref{fig:ego-exo-example} shows qualitative examples for both correspondence directions. The task is particularly demanding because the two perspectives focus on different aspects of the same scene. On the one
 hand, the egocentric view captures object detail and manual interactions with high fidelity, but suffers from motion blur, frequent hand occlusion, and a narrow field of view that misses scene context. On the
 other hand, the exocentric view provides a global picture of the environment and the person's body, but sacrifices detailed resolution for each individual object. As a result, the same object across the two
-views appears at drastically different scales, angles, positions in the frame, and even colour brightness due to differing lighting conditions. Moreover, the cameras lack geometric calibration information, which
+views appears at drastically different scales, angles, positions in the frame, and even colour brightness due to differing lighting conditions. 
+
+\newpage
+\noindent Moreover, the cameras lack geometric calibration information, which
 renders triangulation-based approaches unfeasible. Finally, the wide variety of recorded scenes, camera optics, and imaging conditions introduces a broad domain shift range that challenges any vision perception
 method developed on a standard image dataset.
 
 \begin{figure}
+    \centering
+    \includegraphics[width=0.8\linewidth]{latex/imgs/ch1/cross-view-intro.png}
+    \caption{The Cross-View Object Correspondence Task.}
+    \label{fig:placeholder}
+\end{figure}
+
+\begin{figure}
   \centering
-  \includegraphics[width=1\linewidth]{latex/imgs/ch2/egoexo-many-examples.png}
+  \includegraphics[width=1\linewidth]{latex/imgs/ch1/egoexo-many-examples.png}
   \caption{Qualitative examples of cross-view object correspondence. Couples of frames are displayed vertically. Different objects in the same frame are marked with mask overlays of different color.}
   \label{fig:ego-exo-example}
 \end{figure}
@@ -53,14 +63,18 @@ serve as a bridge between machine learning architectures, acting as a simple yet
 First, it mirrors how humans collaborate.  Each of us perceives a scene, describes it in language, and sends a message to others who rely on language to coordinate and achieve a common goal. Crucially, natural
 language is the most effective tool for us. While mathematics would be more precise and efficient at compressing information, it is expensive to generate and not accessible to everyone. Second, a system built on
 natural language is interpretable by design. A pipeline whose modules communicate through a natural text exposes every step of the reasoning process, so that any prediction can be inspected, and any unsafe or
-erroneous output can be verified and stopped. Cross-view object correspondence on \textit{Ego-Exo4D} provides a concrete testing ground to this question since it directly simulates two agents with different
+erroneous output can be verified and stopped. 
+
+\newpage
+\noindent Cross-view object correspondence on \textit{Ego-Exo4D} provides a concrete testing ground to this question since it directly simulates two agents with different
 perspectives who use language to coordinate actions and find a common physical object.
 \begin{figure}[H]
   \centering
-  \includegraphics[width=1\linewidth]{latex/imgs/ch2/language as a bridge.png}
-  \caption{Language as a bridge concept.}
+  \includegraphics[width=0.8\linewidth]{latex/imgs/ch1/lang-bridge-intro.png}
+  \caption{Illustrative example of language acting as a bridge in a system of two cameras that helps its user to find objects (and animals) in its house.}
   \label{fig:pipeline-summary}
 \end{figure}
+
 \paragraph{Our Pipeline.} To this end, we propose the ``two eyes and one mouth'' pipeline. Two cameras observe the scene from complementary perspectives, and a single natural language description mediates the
 object correspondence between them, illustrated in \cref{fig:ego-exo-example}. Given a source-view mask track, we first select the single highest-quality seed frame from the source view and pass it to a visual
 large language model, which generates a view- and time-independent description of the target object. That description then drives two coordinated processes. First, an open-vocabulary detector scores destination
