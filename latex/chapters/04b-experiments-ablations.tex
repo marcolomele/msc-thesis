@@ -141,22 +141,6 @@ We then test whether richer descriptions improve anchor selection. To this end, 
 % \end{tabular}
 % \end{table}
 
-\paragraph{Performance profile.}
-We finally compare the full pipeline against LM-EEC \cite{hu2025lmeec} on 30\% of the validation takes in the \textit{Exo2Ego} direction, counting a segmentation as successful when its IoU exceeds 0.5. \Cref{fig:pipeline-lmeec} summarises the comparison from four angles on the same runs. The IoU distribution in the top left panel is bimodal rather than spread, with a large mass at zero and a second mode above 0.7 where the pipeline matches or exceeds LM-EEC. The zero mass marks the cases where anchor selection or segmentation fails outright, which from now on we call ``dead cases'', and this discrete population, rather than a uniform loss of precision, is what drags our mean below the state of the art, by 0.405 against 0.644 over the validation triplets.
-
-The split already gives an early indication of the method's promise. Once the cases each system fails outright are removed, by keeping only an IoU above 0.2, the two are level, at 0.732 for the pipeline against 0.705 for LM-EEC, so where the pipeline does fire it matches the state of the art rather than trailing it. The qualification is the survivor count, since the pipeline clears that bar on 118 of the 218 triplets against LM-EEC's 197, so its working mean rests on a smaller and more selective subset. Recovering the dead mass could therefore lift the overall mean above LM-EEC, which places the deficit in a group we can isolate rather than spread across every prediction. We expand the analysis of these cases in \cref{sec:gap-analysis}.
-
-\begin{figure}
-    \centering
-    \includegraphics[width=\linewidth]{imgs/ch4/pipeline-lmeec.png}
-    \caption{Comparison of the full pipeline against LM-EEC on the \textit{Exo2Ego} validation takes at an IoU threshold of 0.5. The top left panel overlays the two IoU distributions. The remaining panels split every run into one of four outcomes, namely both succeed, pipeline only, LM-EEC only, and both fail, broken down by scenario (top right), object size (bottom left), and anchor IoU (bottom right).}
-    \label{fig:pipeline-lmeec}
-\end{figure}
-
-The same split recurs whenever we slice the data. By scenario, the strongest regimes are basketball (81\% joint success) and music (65\%), whereas bike repair is the weakest at 26\%, with both methods failing on 34\% of its runs. Bike repair concentrates small objects whose identity is ambiguous to name, which is precisely where the language bridge of Stage~2 struggles to carry the object across views. Object size tells the same story, since joint success holds near 34\% on small and 29\% on medium objects and then jumps to 62\% on large ones, while the rate at which both methods fail drops from 38\% to 5\%. LM-EEC tracks the same pattern, so the difficulty is shared rather than specific to our pipeline. Interestingly, the small and medium regimes are almost identical, which suggests the penalty sets in below a size threshold rather than scaling smoothly with it.
-
-Crucially, the breakdown by anchor IoU locates the failure. When the anchor IoU is high (in $[0.7,1]$), both methods succeed jointly in 80\% of cases and LM-EEC's advantage shrinks to 7\%. When it is low (in $[0,0.3)$), the pipeline collapses to 5\% joint success while LM-EEC alone wins 60\% of those cases. The state of the art therefore dominates exactly where our anchors are poor, which marks anchor selection and object description as the directions with the highest leverage for improvement.
-
 % ------------------------------------------------------------
 \section{Mechanistic Analysis of Performance}
 \label{sec:gap-analysis}
