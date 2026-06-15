@@ -3,7 +3,7 @@
 \label{sec:ablations}
 % ------------------------------------------------------------
 
-We analyse the pipeline along four dimensions, namely its architecture, the quality of the descriptions Stage~2 produces, the content those descriptions should carry, and its failure profile against the strongest baseline. Each ablation isolates a single design decision or a single foundation model, locating where the pipeline gains accuracy and where it remains limited on a task none of its constituent models was built to solve. 
+We analyse the pipeline along three dimensions, namely its architecture, the selection and number of anchors, and the quality of the descriptions Stage~2 produces. Each ablation isolates a single design decision or a single foundation model, locating where the pipeline gains accuracy and where it remains limited on a task none of its constituent models was built to solve. Each table below fixes its own experimental configuration and validation subset, so the numbers it reports are comparable within the table rather than across tables.
 
 \begin{table}[h]
   \centering
@@ -20,10 +20,10 @@ We analyse the pipeline along four dimensions, namely its architecture, the qual
   (A) Best Single Frame & 0.1684 & 0.13 & 22m\,53s \\
   (B) SAM3 Agent Loop & 0.3554 & 21.30 & 59h\,15m \\
   (C) Propagation & 0.3769 & 0.82 & 2h\,23m \\
-  (D) G-DINO & \textbf{0.3751} & 0.90 & 2h\,37m \\
+  (D) G-DINO & \textbf{0.381} & 0.90 & 2h\,37m \\
   \midrule
   \shortstack[l]{D \% change w.r.t.\\ Baseline $\tfrac{x-y}{y}$}
-    & \textcolor[rgb]{0,0.55,0}{$+254.2\%$}
+    & \textcolor[rgb]{0,0.55,0}{$+259.8\%$}
     & \textcolor[rgb]{0,0.55,0}{$-31.8\%$}
     & \textcolor[rgb]{0,0.55,0}{$-31.7\%$} \\
   \bottomrule
@@ -37,7 +37,7 @@ Generating a description on every source frame is redundant, because the object'
 
 Experiment~B applies the full SAM~3 agent loop on every destination frame and reaches IoU 0.355, but the repeated tool calls raise latency to 21.30\,s per frame, raising total run time to 59 hours, which is impractical at scale. Experiment~C addresses the cost with propagation, matching that accuracy (IoU 0.377) at 0.82\,s per frame, roughly 25 times faster. Together, B and C establish propagation as the efficient route to high accuracy on each frame and reinforce the principle behind the split of \cref{sec:task-formulation}, that transfer across views need only succeed on a few destination frames for the tracker to complete the rest.
 
-To address the asymmetry in mask quality between the two views, Experiment~D adds the anchor selection signal of Stage~3. Grounding DINO yields IoU 0.375 at 0.90\,s per frame, a relative improvement of 254.2\% over the baseline, although the gain over propagation alone falls within the noise of the small ablation subset. Selecting anchors by language thus matches propagation on this subset while keeping the bridge across views entirely linguistic, which is why we adopt it as the anchor signal of the full pipeline. A geometric alternative based on dense matching is unattractive here, since such correspondences collapse under the viewpoint gap between the egocentric and exocentric views (\cref{subsec:matching}).
+To address the asymmetry in mask quality between the two views, Experiment~D adds the anchor selection signal of Stage~3. Grounding DINO yields IoU 0.381 at 0.90\,s per frame, a relative improvement of 259.8\% over the baseline, although the gain over propagation alone falls within the noise of the small ablation subset. Selecting anchors by language thus matches propagation on this subset while keeping the bridge across views entirely linguistic, which is why we adopt it as the anchor signal of the full pipeline. A geometric alternative based on dense matching is unattractive here, since such correspondences collapse under the viewpoint gap between the egocentric and exocentric views (\cref{subsec:matching}).
 
 \paragraph{Anchor selection and count.}
 Two choices govern Stage~3, namely where the anchors come from and how many we keep. The two views are roughly synchronised in time, so the simplest rule would transfer the mask at the destination frame that shares the chosen source frame's index. However, synchronisation in time does not imply alignment in appearance, since at the same instant the target can be occluded, tiny, or out of frame in the destination view, so the best source frame is rarely the best destination frame. \Cref{fig:anchor-selection} confirms this, since the composite scores of paired source and destination frames are almost uncorrelated, with a Spearman correlation of 0.14 across frames and a distribution within each object centred on zero, so a frame that scores well in one view carries no guarantee of scoring well in the other. Stage~3 therefore selects anchors independently in the destination view by grounding confidence rather than reusing the source index. \Cref{tab:abl-anchors} supports this separation, as drawing anchors at random costs 4.4 percentage points of IoU in \textit{Ego2Exo} and 2.6 in \textit{Exo2Ego} against selection ranked by confidence at the same count.
@@ -171,7 +171,7 @@ Half of the deficit is a discrete failure and half is ordinary imprecision. Spli
 \paragraph{The loss is born at the anchor.}
 \label{subsec:born-at-anchor}
 
-The dead cases are created when the object is transferred across views, not during temporal propagation. The anchor IoU, measured on the anchor frame itself before any propagation, is exactly zero in 37\% of the subset in both directions, and only about one in ten of those ever recovers to a final IoU above 0.1. Naturally, checking anchor IoU is unfeasible since it requires access to ground truth masks in the destination view. Thus, a dead anchor remains dead. The opposite event, a healthy anchor that collapses during propagation, accounts for only 8\% of the subset in \textit{Ego2Exo} and 6\% in \textit{Exo2Ego}. This isolates Stages~2 and~3, the language bridge and its grounding, as the stage that decides the dead mass, and it further validates the design of \cref{subsec:Stage4}; on a good anchor, it rarely loses the object in subsequent and preceding frames.
+The dead cases are created when the object is transferred across views, not during temporal propagation. The anchor IoU, measured on the anchor frame itself before any propagation, is exactly zero in 37\% of the subset in both directions, and only about one in ten of those ever recovers to a final IoU above 0.1. Naturally, checking anchor IoU is unfeasible since it requires access to ground truth masks in the destination view. Thus, a dead anchor remains dead. The opposite event, a healthy anchor that collapses during propagation, accounts for only 8\% of the subset in \textit{Ego2Exo} and 6\% in \textit{Exo2Ego}. This isolates Stages~2 and~3, the language bridge and its grounding, as the stages that decide the dead mass, and it further validates the design of \cref{subsec:Stage4}; on a good anchor, it rarely loses the object in subsequent and preceding frames.
 
 Two features of this failure stand out. First, this is a challenging problem because it is a silent failure. A mask is produced in 93\% of the dead cases, so the pipeline almost never abstains. Instead, it commits to a wrong answer. Second, these are not failures of object visibility. Every dead case shows the true object on the destination frame, and none has the object absent from the view entirely. In other words, we are not asking the pipeline something that is not there, but rather the pipeline ``hooks'' on the wrong object, and there is no inherent gate that checks whether the produced mask is on the right object.
 
@@ -181,12 +181,12 @@ Two features of this failure stand out. First, this is a challenging problem bec
 
 Two factors push a case into the dead mass, and they act independently. The first is object size. In \textit{Ego2Exo} the rate of anchor failure falls monotonically from 63\% on the smallest size quartile to 18\% on the largest, because the destination camera mounted on the head renders objects small and a small object gives both the detector and the segmenter little to lock onto. In \textit{Exo2Ego} the relationship is flat across the lower three quartiles, near 44\%, and improves only at the largest, so the size effect is real but depends on the direction.
 
-The second driver is the object name the VLM writes, and it hurts on top of size rather than through it. Holding size fixed, a name that does not match the ground truth object roughly doubles to triples the rate of anchor failure in every size bucket, and marginally it raises that rate from 24\% to 61\% in \textit{Ego2Exo} and from 16\% to 53\% in \textit{Exo2Ego}. Even on large and clearly visible objects a wrong name fails about half the time. The two directions weight the drivers differently, with the \textit{Ego2Exo} dead mass leaning on size and the \textit{Exo2Ego} dead mass leaning on naming, but the single largest cell in both is the object that is at once small and misnamed. This suggests that SAM 3 agent segmentation is sensitive to subtle shifts in meaning that language can have with synonyms or objects of similar look.
+The second driver is the object name the VLM writes, and it hurts on top of size rather than through it. Holding size fixed, a name that does not match the ground truth object roughly doubles to triples the rate of anchor failure in every size bucket, and it raises that rate from 24\% to 61\% in \textit{Ego2Exo} and from 16\% to 53\% in \textit{Exo2Ego}. Even on large and clearly visible objects a wrong name fails about half the time. The two directions weight the drivers differently, with the \textit{Ego2Exo} dead mass leaning on size and the \textit{Exo2Ego} dead mass leaning on naming, but the single largest cell in both is the object that is at once small and misnamed. This suggests that SAM 3 agent segmentation is sensitive to subtle shifts in meaning that language can have with synonyms or objects of similar look.
 
 \paragraph{Failure waterfall.}
 \label{subsec:waterfall}
 
-Charging each dead case to the first stage that fails turns these drivers into an ordering. We build \cref{tab:waterfall} by walking the pipeline in sequence and stopping at the first stage that breaks. It shows that naming in Stage~2 is the single largest cause by a wide margin, accounting for 59\% of the dead mass in \textit{Ego2Exo} and 81\% in \textit{Exo2Ego}. Selecting the anchor frame in Stage~3 is next, and the two together explain 74\% and 92\% of all dead cases. Grounding DINO placing its box off the object and the agent segmenting the wrong thing inside a good box are real but minor by comparison. Notably, propagation is zero by construction, since an anchor on the wrong object will reliably stay for the entirety of propagation. Therefore, the bulk of the loss is produced before SAM~3 ever runs, pointing to the need for more thorough analysis of VLM descriptions than our approach in \cref{sec:ablations}.
+Charging each dead case to the first stage that fails turns these drivers into an ordering. We build \cref{tab:waterfall} by walking the pipeline in sequence and stopping at the first stage that breaks. It shows that naming in Stage~2 is the single largest cause by a wide margin, accounting for 59\% of the dead mass in \textit{Ego2Exo} and 81\% in \textit{Exo2Ego}. Selecting the anchor frame in Stage~3 is next, and the two together explain 74\% and 92\% of all dead cases. Grounding DINO placing its box off the object and the agent segmenting the wrong thing inside a good box are real but minor by comparison. Notably, propagation is zero by construction, since an anchor on the wrong object will reliably stay for the entirety of propagation. Therefore, the bulk of the loss is produced before SAM~3 ever runs, pointing to the need for more thorough analysis of VLM descriptions than we provide in \cref{sec:ablations}.
 
 \begin{table}
   \centering
@@ -234,10 +234,10 @@ A present but unannotated object (container/tool/surface) & 34\% & 58\% \\
 \begin{table}[t]
 \centering
 \caption{Effect of the descriptor-VLM input image format on segmentation
-  quality (10\% eof validation set, egoexo, displaying anchor-frame IoU). Replacing the full frame with a crop collapses IoU by mis-naming the isolated patch; a crop added
+  quality (10\% of validation set, egoexo, displaying anchor-frame IoU). Replacing the full frame with a crop collapses IoU by mis-naming the isolated patch; a crop added
   alongside the full frame has no impact.}
 \label{tab:vlm-input-format}
-\begin{tabular}{@{}llcc@{}}
+\begin{tabular}{@{}lc@{}}
   \toprule
   What the descriptor-VLM sees & Mean IoU (egoexo) \\
   \midrule
@@ -278,7 +278,7 @@ Three findings organise everything above. The pipeline's deficit is concentrated
 The legibility that exposed these failures also lets us attack them directly. We report three interventions, each aimed at a stage the analysis charged with the dead mass. Their outcomes are mostly negative, and we include them because a negative result on a legible pipeline still localises the constraint, which sharpens the future work of \cref{chap:conclusions}.
 
 \paragraph{Conditioning the description on scene vocabulary.}
-The waterfall placed naming at the head of the dead mass, and the first direction of \cref{subsec:gap-summary} asks for the scene context that a bare object name discards. We add a stage after Block~1 that classifies the take into its scenario, maps that scenario to a curated list of plausible object names, and hands the list to Block~2, so the generated description is anchored to a known vocabulary rather than invented from the overlay alone. The intervention is encouraging on the smaller subset, lifting IoU from 0.376 to 0.408 in \textit{Ego2Exo} and from 0.322 to 0.480 in \textit{Exo2Ego} on 10\% of the validation set, but the gain narrows to $+0.011$ and reverses to $-0.008$ on the 25\% subset (\cref{tab:abl-vlm-align}). 
+The waterfall placed naming at the head of the dead mass, and the first direction of \cref{subsec:gap-summary} asks for the scene context that a bare object name discards. We add a stage after Stage~1 that classifies the take into its scenario, maps that scenario to a curated list of plausible object names, and hands the list to Stage~2, so the generated description is anchored to a known vocabulary rather than invented from the overlay alone. The intervention is encouraging on the smaller subset, lifting IoU from 0.376 to 0.408 in \textit{Ego2Exo} and from 0.322 to 0.480 in \textit{Exo2Ego} on 10\% of the validation set, but the gain narrows to $+0.011$ and reverses to $-0.008$ on the 25\% subset (\cref{tab:abl-vlm-align}). 
 
 \begin{table}
   \centering\small
