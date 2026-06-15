@@ -80,6 +80,7 @@ We set $\abs{\set{S}} = 1$ seed frame and $\abs{\set{A}} = 3$ anchor frames, sin
 
 \textbf{Results.} \Cref{tab:main} reports results on the Ego-Exo4D Correspondences v2 test split. The gap to the current state of the art is large and was expected. By the time of writing, LM-EEC of Hu et al. \cite{hu2025lmeec} holds the strongest published numbers, scoring 54.98 and 65.77 IoU in the \textit{Ego2Exo} and \textit{Exo2Ego} directions, against our 37.7 and 40.6. A method that retrains the full SAM~2 backbone on the benchmark videos has access to a signal our pipeline by default lacks and can only approximate with distribution it learned in prior training. 
 
+\newpage
 The gap flattens once it is restricted to methods that do not retrain a segmentation backbone. Our approach trails O-MaMa \cite{o-mama}, winner of the 2025 Ego-Exo4D Correspondences Challenge, by roughly five IoU points in both directions ($-11.5\%$ on \textit{Ego2Exo}, $-7.9\%$ on \textit{Exo2Ego}), while surpassing ObjectRelator \cite{fu2025objectrelator} in IoU across both settings (37.7 against 35.3 on \textit{Ego2Exo}, 40.6 against 40.3 on \textit{Exo2Ego}). Remarking that our pipeline is training-free closes to within a few points of the challenge winner, and overtakes a method built on jointly learned cross-view alignment, suggests that much of what the learned components contribute can be recovered by composing strong foundational models around the language bridge.
 
 The other error metrics provide further detail about our pipeline. In the \textit{Ego2Exo} direction, our LE of 0.071 is worse than that of XMem+XSegTx (0.038), a baseline that operates within a single view, even though our IoU is higher. The pipeline therefore tends to recover the correct object region while placing it with coarser spatial precision than its competitors. This profile reflects grounding the object through a language description rather than a learned correspondence, creating a distinction also in the errors of mask matching made by ObjectRelator and O-MaMa and consistent with (\cref{subsec:Stage3}). 
@@ -90,7 +91,7 @@ The same split recurs whenever we slice the data. By scenario, the strongest reg
 
 \begin{figure}
     \centering
-    \includegraphics[width=0.9\linewidth]{imgs/ch4/pipeline-lmeec.png}
+    \includegraphics[width=1\linewidth]{imgs/ch4/pipeline-lmeec.png}
     \caption{Comparison of the full pipeline against LM-EEC on the \textit{Exo2Ego} validation takes at an IoU threshold of 0.5. The top left panel overlays the two IoU distributions. The remaining panels split every run into one of four outcomes: both succeed, pipeline only, LM-EEC only, and both fail, broken down by scenario (top right), object size and anchor IoU (bottom).}
     \label{fig:pipeline-lmeec}
 \end{figure}

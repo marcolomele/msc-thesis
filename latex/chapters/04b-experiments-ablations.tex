@@ -49,9 +49,10 @@ Two choices govern Stage~3, namely where the anchors come from and how many we k
     \label{fig:anchor-selection}
 \end{figure}
 
+\newpage
 The grounding confidence behind this ranking is itself an imperfect signal, which invites a more direct proxy for how clearly the object is seen. Since a larger detection usually means a more visible object, we filter the confident detections and rank them by bounding box area instead. The substitution does not pay off. On 10\% of the validation set ranking by confidence already leads, by IoU 0.433 against 0.376 in \textit{Ego2Exo} and 0.458 against 0.322 in \textit{Exo2Ego}, and the larger 25\% subset confirms the ordering, by 0.378 against 0.354 and 0.437 against 0.293 (\cref{tab:abl-anchor-rule}). We therefore rank anchors by confidence, the imperfect signal that nonetheless beats every proxy we tried.
 
-\begin{table}[h]
+\begin{table}
   \centering\small
   \setlength{\tabcolsep}{6pt}
   \caption{Anchor ranking rule, grounding confidence against bounding box area, on two validation subsets. The early 10\% study already favours confidence, and the larger 25\% subset confirms it.}
@@ -69,7 +70,7 @@ The grounding confidence behind this ranking is itself an imperfect signal, whic
   \end{tabular}
 \end{table}
 
-The number of anchors $K$ trades coverage of the take against the cost of one agent call per anchor, and \cref{tab:abl-anchors} shows the expected diminishing returns. Accuracy rises sharply from a single anchor to three, gaining 6.1 percentage points in \textit{Ego2Exo} and 1.3 in \textit{Exo2Ego}, then stalls or regresses at five, where \textit{Ego2Exo} loses 3.2 points and \textit{Exo2Ego} is flat. Three anchors sit at the knee of both curves, so we fix $K=3$ for the full pipeline.
+The number of anchors $K$ trades coverage of the take against the cost of one agent call per anchor, and \cref{tab:abl-anchors} shows the expected diminishing returns. Accuracy rises sharply from a single anchor to three, gaining 6.1 percentage points in \textit{Ego2Exo} and 1.3 in \textit{Exo2Ego}, then stalls or regresses at five, where \textit{Ego2Exo} loses 3.2 points and \textit{Exo2Ego} is flat. Three anchors sit at the knee of both curves, balancing diversity with consistency, so we fix $K=3$ for the full pipeline.
 
 \begin{table}[h]
   \centering
@@ -93,13 +94,10 @@ The number of anchors $K$ trades coverage of the take against the cost of one ag
   \end{tabular}
 \end{table}
 
-\paragraph{Description quality.}
-We compare the VLM backends for Stage~2 by judging their descriptions with Gemma~4 \cite{gemma4blog}. The judge receives each generated description alongside the source image and the ground truth label, then scores correctness as a binary outcome across object identity, contextual descriptors, and the attributes that hold independently of viewpoint. \Cref{tab:abl-vlm} reports the result. Qwen~3.5~35B attains the highest judge scores in both directions (77.0\% on \textit{Ego2Exo} and 70.0\% on \textit{Exo2Ego}), which motivates its selection as the backend for Stages~2 and~3. Its batched variant runs 43\% faster but loses 23.4 percentage points of quality on \textit{Ego2Exo}, an unfavourable tradeoff. PixelRefer \cite{yuan2025pixelreferunifiedframeworkspatiotemporal}, a lightweight variant trained to describe image regions with masks as input, also underperforms Qwen, further supporting our case for using general foundation models.
-
 \begin{table}
     \centering
     \setlength{\tabcolsep}{4pt}
-    \caption{Description quality judged by Gemma~4.}
+    \caption{Description quality judged by Gemma~4. A successful description gets both object name and properties correct.}
     \label{tab:abl-vlm}
     \begin{tabular}{l ccc}
       \toprule
@@ -116,8 +114,25 @@ We compare the VLM backends for Stage~2 by judging their descriptions with Gemma
     \end{tabular}
 \end{table}
 
-\paragraph{Description content.}
-We then test whether richer descriptions improve anchor selection. To this end, we fix Stage~3 to Grounding DINO and vary the description it receives across three cumulative conditions, namely object identity alone, identity extended with colour, and the two extended further with attributes independent of viewpoint. We report two metrics alongside IoU, namely Fully Inside (FI), the fraction of cases in which the ground truth box lies entirely within the predicted region, and Centroid in Box (CB), the looser fraction in which at least the ground truth centroid falls inside it. \Cref{tab:abl-desc} tells us how much of the grounding signal is carried by the object name and how much by the attributes layered on top of it.
+\begin{table}[t]
+  \centering
+  \setlength{\tabcolsep}{6pt}
+  \caption{The IoU deficit split into a dead mass and a working mode.}
+  \label{tab:bimodal}
+  \begin{tabular}{lcc}
+  \toprule
+  & \textit{Ego2Exo} & \textit{Exo2Ego} \\
+  \midrule
+  Mean IoU (all cases)        & 0.389 & 0.428 \\
+  Dead mass (IoU $<$ 0.01)    & 32\%  & 31\%  \\
+  Mean IoU (working mode)     & 0.569 & 0.617 \\
+  Lift from removing dead mass & $+0.180$ & $+0.189$ \\
+  \bottomrule
+  \end{tabular}
+\end{table}
+
+\paragraph{Description quality.}
+We compare the VLM backends for Stage~2 by judging their descriptions with Gemma~4 \cite{gemma4blog}. The judge receives each generated description alongside the source image and the ground truth label, then scores correctness as a binary outcome across object identity, contextual descriptors, and the attributes that hold independently of viewpoint. \Cref{tab:abl-vlm} reports the result. Qwen~3.5~35B attains the highest judge scores in both directions (77.0\% on \textit{Ego2Exo} and 70.0\% on \textit{Exo2Ego}), which motivates its selection as the backend for Stages~2 and~3. Its batched variant runs 43\% faster but loses 23.4 percentage points of quality on \textit{Ego2Exo}, an unfavourable tradeoff. PixelRefer \cite{yuan2025pixelreferunifiedframeworkspatiotemporal}, a lightweight variant trained to describe image regions with masks as input, also underperforms Qwen, further supporting our case for using general foundation models.
 
 % \begin{table}
 % \centering
@@ -146,29 +161,12 @@ We then test whether richer descriptions improve anchor selection. To this end, 
 \label{sec:gap-analysis}
 % ------------------------------------------------------------
 
-In the previous section we identified a concentrated symptom of our pipeline. Because every intermediate output of the pipeline is legible, we can assign each dead case to the stage that lost it. We conduct this analysis on 25\% of the validation split of $\dataset$, comparing against the two strongest runs of the pipeline in each direction, namely 218 triplets $(\take, o, d)$ of a take, an object, and a direction per run across 45 takes and 172 distinct objects. Every number below is computed against the ground truth masks.
+Because every intermediate output of the pipeline is legible, we can assign each dead case to the stage that lost it. We conduct this analysis on 25\% of the validation split of $\dataset$, comparing against the two strongest runs of the pipeline in each direction, namely 218 triplets $(\take, o, d)$ of a take, an object, and a direction per run across 45 takes and 172 distinct objects. Every number below is computed against the ground truth masks.
 
 \paragraph{The gap is bimodal.}
 \label{subsec:bimodal}
 
 Half of the deficit is a discrete failure and half is ordinary imprecision. Splitting the mean IoU into a mass near zero and the rest, the zero mass holds 32\% of cases in \textit{Ego2Exo} and 31\% in \textit{Exo2Ego}, while the mean over the surviving cases climbs to 0.569 and 0.617 (\cref{tab:bimodal}). Removing the zero mass alone would lift the average by roughly 0.18 in both directions, matching the state of the art set by LM-EEC (\cref{tab:main}). Hence the name ``dead'' mass, since the cases in it are not weak predictions but absent ones. We dissect this in the remainder of this section.
-
-\begin{table}
-  \centering
-  \setlength{\tabcolsep}{6pt}
-  \caption{The IoU deficit split into a dead mass and a working mode.}
-  \label{tab:bimodal}
-  \begin{tabular}{lcc}
-  \toprule
-  & \textit{Ego2Exo} & \textit{Exo2Ego} \\
-  \midrule
-  Mean IoU (all cases)        & 0.389 & 0.428 \\
-  Dead mass (IoU $<$ 0.01)    & 32\%  & 31\%  \\
-  Mean IoU (working mode)     & 0.569 & 0.617 \\
-  Lift from removing dead mass & $+0.180$ & $+0.189$ \\
-  \bottomrule
-  \end{tabular}
-\end{table}
 
 \paragraph{The loss is born at the anchor.}
 \label{subsec:born-at-anchor}
@@ -177,7 +175,6 @@ The dead cases are created when the object is transferred across views, not duri
 
 Two features of this failure stand out. First, this is a challenging problem because it is a silent failure. A mask is produced in 93\% of the dead cases, so the pipeline almost never abstains. Instead, it commits to a wrong answer. Second, these are not failures of object visibility. Every dead case shows the true object on the destination frame, and none has the object absent from the view entirely. In other words, we are not asking the pipeline something that is not there, but rather the pipeline ``hooks'' on the wrong object, and there is no inherent gate that checks whether the produced mask is on the right object.
 
-Next, we ask what drives a case into that mass and where across those two stages the loss first lands.
 
 \paragraph{Object size and naming are drivers.}
 \label{subsec:drivers}
@@ -234,17 +231,34 @@ A present but unannotated object (container/tool/surface) & 34\% & 58\% \\
 \end{table}
 
 
+\begin{table}[t]
+\centering
+\caption{Effect of the descriptor-VLM input image format on segmentation
+  quality (10\% eof validation set, egoexo, displaying anchor-frame IoU). Replacing the full frame with a crop collapses IoU by mis-naming the isolated patch; a crop added
+  alongside the full frame has no impact.}
+\label{tab:vlm-input-format}
+\begin{tabular}{@{}llcc@{}}
+  \toprule
+  What the descriptor-VLM sees & Mean IoU (egoexo) \\
+  \midrule
+  Raw frame + mask overlay          & 0.412  \\
+  Raw + overlay + crop                           & 0.411   \\
+  Only tight crop                     & 0.180  \\
+  \bottomrule
+\end{tabular}
+\end{table}
+
 \paragraph{Cropping the input is ineffective.}
 \label{subsec:crop}
 
-The logical remedy to the above problem is to crop the seed frame to the target object so it becomes the predominant element of the input of the VLM. Strikingly, replacing the full frame with a tight crop of the object lowers IoU from 0.411 to 0.180, more than halving it, and the collapse is consistent case by case (\cref{tab:crop}). The hypothesis is that identity of a small object is carried by its surroundings, so a crop that maximises the object's pixels destroys the very evidence the VLM uses to name it. Looking at some qualitative examples, the VLM reads a cropped basketball as a finger, a CPR manikin as a human hand, and a pack of noodles as pink paper. The one form of cropping that survives is additive, appending a zoom alongside the full frame rather than replacing it, which neither helps nor harms at this threshold. 
+The logical remedy to the above problem is to crop the seed frame to the target object so it becomes the predominant element of the input of the VLM. Strikingly, replacing the full frame with a tight crop of the object lowers IoU from 0.411 to 0.180, more than halving it, and the collapse is consistent case by case (\cref{tab:vlm-input-format}). The hypothesis is that identity of a small object is carried by its surroundings, so a crop that maximises the object's pixels destroys the very evidence the VLM uses to name it. The one form of cropping that survives is additive, appending a zoom alongside the full frame rather than replacing it, which neither helps nor harms at this threshold. 
 
 \paragraph{Confident mis-groundings.}
 \label{subsec:confident-wrong}
 
 Naming in Stage~2 decides most of the dead mass, but the rest is charged to Stage~3, where Grounding DINO and the SAM~3 agent act on a name that is already correct. Grounding DINO reports high confidence on these cases, with a median top score of 0.53 in \textit{Ego2Exo} and 0.73 in \textit{Exo2Ego} and nothing below 0.30, and the SAM~3 agent marks its own output acceptable on the majority of them. Worse, these confidence values overlap almost completely with those of the successful cases, so no internal signal the pipeline already computes can tell a hit from a miss. We call this failure a ``confident mis-grounding'', because the pipeline is not uncertain and recovering, but certain and wrong.
 
-\paragraph{Extending the ill cases.}
+\paragraph{Extending to more failures.}
 \label{subsec:ill-cases}
 
 Restricting the analysis to exact zeros understates the prize and hides a second failure mode. Widening the target to every case below 0.3 IoU, namely ``ill cases'', roughly doubles the affected population, to 51\% of cases in \textit{Ego2Exo} and 49\% in \textit{Exo2Ego}. Additionally, this band carries about 80\% of the total deficit, so almost everything worth fixing sits below 0.3. The band is not simply a softer copy of the zeros. The share of cases with a dead anchor falls from about 95\% at exact zero to roughly 37\% across the band, while propagation drift rises from near zero to about 30\% of the added cases. Extending the target therefore surfaces a Stage~4 problem that the dead mass alone hid completely.
@@ -264,9 +278,9 @@ Three findings organise everything above. The pipeline's deficit is concentrated
 The legibility that exposed these failures also lets us attack them directly. We report three interventions, each aimed at a stage the analysis charged with the dead mass. Their outcomes are mostly negative, and we include them because a negative result on a legible pipeline still localises the constraint, which sharpens the future work of \cref{chap:conclusions}.
 
 \paragraph{Conditioning the description on scene vocabulary.}
-The waterfall placed naming at the head of the dead mass, and the first direction of \cref{subsec:gap-summary} asks for the scene context that a bare object name discards. We add a stage after Block~1 that classifies the take into its scenario, maps that scenario to a curated list of plausible object names, and hands the list to Block~2, so the generated description is anchored to a known vocabulary rather than invented from the overlay alone. The intervention is encouraging on the smaller subset, lifting IoU from 0.376 to 0.408 in \textit{Ego2Exo} and from 0.322 to 0.480 in \textit{Exo2Ego} on 10\% of the validation set, but the gain narrows to $+0.011$ and reverses to $-0.008$ on the 25\% subset (\cref{tab:abl-vlm-align}). The effect does not yet survive the larger sample, so we record scene conditioning as the most direct lever on the naming bottleneck and the clearest candidate for a canonical naming fix, pending evaluation on the full validation set.
+The waterfall placed naming at the head of the dead mass, and the first direction of \cref{subsec:gap-summary} asks for the scene context that a bare object name discards. We add a stage after Block~1 that classifies the take into its scenario, maps that scenario to a curated list of plausible object names, and hands the list to Block~2, so the generated description is anchored to a known vocabulary rather than invented from the overlay alone. The intervention is encouraging on the smaller subset, lifting IoU from 0.376 to 0.408 in \textit{Ego2Exo} and from 0.322 to 0.480 in \textit{Exo2Ego} on 10\% of the validation set, but the gain narrows to $+0.011$ and reverses to $-0.008$ on the 25\% subset (\cref{tab:abl-vlm-align}). 
 
-\begin{table}[h]
+\begin{table}
   \centering\small
   \setlength{\tabcolsep}{6pt}
   \caption{Scene vocabulary conditioning of the description, anchors ranked by confidence, on two validation subsets.}
@@ -285,34 +299,32 @@ The waterfall placed naming at the head of the dead mass, and the first directio
 \end{table}
 
 \paragraph{Cropping the destination detection.}
-A second family of dead cases survives correct naming, where Grounding DINO and the agent lock onto a large neighbour of the target. Cropping the source frame for the VLM already proved counterproductive in \cref{subsec:crop}, but that crop starved the description of context. Here we crop on the destination side instead, passing the Grounding DINO box to the SAM~3 agent as a hint and segmenting within it. In aggregate the hint hurts in all four combinations of direction and ranking, by $-0.044$ and $-0.043$ in \textit{Ego2Exo} and $-0.005$ and $-0.043$ in \textit{Exo2Ego}. Stratifying by the baseline IoU of each frame explains the loss (\cref{tab:abl-crop-strat}), since the hint rescues frames the pipeline was already failing, adding 0.043 to 0.077 in the low baseline band, yet corrupts frames the pipeline already handled, removing 0.076 to 0.217 in the high band, and the population the pipeline already handles is large enough to drive the mean negative.
+A second set of dead cases is linked with Grounding DINO and the agent locking on a large neighbour of the target. Cropping the source frame for the VLM already proved counterproductive in \cref{subsec:crop}, but that crop starved the description of context. Here we crop on the destination side instead, passing the Grounding DINO box to the SAM~3 agent as a hint and segmenting within it. In aggregate the hint hurts in all four combinations of direction and ranking, by $-0.044$ and $-0.043$ in \textit{Ego2Exo} and $-0.005$ and $-0.043$ in \textit{Exo2Ego}. Stratifying by the baseline IoU of each frame explains the loss (\cref{tab:abl-crop-strat}), since the hint rescues frames the pipeline was already failing, adding 0.043 to 0.077 in the low baseline band, yet corrupts frames the pipeline already handled, removing 0.076 to 0.217 in the high band, and the population the pipeline already handles is large enough to drive the mean negative. The thin payoff in the failing band is not a fault of the crop but of what precedes it. When the VLM mislabels the object, Grounding DINO confidently boxes the wrong one and the crop faithfully zooms into that wrong object, so the hint cannot recover a case that naming has already lost (\cref{subsec:Stage2-deepdive}). An unconditional hint is therefore the wrong tool, and only a gated variant that fires on the failing population without touching the rest could net positive.
 
-The thin payoff in the failing band is not a fault of the crop but of what precedes it. When the VLM mislabels the object, Grounding DINO confidently boxes the wrong one and the crop faithfully zooms into that wrong object, so the hint cannot recover a case that naming has already lost (\cref{subsec:Stage2-deepdive}). An unconditional hint is therefore the wrong tool, and only a gated variant that fires on the failing population without touching the rest could net positive.
-
-\begin{table}[h]
+\begin{table}
   \centering\small
   \setlength{\tabcolsep}{5pt}
-  \caption{Destination crop hint stratified by the baseline IoU of each frame, 25\% validation. Rank is the anchor ranking rule, by confidence (conf) or box area (area). The hint helps the low baseline band and harms the high band, and the large high band drives the negative mean.}
+  \caption{Destination crop hint stratified by the baseline IoU of each frame, 25\% validation. Rank is the anchor ranking rule, by G-DINO confidence (top-k confidence) or bounding box area (bbox area). The hint helps the low baseline band and harms the high band, and the large high band drives the negative mean.}
   \label{tab:abl-crop-strat}
-  \begin{tabular}{lllrccc}
+  \begin{tabular}{lllrcc}
   \toprule
-  Direction & Rank & Baseline band & $n$ & Off & On & $\Delta$ \\
+  Direction & Rank & Baseline band & Off & On & $\Delta$ \\
   \midrule
-  \textit{Ego2Exo} & conf & Low $[0,0.25)$   & 17257 & 0.015 & 0.064 & $+0.049$ \\
-  \textit{Ego2Exo} & conf & Mid $[0.25,0.6)$ &  2407 & 0.435 & 0.499 & $+0.063$ \\
-  \textit{Ego2Exo} & conf & High $[0.6,1]$   & 12432 & 0.870 & 0.676 & $-0.194$ \\
-  \cmidrule(l){2-7}
-  \textit{Ego2Exo} & area & Low $[0,0.25)$   & 18047 & 0.011 & 0.088 & $+0.077$ \\
-  \textit{Ego2Exo} & area & Mid $[0.25,0.6)$ &  2329 & 0.431 & 0.318 & $-0.113$ \\
-  \textit{Ego2Exo} & area & High $[0.6,1]$   & 11720 & 0.866 & 0.651 & $-0.215$ \\
+  \textit{Ego2Exo} & top-k confidence & Low $[0,0.25)$   &  0.015 & 0.064 & $+0.049$ \\
+  \textit{Ego2Exo} & top-k confidence & Mid $[0.25,0.6)$ &  0.435 & 0.499 & $+0.063$ \\
+  \textit{Ego2Exo} & top-k confidence & High $[0.6,1]$   & 0.870 & 0.676 & $-0.194$ \\
+  \cmidrule(l){2-6}
+  \textit{Ego2Exo} & bbox area & Low $[0,0.25)$   & 0.011 & 0.088 & $+0.077$ \\
+  \textit{Ego2Exo} & bbox area & Mid $[0.25,0.6)$ &   0.431 & 0.318 & $-0.113$ \\
+  \textit{Ego2Exo} & bbox area & High $[0.6,1]$   &  0.866 & 0.651 & $-0.215$ \\
   \midrule
-  \textit{Exo2Ego} & conf & Low $[0,0.25)$   & 15916 & 0.009 & 0.065 & $+0.056$ \\
-  \textit{Exo2Ego} & conf & Mid $[0.25,0.6)$ &  1338 & 0.435 & 0.494 & $+0.059$ \\
-  \textit{Exo2Ego} & conf & High $[0.6,1]$   & 14842 & 0.896 & 0.820 & $-0.076$ \\
-  \cmidrule(l){2-7}
-  \textit{Exo2Ego} & area & Low $[0,0.25)$   & 21353 & 0.007 & 0.051 & $+0.043$ \\
-  \textit{Exo2Ego} & area & Mid $[0.25,0.6)$ &   952 & 0.430 & 0.228 & $-0.202$ \\
-  \textit{Exo2Ego} & area & High $[0.6,1]$   &  9791 & 0.902 & 0.685 & $-0.217$ \\
+  \textit{Exo2Ego} & top-k confidence & Low $[0,0.25)$   & 0.009 & 0.065 & $+0.056$ \\
+  \textit{Exo2Ego} & top-k confidence & Mid $[0.25,0.6)$ &   0.435 & 0.494 & $+0.059$ \\
+  \textit{Exo2Ego} & top-k confidence & High $[0.6,1]$   & 0.896 & 0.820 & $-0.076$ \\
+  \cmidrule(l){2-6}
+  \textit{Exo2Ego} & bbox area & Low $[0,0.25)$   &  0.007 & 0.051 & $+0.043$ \\
+  \textit{Exo2Ego} & bbox area & Mid $[0.25,0.6)$ &   0.430 & 0.228 & $-0.202$ \\
+  \textit{Exo2Ego} & bbox area & High $[0.6,1]$   &   0.902 & 0.685 & $-0.217$ \\
   \bottomrule
   \end{tabular}
 \end{table}
@@ -320,7 +332,7 @@ The thin payoff in the failing band is not a fault of the crop but of what prece
 \paragraph{Brightening the egocentric view.}
 Egocentric frames are often dark, which suggested that part of the dead mass might be a problem of raw visibility. Raising the brightness and contrast of the egocentric frames before description and segmentation does not help, and instead lowers IoU by 0.037 in \textit{Ego2Exo} and 0.023 in \textit{Exo2Ego}, within the range of variation between runs (\cref{tab:abl-bright}). Visibility at the pixel level is therefore not the binding constraint, which is consistent with the earlier finding that the dead cases show the object plainly and fail at naming rather than at the perception of light (\cref{subsec:born-at-anchor}).
 
-\begin{table}[h]
+\begin{table}
   \centering\small
   \setlength{\tabcolsep}{6pt}
   \caption{Brightness and contrast augmentation of the egocentric frames, 25\% validation, anchors ranked by confidence.}
@@ -335,4 +347,5 @@ Egocentric frames are often dark, which suggested that part of the dead mass mig
   \end{tabular}
 \end{table}
 
-Each of these interventions localises the constraint without lifting it. We carry the resulting directions, together with the need for a more discriminative grounding detector on the remaining slice of the waterfall where Grounding DINO boxes a correctly named object off target, into \cref{chap:conclusions}.
+\vspace{4mm}
+Each of these interventions localises a constraint without solving it. We discuss the findings, together with the need for a more discriminative grounding detector on the remaining slice of the waterfall where Grounding DINO boxes a correctly named object off target, into \cref{chap:conclusions}.
