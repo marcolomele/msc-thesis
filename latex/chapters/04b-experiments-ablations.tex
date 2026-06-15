@@ -239,7 +239,7 @@ A present but unannotated object (container/tool/surface) & 34\% & 58\% \\
 \label{tab:vlm-input-format}
 \begin{tabular}{@{}lc@{}}
   \toprule
-  What the descriptor-VLM sees & Mean IoU (egoexo) \\
+  What the descriptor-VLM sees & IoU (egoexo) \\
   \midrule
   Raw frame + mask overlay          & 41.2  \\
   Raw + overlay + crop                           & 41.1   \\
@@ -308,7 +308,7 @@ A second set of dead cases is linked with Grounding DINO and the agent locking o
   \label{tab:abl-crop-strat}
   \begin{tabular}{lllrcc}
   \toprule
-  Direction & Rank & Baseline band & Off & On & $\Delta$ \\
+  Direction & Rank & Baseline band & IoU (Off) & IoU (On) & $\Delta$ \\
   \midrule
   \textit{Ego2Exo} & top-k confidence & Low $[0,0.25)$   &  1.5 & 6.4 & $+4.9$ \\
   \textit{Ego2Exo} & top-k confidence & Mid $[0.25,0.6)$ &  43.5 & 49.9 & $+6.3$ \\
@@ -339,7 +339,7 @@ Egocentric frames are often dark, which suggested that part of the dead mass mig
   \label{tab:abl-bright}
   \begin{tabular}{lccc}
   \toprule
-  Direction & Off & On & $\Delta$ \\
+  Direction & IoU (Off) & IoU (On) & $\Delta$ \\
   \midrule
   \textit{Ego2Exo} & 37.8 & 34.1 & $-3.7$ \\
   \textit{Exo2Ego} & 43.7 & 41.4 & $-2.3$ \\
@@ -348,4 +348,4 @@ Egocentric frames are often dark, which suggested that part of the dead mass mig
 \end{table}
 
 \vspace{4mm}
-Each of these interventions localises a constraint without solving it. We discuss the findings, together with the need for a more discriminative grounding detector on the remaining slice of the waterfall where Grounding DINO boxes a correctly named object off target, into \cref{chap:conclusions}.
+The above interventions localize constraints without solving them. Nonetheless, they provide valuable findings that deepen our understanding of the language as a bridge paradigm in the context of cross-view object correspondence. What's left is to collect these learnings together and identify directions for future research, which we do in \cref{chap:conclusions}.

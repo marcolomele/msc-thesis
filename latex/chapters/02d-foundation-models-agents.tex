@@ -57,7 +57,7 @@ language models} (MLLMs). The latter naming is used more frequently because new 
 Training proceeds in three stages. First, the model pre-trains on 1.4 billion cleaned web pairs of image and text at low resolution, freezing the language model and optimising only the visual encoder and adapter. Then a second stage raises the resolution and trains jointly across seven tasks, among them region descriptions that teach the model to emit bounding boxes as a normalised string. Finally, a supervised stage tunes the model for instruction following. The early stage lets the model view an image; the later ones let it reason over what it sees, so that Qwen-VL grounds language in an image within a single pass and enables object localization.
 \begin{figure}
     \centering
-    \includegraphics[width=0.8\linewidth]{latex/imgs/ch2/qwen-training.png}
+    \includegraphics[width=0.85\linewidth]{latex/imgs/ch2/qwen-training.png}
     \caption{Training of Qwen-VL starts from the Qwen language model. From \cite{bai2023qwenvl}.}
     \label{fig:qwen-vl-training}
 \end{figure}
