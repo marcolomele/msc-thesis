@@ -16,9 +16,9 @@ In this section we explore this challenge from an overview of the early works, t
 \subsection{Prior Works}
 \label{subsec:segmentation-prior}
 
-Segmentation asks which pixels in an image pertain to a specific object. The key metric guiding this task is the intersection-over-union score, which computes the overlap between a predicted mask $\hat{\mask}$ and a reference ground truth $\mask$ as the ratio:
+Segmentation asks which pixels in an image pertain to a specific object. The key metric guiding this task is the intersection-over-union score, which computes the overlap between a predicted mask $\hat{\mask}$ and a reference ground truth $\mask$. We report it as a percentage, multiplying the ratio of intersection to union by 100:
 \begin{equation}
-    \iou(\hat{\mask}, \mask) = \frac{\abs{\hat{\mask} \cap \mask}} {\abs{\hat{\mask} \cup \mask}}
+    \iou(\hat{\mask}, \mask) = \frac{\abs{\hat{\mask} \cap \mask}} {\abs{\hat{\mask} \cup \mask}} \times 100
 \label{eq:iou}
 \end{equation}
 The first successful deep learning models for segmentation were the fully convolutional network of Long et al.\ in 2015 \cite{long2015fcn}, which assigns a class to every pixel in one forward pass; the \textit{U-Net} of Ronneberger et al.\ in 2015 \cite{ronneberger2015unet}, whose encoder and decoder with skip connections recovers the fine spatial detail lost to downsampling; and \textit{Mask R-CNN} of He et al.\ in 2017 \cite{he2017maskrcnn}, which first proposes candidate regions and then segments within each, separating one instance of a class from another. These works interpret the task in several ways: labelling every pixel with a class, isolating each object instance, or doing both at once. Later, Sofiiuk et al.\ in 2022 introduced RITM \cite{sofiiuk2021revivingiterativetrainingmask}, which brought interactive segmentation, the ability to let a user guide the result by clicking on the target. Until this point, models were heads specific to each task, each achieving state-of-the-art performance in their own narrow applications.
