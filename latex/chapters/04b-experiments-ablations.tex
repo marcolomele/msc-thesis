@@ -49,7 +49,6 @@ Two choices govern Stage~3, namely where the anchors come from and how many we k
     \label{fig:anchor-selection}
 \end{figure}
 
-\newpage
 The grounding confidence behind this ranking is itself an imperfect signal, which invites a more direct proxy for how clearly the object is seen. Since a larger detection usually means a more visible object, we filter the confident detections and rank them by bounding box area instead. The substitution does not pay off. On 10\% of the validation set ranking by confidence already leads, by IoU 43.3 against 37.6 in \textit{Ego2Exo} and 45.8 against 32.2 in \textit{Exo2Ego}, and the larger 25\% subset confirms the ordering, by 37.8 against 35.4 and 43.7 against 29.3 (\cref{tab:abl-anchor-rule}). We therefore rank anchors by confidence, the imperfect signal that nonetheless beats every proxy we tried.
 
 \begin{table}
@@ -171,9 +170,14 @@ Half of the deficit is a discrete failure and half is ordinary imprecision. Spli
 \paragraph{The loss is born at the anchor.}
 \label{subsec:born-at-anchor}
 
-The dead cases are created when the object is transferred across views, not during temporal propagation. The anchor IoU, measured on the anchor frame itself before any propagation, is exactly zero in 37\% of the subset in both directions, and only about one in ten of those ever recovers to a final IoU above 0.1. Naturally, checking anchor IoU is unfeasible since it requires access to ground truth masks in the destination view. Thus, a dead anchor remains dead. The opposite event, a healthy anchor that collapses during propagation, accounts for only 8\% of the subset in \textit{Ego2Exo} and 6\% in \textit{Exo2Ego}. This isolates Stages~2 and~3, the language bridge and its grounding, as the stages that decide the dead mass, and it further validates the design of \cref{subsec:Stage4}; on a good anchor, it rarely loses the object in subsequent and preceding frames.
+The dead cases are born when the object is transferred across views. \cref{fig:grounding-comparison} illustrates a grounding success against a failure. The anchor IoU, measured on the anchor frame itself before any propagation, is exactly zero in 37\% of the subset in both directions, and only about one in ten of those ever recovers to a final IoU above 0.1. Naturally, checking anchor IoU is unfeasible since it requires access to ground truth masks in the destination view. Thus, a dead anchor remains dead. The opposite event, a healthy anchor that collapses during propagation, accounts for only 8\% of the subset in \textit{Ego2Exo} and 6\% in \textit{Exo2Ego}. This isolates Stages~2 and~3, the language bridge and its grounding, as the stages that decide the dead mass, and it further validates the design of \cref{subsec:Stage4}; on a good anchor, it rarely loses the object in subsequent and preceding frames. Two features of this failure stand out. First, this is a challenging problem because it is a silent failure. A mask is produced in 93\% of the dead cases, so the pipeline almost never abstains. Instead, it commits to a wrong answer. Second, these are not failures of object visibility. Every dead case shows the true object on the destination frame, and none has the object absent from the view entirely. In other words, we are not asking the pipeline something that is not there, but rather the pipeline ``hooks'' on the wrong object, and there is no inherent gate that checks whether the produced mask is on the right object.
 
-Two features of this failure stand out. First, this is a challenging problem because it is a silent failure. A mask is produced in 93\% of the dead cases, so the pipeline almost never abstains. Instead, it commits to a wrong answer. Second, these are not failures of object visibility. Every dead case shows the true object on the destination frame, and none has the object absent from the view entirely. In other words, we are not asking the pipeline something that is not there, but rather the pipeline ``hooks'' on the wrong object, and there is no inherent gate that checks whether the produced mask is on the right object.
+\begin{figure}
+    \centering
+    \includegraphics[width=1\linewidth]{latex/imgs/ch4/grounding examples.png}
+    \caption{On the right, a grounding success with IoU 94. On the left, a grounding failure with IoU 0, driven by SAM 3 failing to identify the object due to the difficult viewpoint change. For both, we display the three anchors.}
+    \label{fig:grounding-comparison}
+\end{figure}
 
 
 \paragraph{Object size and naming are drivers.}
@@ -186,36 +190,45 @@ The second driver is the object name the VLM writes, and it hurts on top of size
 \paragraph{Failure waterfall.}
 \label{subsec:waterfall}
 
-Charging each dead case to the first stage that fails turns these drivers into an ordering. We build \cref{tab:waterfall} by walking the pipeline in sequence and stopping at the first stage that breaks. It shows that naming in Stage~2 is the single largest cause by a wide margin, accounting for 59\% of the dead mass in \textit{Ego2Exo} and 81\% in \textit{Exo2Ego}. Selecting the anchor frame in Stage~3 is next, and the two together explain 74\% and 92\% of all dead cases. Grounding DINO placing its box off the object and the agent segmenting the wrong thing inside a good box are real but minor by comparison. Notably, propagation is zero by construction, since an anchor on the wrong object will reliably stay for the entirety of propagation. Therefore, the bulk of the loss is produced before SAM~3 ever runs, pointing to the need for more thorough analysis of VLM descriptions than we provide in \cref{sec:ablations}.
+Charging each dead case to the first stage that fails turns these drivers into an ordering. We build \cref{tab:waterfall} by walking the pipeline in sequence and stopping at the first stage that breaks. It shows that naming in Stage~2 is the single largest cause by a wide margin, accounting for 59\% of the dead mass in \textit{Ego2Exo} and 81\% in \textit{Exo2Ego}. Selecting the anchor frame in Stage~3 is next, and the two together explain 74\% and 92\% of all dead cases. Grounding DINO placing its box off the object and the agent segmenting the wrong thing inside a good box are real but minor by comparison. Notably, propagation is zero by construction, since an anchor on the wrong object will reliably stay for the entirety of propagation. 
 
-\begin{table}
+\begin{table}[t]
   \centering
   \setlength{\tabcolsep}{5pt}
   \caption{Failure waterfall over the dead mass per direction, charging each case to the first stage that fails. Cells are shares of the dead mass.}
   \label{tab:waterfall}
   \begin{tabular}{llcc}
   \toprule
-  Stage & First failure & \textit{Ego2Exo} & \textit{Exo2Ego} \\
+  Pipeline Stage & First failure & \textit{Ego2Exo} & \textit{Exo2Ego} \\
   \midrule
-  Stage~2 & VLM names a different object        & 59\% & 81\% \\
-  Stage~3 & Anchor frame lands on a tiny object   & 15\% & 11\% \\
-  Stage~3 & Grounding DINO box misses the object & 10\% & 2\%  \\
-  Stage~3 & Agent segments wrong despite a good box & 16\% & 5\% \\
-  Stage~4 & Propagation                          & 0\%  & 0\%  \\
+  2 & VLM names a different object        & 59\% & 81\% \\
+  3 & Anchor frame lands on a tiny object   & 15\% & 11\% \\
+  3 & Grounding DINO box misses the object & 10\% & 2\%  \\
+  3 & Agent segments wrong despite a good box & 16\% & 5\% \\
+  4 & Propagation                          & 0\%  & 0\%  \\
   \midrule
           & Total                                & 100\% & 100\% \\
   \bottomrule
   \end{tabular}
 \end{table}
 
-Reading the waterfall back through \cref{chap:theory} clarifies why naming dominates. The language bridge of \cref{subsec:Stage2} asks a general VLM to name a target it sees only as a translucent overlay on a full frame. When that target occupies a fraction of a percent of the image, is ambiguous, or can have multiple names, the model describes the salient object using the features it can extract. The bridge is only as good as the object description it carries over to the other view.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{latex/imgs/ch4/vlm-description-failure.png}
+    \caption{Examples of VLM description failures. The first is a case where the target object is seen partially in the source frame. The second is a case where the description is not specific enough and locks on another object in the anchor frame.}
+    \label{fig:vlm-failure}
+\end{figure}
+
+Therefore, the bulk of the loss is produced before SAM~3 ever runs, pointing to the need for more thorough analysis of VLM descriptions than we provide in \cref{sec:ablations}.
+
+Reading the waterfall back through \cref{chap:theory} clarifies why naming dominates. The language bridge of \cref{subsec:Stage2} asks a general VLM to name a target it sees only as a translucent overlay on a full frame. When that target occupies a fraction of a percent of the image, is ambiguous, or can have multiple names, the model describes the salient object using the features it can extract. The bridge is only as good as the object description it carries over to the other view. \cref{fig:vlm-failure} presents two qualitative examples of this kind of failure. 
 
 \paragraph{Why the model names the wrong object.}
 \label{subsec:Stage2-deepdive}
 
 The naming failure is one of perception, not of vocabulary or implementation. On the dead cases the source mask handed to the model is three to six times smaller than on the successful ones (median 1.43\% against 4.05\% of the frame in \textit{Ego2Exo}, and 0.098\% against 0.564\% in \textit{Exo2Ego}), and in \textit{Exo2Ego} half of the failures show the object at under 0.1\% of the frame. Crucially, when the model misnames it names a different object that is itself annotated in the same take in 38\% of \textit{Ego2Exo} and 24\% of \textit{Exo2Ego} failures, so it describes a real and clearer neighbour rather than hallucinating. The call runs deterministically and without a description cache, which rules out a software cause, and genuine vocabulary near misses such as ``a plate'' read as ``a bowl'' form a small minority. The pattern holds once we look past the separately annotated neighbours. Across all dead cases, the model never hallucinates an absent object but always nominates a real and generally larger structure present alongside the target. \Cref{tab:wrong-nomination} reports the split, where a minority are named correctly and die downstream, while of the genuine naming failures roughly a quarter name a separately annotated neighbour and the remainder name an object present in the scene yet outside the annotation set. Typically, this is the dominant container, tool, or surface on which the tiny target rests, with true synonyms and generic categories of the right object forming a small residual.
 
-\begin{table}
+\begin{table}[t]
 \centering
 \caption{What the VLM nominates on the dead cases ($\mathrm{anchor\ IoU}=0$), as a proportion of all such cases per direction.}
 \label{tab:wrong-nomination}
@@ -229,7 +242,6 @@ A present but unannotated object (container/tool/surface) & 34\% & 58\% \\
 \bottomrule
 \end{tabular}
 \end{table}
-
 
 \begin{table}[t]
 \centering
