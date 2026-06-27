@@ -1,0 +1,440 @@
+\documentclass[professionalfonts,aspectratio=169]{beamer}
+
+% ---- Black & white academic styling ----
+\usetheme{default}
+\usecolortheme{dove}
+\setbeamercolor{structure}{fg=black}
+\setbeamercolor{normal text}{fg=black,bg=white}
+\setbeamertemplate{navigation symbols}{} % remove nav icons
+\setbeamertemplate{footline}[frame number]
+
+% ---- Packages (NO 'caption', NO 'enumitem') ----
+\usepackage{amsmath, amssymb, bm, mathtools, mathrsfs, bbm}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{microtype}
+\usepackage{tikz}
+\usetikzlibrary{positioning,fit,backgrounds}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true, linkcolor=blue}
+
+% =====================================================================
+% MAIN QUESTION FOR THE SUPERVISOR (decide first — NOT a slide)
+% ---------------------------------------------------------------------
+% The reference research project CONTINUED AFTER thesis submission, and
+% two of the strongest points (slides 16 and 21) are post-submission
+% findings. This forces one decision that shapes the whole talk:
+%
+%   Should the presentation be restricted to the content of the
+%   submitted thesis, or include the continued research — even though
+%   that pushes the narrative (and likely the time) beyond the thesis?
+%
+%   Option A — thesis-only: safest, fully defensible against "is this in
+%     your thesis?"; keeps to 20 min. Slides 16/21 use only submitted
+%     results.  <-- THIS DECK IS BUILT AS OPTION A (default).
+%   Option B — include continued work: stronger story (sharper SOTA
+%     framing + a concrete working fix for the main failure mode), shows
+%     the research is alive; risks scope/time questions.
+%
+% Every [POST-SUBMISSION] block is present below but COMMENTED OUT.
+% Switch to Option B by uncommenting the marked blocks on slides 16, 21
+% and the conclusion.
+% =====================================================================
+
+% ---- Title metadata ----
+\title{A Training-Free Language Bridge for Cross-View Object Correspondence}
+\subtitle{A training-free, language-bridge pipeline for cross-view object correspondence}
+\author{TODO: Candidate Name}
+\institute{Bocconi University --- MSc Data Science}
+\date{}
+% Beamer has no native supervisor field; rendered as plain text on the title slide.
+\newcommand{\supervisor}{TODO: Supervisor Name}
+
+\begin{document}
+
+% =====================================================================
+% Slide 1 — Title
+% =====================================================================
+\begin{frame}[plain]
+  \titlepage
+  \begin{center}
+    \small Supervisor: \supervisor
+  \end{center}
+\end{frame}
+\note{(~20s) Open with name and title; defer detail to the next slide.}
+
+% #####################################################################
+\section{Introduction}
+% #####################################################################
+
+% =====================================================================
+% Slide 2 — The problem: cross-view object correspondence
+% =====================================================================
+\begin{frame}{The problem: cross-view object correspondence}
+  \begin{columns}
+    \begin{column}{0.5\textwidth}
+      \begin{itemize}
+        \item Same object, two synchronized cameras: egocentric and exocentric.
+        \item Given the object's mask track in one view, recover it in the other.
+        \item Matters for AR, robotics, and multi-agent collaboration.
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \includegraphics[width=\textwidth]{imgs/ch1/cross-view-intro.png}
+    \end{column}
+  \end{columns}
+\end{frame}
+\note{(~55s) Define the task in plain terms over the figure; the object a person holds (ego) must be located in the third-person view (exo) and vice versa. Frame it as a building block for systems that must share what they see.}
+
+% =====================================================================
+% Slide 3 — Why it is hard, and where prior methods fall short
+% =====================================================================
+\begin{frame}{Why it is hard, and where prior methods fall short}
+  \begin{itemize}
+    \item Extreme gap in scale, angle, lighting, field of view; no geometric calibration.
+    \item Existing methods are trained on the benchmark, tied to camera setups, hard to interpret.
+  \end{itemize}
+  \begin{center}
+    \includegraphics[width=0.8\textwidth]{imgs/ch1/egoexo-many-examples.png}
+  \end{center}
+\end{frame}
+\note{(~55s) The viewpoint gap defeats geometric matching, and learned fusion methods buy accuracy with supervision that does not transfer. Their decisions sit in opaque weights, so a wrong answer cannot be explained. This sets up our two design goals: no training, and legibility.}
+
+% =====================================================================
+% Slide 4 — Our idea: language as a bridge
+% =====================================================================
+\begin{frame}{Our idea: language as a bridge}
+  \begin{columns}
+    \begin{column}{0.52\textwidth}
+      \begin{itemize}
+        \item Describe the object in one view, find it in the other through that description.
+        \item Frozen foundation models, composed, never trained for this task.
+        \item Contribution: training-free $\cdot$ language bridge $\cdot$ interpretable $\cdot$ camera- and dataset-agnostic.
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \includegraphics[width=\textwidth]{imgs/ch1/lang-bridge-intro.png}
+    \end{column}
+  \end{columns}
+\end{frame}
+\note{(~60s) State the hypothesis: natural language is a semantic channel that survives the viewpoint gap. "Two eyes and one mouth" -- two visual systems mediated by one description. The contribution is the first training-free, language-mediated approach, and one whose every intermediate output a human can read.}
+
+% #####################################################################
+\section{Theory}
+% #####################################################################
+
+% =====================================================================
+% Slide 5 — Visual representation
+% =====================================================================
+\begin{frame}{Visual representation}
+  \begin{columns}
+    \begin{column}{0.5\textwidth}
+      \begin{itemize}
+        \item ViT + self-supervised DINO: semantic patch features, no labels.
+        \item \textbf{Property:} features carry object identity, robust to appearance shift.
+        \item \textbf{Limitation:} even these degrade under the extreme ego-exo gap.
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \includegraphics[width=\textwidth]{imgs/ch2/dinov3-results.png}
+    \end{column}
+  \end{columns}
+\end{frame}
+\note{(~50s) State the property and the limitation, then the consequence: because the strongest visual features still collapse across this viewpoint gap, pure feature/geometric matching is not enough -- which is what motivates reaching for language. This frames the whole thesis as a response to a limitation of the visual substrate, not a dismissal of it.}
+
+% =====================================================================
+% Slide 6 — Segmentation
+% =====================================================================
+\begin{frame}{Segmentation}
+  \begin{columns}
+    \begin{column}{0.5\textwidth}
+      \begin{itemize}
+        \item SAM: promptable masks. SAM 2: memory-based propagation through video.
+        \item \textbf{Property:} tracks robustly through occlusion and fast motion.
+        \item \textbf{Limitation:} it faithfully propagates whatever seed it is given.
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \includegraphics[width=\textwidth]{imgs/ch2/sam2.png}
+    \end{column}
+  \end{columns}
+\end{frame}
+\note{(~50s) SAM 2 is the right tool for temporal completeness, so we delegate that to it. But the same fidelity means a wrong seed propagates perfectly to a wrong answer -- flag this now, because it explains later why propagation contributes ~0\% of our failures yet cannot rescue a bad anchor.}
+
+% =====================================================================
+% Slide 7 — Language grounding
+% =====================================================================
+\begin{frame}{Language grounding}
+  \begin{itemize}
+    \item CLIP $\to$ Grounding DINO $\to$ SAM 3: align text to image regions.
+    \item \textbf{Property:} open-vocabulary --- locate a concept from words.
+    \item \textbf{Limitation:} contrastive training aligns whole image to whole caption.
+  \end{itemize}
+  \begin{center}
+    \includegraphics[width=0.85\textwidth]{imgs/ch2/gdino-architecture-examples.png}
+  \end{center}
+\end{frame}
+\note{(~55s) This chain is the bridge: words become a location. The limitation is the load-bearing detail -- because alignment is image-to-caption, a paragraph of attributes dilutes the match while a short noun phrase concentrates it. That is exactly why Stage 3 compresses the description into a phrase, a design choice that falls directly out of how CLIP was trained.}
+
+% =====================================================================
+% Slide 8 — Foundation models and agents
+% =====================================================================
+\begin{frame}{Foundation models and agents}
+  \begin{columns}
+    \begin{column}{0.5\textwidth}
+      \begin{itemize}
+        \item LLM/Qwen + ReAct: reason, call a tool, observe, repeat.
+        \item \textbf{Property:} the VLM can describe an object and self-verify masks.
+        \item \textbf{Limitation:} it reports what it perceives, not what is annotated.
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \includegraphics[width=\textwidth]{imgs/ch2/react-scheme.png}
+    \end{column}
+  \end{columns}
+\end{frame}
+\note{(~55s) The agentic loop gives us both the description and a built-in verification step, and it keeps every step legible. The limitation foreshadows the dominant failure mode: when the target is tiny, the model honestly names the salient neighbour it can actually see. We return to this as the single largest source of error.}
+
+% #####################################################################
+\section{Method}
+% #####################################################################
+
+% =====================================================================
+% Slide 9 — Task formulation and the key insight
+% =====================================================================
+\begin{frame}{Task formulation and the key insight}
+  \begin{itemize}
+    \item Input: object mask track in the source view. Output: mask for every destination frame.
+    \item Two orthogonal sub-problems: cross-view transfer (hard) vs. temporal completeness (solved).
+    \item Spend effort on transfer via language; delegate completeness to SAM 2.
+  \end{itemize}
+  \begin{center}
+    \fbox{\parbox{0.7\textwidth}{\centering\textbf{TO CREATE:} optional two-box schematic --- ``transfer (hard) vs. completeness (solved)''. Could reuse part of the pipeline figure instead.}}
+  \end{center}
+\end{frame}
+\note{(~50s) This is the one idea the board should leave with. Transfer across views need only succeed on a few frames; a tracker fills the rest. Every design choice downstream follows from this split -- say it slowly, then move fast.}
+
+% =====================================================================
+% Slide 10 — Pipeline overview
+% =====================================================================
+\begin{frame}{Pipeline overview}
+  \begin{itemize}
+    \item Four stages: source frame selection $\to$ description $\to$ anchor grounding $\to$ propagation.
+    \item Every intermediate output is human-readable.
+  \end{itemize}
+  \begin{center}
+    \includegraphics[width=\textwidth]{imgs/ch3/pipeline_full_columns.png}
+  \end{center}
+\end{frame}
+\note{(~40s) One left-to-right pass naming each stage and its model. Stress legibility -- seed frame, description, anchor masks are all inspectable -- then go rapid-fire.}
+
+% =====================================================================
+% Slide 11 — Stage 1: source frame selection (rapid)
+% =====================================================================
+\begin{frame}{Stage 1: source frame selection}
+  \begin{itemize}
+    \item Pick the clearest seed frame by a visibility score (area-dominated). $K=1$.
+  \end{itemize}
+  \begin{center}
+    \includegraphics[width=\textwidth]{imgs/ch3/pipeline_full_columns.png}
+  \end{center}
+\end{frame}
+\note{(~30s) A bigger object gives the VLM more to describe; one good frame is enough. Detail deferred to Q\&A / backup. (Figure: column 1 of the full pipeline figure.)}
+
+% =====================================================================
+% Slide 12 — Stage 2: object description (rapid)
+% =====================================================================
+\begin{frame}{Stage 2: object description}
+  \begin{itemize}
+    \item VLM writes view- and time-independent attributes; masked frame + raw frame in, JSON out.
+  \end{itemize}
+  \begin{center}
+    \includegraphics[width=\textwidth]{imgs/ch3/pipeline_full_columns.png}
+  \end{center}
+\end{frame}
+\note{(~30s) Only intrinsic attributes, so the description holds from any viewpoint at any moment. The overlay points the model; the raw frame preserves appearance. (Figure: column 2 of the full pipeline figure.)}
+
+% =====================================================================
+% Slide 13 — Stage 3: anchor grounding (rapid)
+% =====================================================================
+\begin{frame}{Stage 3: anchor grounding}
+  \begin{itemize}
+    \item Grounding DINO re-selects anchors by confidence in the destination ($K=3$); SAM 3 agent segments and self-verifies.
+    \item Anchor signal is swappable: language (G-DINO) or geometry (RoMa).
+  \end{itemize}
+  \begin{center}
+    \includegraphics[width=0.85\textwidth]{imgs/ch4/anchor-selection.png}
+  \end{center}
+\end{frame}
+\note{(~40s) One line of reasoning to keep: the same time index is rarely the best destination frame (rho = 0.14), so we re-select. The bridge stays linguistic; the anchor signal could be geometric instead. (Figure: columns 3.1/3.2 of the pipeline figure, or anchor-selection.png.)}
+
+% =====================================================================
+% Slide 14 — Stage 4: propagation (rapid)
+% =====================================================================
+\begin{frame}{Stage 4: propagation}
+  \begin{itemize}
+    \item SAM 2 memory tracker fills all frames; bidirectional, each frame served by its nearest anchor.
+  \end{itemize}
+  \begin{center}
+    \includegraphics[width=\textwidth]{imgs/ch3/pipeline_full_columns.png}
+  \end{center}
+\end{frame}
+\note{(~30s) Memory reaches back to a distant reliable anchor when nearby frames fail. Two passes meet so every frame has a short path to a good anchor. (Figure: column 4 of the full pipeline figure.)}
+
+% #####################################################################
+\section{Results \& Analysis}
+% #####################################################################
+
+% =====================================================================
+% Slide 15 — Setup and qualitative successes
+% =====================================================================
+\begin{frame}{Setup and qualitative successes}
+  \begin{itemize}
+    \item Ego-Exo4D Correspondences v2 test split; metrics IoU (primary), LE, CA.
+    \item Inference only, single NVIDIA H200; Qwen 3.5 35B + Grounding DINO + SAM 3 + SAM 2.
+  \end{itemize}
+  \begin{center}
+    \includegraphics[width=0.85\textwidth]{imgs/ch4/pipeline-qualitative-examples.png}
+  \end{center}
+\end{frame}
+\note{(~55s) No component is trained, unlike every competitor. Show clean successes in both directions before turning to the aggregate numbers.}
+
+% =====================================================================
+% Slide 16 — Results vs. state of the art
+% =====================================================================
+\begin{frame}{Results vs. state of the art}
+  \begin{itemize}
+    \item Ours: 37.7 (Ego2Exo) / 40.6 (Exo2Ego) IoU --- training-free.
+    \item We beat ObjectRelator (35.3 / 40.3); only method training-free + camera- + dataset-agnostic.
+    \item Strongest published: LM-EEC (54.98 / 65.77).
+  \end{itemize}
+  \begin{center}
+    \fbox{\parbox{0.75\textwidth}{\centering\textbf{TO CREATE:} results table from \texttt{04-experiments.tex} (\texttt{tab:main}). Suggested rows: XMem+XSegTx, ObjectRelator, O-MaMa, V$^2$-SAM, LM-EEC, Ours; highlight the three ``agnostic'' columns.}}
+  \end{center}
+\end{frame}
+\note{(~80s) Present LM-EEC plainly as "strongest published". Ours is the only training-free, camera- and dataset-agnostic method and it already beats ObjectRelator. [Option A: keep the framing simple, no upper-bound argument.]}
+% === POST-SUBMISSION (Option B) — uncomment if supervisor approves ===
+% Replace the bullets above with:
+%   \item Ours: 37.7 (Ego2Exo) / 40.6 (Exo2Ego) IoU --- training-free.
+%   \item Realistic comparator $\to$ V$^2$-SAM: 46.3 / 49.6 (no backbone retraining on the benchmark).
+%   \item In-distribution ceiling $\to$ LM-EEC: 54.98 / 65.77 (full SAM 2 fine-tuned on the benchmark).
+%   \item We beat ObjectRelator (35.3 / 40.3); only method training-free + camera- + dataset-agnostic.
+% And the note:
+%   (~80s) Frame the two comparators differently -- this is the analytical point, not the raw
+%   gap. LM-EEC is an in-distribution upper bound: it fine-tunes the full SAM 2 backbone on the
+%   benchmark, so its number reports what a retrained model achieves on data it has seen, not what
+%   a fair like-for-like method achieves. The honest comparator is V^2-SAM, which does not retrain
+%   a backbone; against that frontier our training-free pipeline sits a few points back while
+%   paying none of the supervision cost.
+% === end POST-SUBMISSION ===
+
+% =====================================================================
+% Slide 17 — Ablation: what each stage contributes
+% =====================================================================
+\begin{frame}{Ablation: what each stage contributes}
+  \begin{itemize}
+    \item Naive baseline 10.6 IoU $\to$ full pipeline +259.8\%.
+    \item Frame selection $\approx$ oracle (16.8 vs. 17.0), no privileged info.
+    \item Propagation matches per-frame agent (37.7 vs. 35.5) at $\sim$25$\times$ speed (0.82 vs. 21.30 s/frame).
+  \end{itemize}
+  \begin{center}
+    \fbox{\parbox{0.75\textwidth}{\centering\textbf{TO CREATE:} ablation table from \texttt{04b-experiments-ablations.tex} (\texttt{tab:abl-summary}), simplified to IoU + time/frame; consider a bar chart.}}
+  \end{center}
+\end{frame}
+\note{(~70s) The numbers validate the design split. Running SAM 3 on every frame works but is impractical (59 hours); propagation recovers the same accuracy cheaply. Grounding-DINO anchors keep the bridge linguistic.}
+
+% =====================================================================
+% Slide 18 — The gap is bimodal
+% =====================================================================
+\begin{frame}{The gap is bimodal}
+  \begin{columns}
+    \begin{column}{0.5\textwidth}
+      \begin{itemize}
+        \item $\sim$32\% (Ego2Exo) / 31\% (Exo2Ego) ``dead mass'': near-zero IoU.
+        \item Surviving cases (working mode): 56.9 / 61.7 IoU.
+        \item Remove the dead mass $\to$ average rises $\sim$18, level with LM-EEC.
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \includegraphics[width=\textwidth]{imgs/ch4/pipeline-lmeec.png}
+    \end{column}
+  \end{columns}
+\end{frame}
+\note{(~75s) The deficit is not uniform imprecision; it is half discrete failure, half ordinary error. The working mode already competes with the state of the art. The whole question becomes: what causes the dead mass?}
+
+% =====================================================================
+% Slide 19 — Where the loss is born
+% =====================================================================
+\begin{frame}{Where the loss is born}
+  \begin{itemize}
+    \item Charging each failure to its first failing stage.
+    \item Stage 2 naming: 59\% (Ego2Exo) / 81\% (Exo2Ego) of dead mass.
+    \item Stages 2+3 together: 74\% / 92\%. Propagation: 0\% by construction.
+  \end{itemize}
+  \begin{center}
+    \includegraphics[width=0.8\textwidth]{imgs/ch4/grounding-examples.png}
+  \end{center}
+\end{frame}
+\note{(~70s) The loss is in cross-view transfer, not tracking. An anchor on the wrong object propagates faithfully to the wrong answer, so the failure is decided early, at description and grounding. (Alternative figure: waterfall chart, TO CREATE from tab:waterfall.)}
+
+% =====================================================================
+% Slide 20 — Why the VLM mislabels: perception, not vocabulary
+% =====================================================================
+\begin{frame}{Why the VLM mislabels: perception, not vocabulary}
+  \begin{itemize}
+    \item On dead cases the source mask is 3--6$\times$ smaller; the model names a real, larger neighbour.
+    \item It never hallucinates an absent object --- the failure is perceptual, not lexical.
+  \end{itemize}
+  \begin{center}
+    \includegraphics[width=0.8\textwidth]{imgs/ch4/vlm-description-failure.png}
+  \end{center}
+\end{frame}
+\note{(~80s) This is the analytical heart. With too few pixels the model honestly describes the salient surface or tool the target rests on. The diagnosis matters because it rules out the obvious fix (a bigger vocabulary or better prompt) and points at perception -- exactly the kind of evidence-led conclusion the board is listening for.}
+
+% =====================================================================
+% Slide 21 — Testing the diagnosis: disciplined negatives
+% =====================================================================
+\begin{frame}{Testing the diagnosis: disciplined negatives}
+  \begin{itemize}
+    \item Scene-vocabulary conditioning, destination cropping, frame brightening --- each tried, each net-negative.
+    \item Cropping helps failing frames but corrupts the many already-correct ones; brightening confirms pixels are not the constraint.
+    \item Negatives point the same way: the fix must use the VLM better, not pre-process the image.
+  \end{itemize}
+  \begin{center}
+    \fbox{\parbox{0.75\textwidth}{\centering\textbf{TO CREATE:} small 2--3 row interventions strip from \S4.5 (on/off deltas); or reuse \texttt{vlm-description-failure.png}.}}
+  \end{center}
+\end{frame}
+\note{(~80s) Frame this as the practitioner's method, not a list of misses -- this slide is where critical-reasoning scoring lives, so do not rush it. The negatives are informative precisely because they rule out the cheap fixes (vocabulary, cropping, lighting) and isolate the constraint at how the VLM perceives small objects. [Option A: end on the diagnosis; the two working fixes live in future work / a backup slide.]}
+% === POST-SUBMISSION (Option B) — uncomment if supervisor approves ===
+% Add this bullet to the itemize above:
+%   \item Two working directions: (i) pass the mask signal into the VLM so it describes the
+%         target, not its neighbour; (ii) add a judge layer after SAM 3 to filter candidate
+%         masks against the description.
+% And extend the note:
+%   That diagnosis directly motivated the continued work: feeding the mask signal to the VLM
+%   addresses the perceptual mislabel at its source, and a judge stage after SAM 3 catches the
+%   confident mis-groundings that have no internal confidence signal.
+% === end POST-SUBMISSION ===
+
+% #####################################################################
+\section{Conclusion}
+% #####################################################################
+
+% =====================================================================
+% Slide 22 — Conclusions and future work
+% =====================================================================
+\begin{frame}{Conclusions and future work}
+  \begin{itemize}
+    \item Language is a viable cross-view bridge --- and, crucially, a legible one.
+    \item Legibility turned the gap to SOTA into a diagnosis, not a verdict.
+    \item Near-term: description optimization (mask signal to the VLM), stronger grounding, a judge/verification gate.
+    \item Paradigm: legibility vs. performance trade-off; composing foundation models rather than training them.
+  \end{itemize}
+\end{frame}
+\note{(~60s) Close on the larger claim. As foundation models absorb more general understanding, the most capable systems may be composed rather than trained, with language the human-readable medium that keeps people in the loop. [Option A: the two continued-work directions live here as "near-term future work".]}
+% === POST-SUBMISSION (Option B) — uncomment if supervisor approves ===
+% Under Option B the two directions were already shown working on slide 21, so here drop the
+% "near-term" bullet and instead point forward to the open paradigm questions only.
+% === end POST-SUBMISSION ===
+
+\end{document}
