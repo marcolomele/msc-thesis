@@ -45,13 +45,13 @@
 % =====================================================================
 
 % ---- Title metadata ----
-\title{A Training-Free Language Bridge for Cross-View Object Correspondence}
-\subtitle{A training-free, language-bridge pipeline for cross-view object correspondence}
-\author{TODO: Candidate Name}
-\institute{Bocconi University --- MSc Data Science}
-\date{}
-% Beamer has no native supervisor field; rendered as plain text on the title slide.
-\newcommand{\supervisor}{TODO: Supervisor Name}
+\title{Two Eyes and One Mouth:}
+\subtitle{a Training-Free Pipeline with Agentic Image Segmentation and \\ 
+Object Video Tracking for Cross-View Object Correspondence}
+\author{Marco Lomele}
+\institute{Bocconi University --- MSc in Data Science and Business Analytics}
+\date{21st July 2026}
+\newcommand{\supervisor}{Chiara Plizzari}
 
 \begin{document}
 
@@ -61,7 +61,7 @@
 \begin{frame}[plain]
   \titlepage
   \begin{center}
-    \small Supervisor: \supervisor
+    \small Supervisor: Chiara Plizzari
   \end{center}
 \end{frame}
 \note{(~20s) Open with name and title; defer detail to the next slide.}
@@ -174,7 +174,7 @@
     \item \textbf{Limitation:} contrastive training aligns whole image to whole caption.
   \end{itemize}
   \begin{center}
-    \includegraphics[width=0.85\textwidth]{imgs/ch2/gdino-architecture-examples.png}
+    \includegraphics[width=0.85\textwidth]{latex/imgs/ch2/sam-3-simplified-architecture.png}
   \end{center}
 \end{frame}
 \note{(~55s) This chain is the bridge: words become a location. The limitation is the load-bearing detail -- because alignment is image-to-caption, a paragraph of attributes dilutes the match while a short noun phrase concentrates it. That is exactly why Stage 3 compresses the description into a phrase, a design choice that falls directly out of how CLIP was trained.}
@@ -197,6 +197,12 @@
   \end{columns}
 \end{frame}
 \note{(~55s) The agentic loop gives us both the description and a built-in verification step, and it keeps every step legible. The limitation foreshadows the dominant failure mode: when the target is tiny, the model honestly names the salient neighbour it can actually see. We return to this as the single largest source of error.}
+
+\begin{frame}{Segmentation with Complex Prompts}
+\begin{center}
+    \includegraphics[width=0.8\textwidth]{latex/imgs/ch2/sam3-agent-examples.png}
+\end{center}
+\end{frame}
 
 % #####################################################################
 \section{Method}
@@ -226,7 +232,7 @@
     \item Every intermediate output is human-readable.
   \end{itemize}
   \begin{center}
-    \includegraphics[width=\textwidth]{imgs/ch3/pipeline_full_columns.png}
+    \includegraphics[width=0.8\textwidth]{latex/imgs/ch3/pipeline_horizontal.png}
   \end{center}
 \end{frame}
 \note{(~40s) One left-to-right pass naming each stage and its model. Stress legibility -- seed frame, description, anchor masks are all inspectable -- then go rapid-fire.}
@@ -239,7 +245,7 @@
     \item Pick the clearest seed frame by a visibility score (area-dominated). $K=1$.
   \end{itemize}
   \begin{center}
-    \includegraphics[width=\textwidth]{imgs/ch3/pipeline_full_columns.png}
+    \includegraphics[width=0.9\textwidth]{latex/imgs/ch3/pipeline_horizontal.png}
   \end{center}
 \end{frame}
 \note{(~30s) A bigger object gives the VLM more to describe; one good frame is enough. Detail deferred to Q\&A / backup. (Figure: column 1 of the full pipeline figure.)}
@@ -252,7 +258,7 @@
     \item VLM writes view- and time-independent attributes; masked frame + raw frame in, JSON out.
   \end{itemize}
   \begin{center}
-    \includegraphics[width=\textwidth]{imgs/ch3/pipeline_full_columns.png}
+    \includegraphics[width=0.9\textwidth]{latex/imgs/ch3/pipeline_horizontal.png}
   \end{center}
 \end{frame}
 \note{(~30s) Only intrinsic attributes, so the description holds from any viewpoint at any moment. The overlay points the model; the raw frame preserves appearance. (Figure: column 2 of the full pipeline figure.)}
@@ -271,6 +277,15 @@
 \end{frame}
 \note{(~40s) One line of reasoning to keep: the same time index is rarely the best destination frame (rho = 0.14), so we re-select. The bridge stays linguistic; the anchor signal could be geometric instead. (Figure: columns 3.1/3.2 of the pipeline figure, or anchor-selection.png.)}
 
+\begin{frame}{Stage 3.2: Agentic Segmentation}
+  \begin{itemize}
+    \item Loop that itratively proposes prompt, generates candidates, validates, and selects. 
+  \end{itemize}
+  \begin{center}
+    \includegraphics[width=0.4\textwidth]{latex/imgs/ch3/pipeline-block-3.png}
+  \end{center}
+\end{frame}
+
 % =====================================================================
 % Slide 14 — Stage 4: propagation (rapid)
 % =====================================================================
@@ -279,7 +294,7 @@
     \item SAM 2 memory tracker fills all frames; bidirectional, each frame served by its nearest anchor.
   \end{itemize}
   \begin{center}
-    \includegraphics[width=\textwidth]{imgs/ch3/pipeline_full_columns.png}
+    \includegraphics[width=0.9\textwidth]{latex/imgs/ch3/pipeline_horizontal.png}
   \end{center}
 \end{frame}
 \note{(~30s) Memory reaches back to a distant reliable anchor when nearby frames fail. Two passes meet so every frame has a short path to a good anchor. (Figure: column 4 of the full pipeline figure.)}
