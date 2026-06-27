@@ -11,6 +11,9 @@
 % ---- Packages (NO 'caption', NO 'enumitem') ----
 \usepackage{amsmath, amssymb, bm, mathtools, mathrsfs, bbm}
 \usepackage{graphicx}
+% Images live in latex/imgs (no symlink — Overleaf does not support symlinks).
+% Resolve "imgs/chX/..." against the sibling latex/ directory.
+\graphicspath{{../latex/}}
 \usepackage{booktabs}
 \usepackage{microtype}
 \usepackage{tikz}
