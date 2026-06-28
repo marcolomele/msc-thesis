@@ -2,6 +2,7 @@
 
 % ---- Black & white academic styling ----
 \usetheme{default}
+\usefonttheme{serif} % use roman (Times) font for slide text, not the default sans
 \usecolortheme{dove}
 \setbeamercolor{structure}{fg=black}
 \setbeamercolor{normal text}{fg=black,bg=white}
@@ -11,6 +12,7 @@
 
 % ---- Packages (NO 'caption', NO 'enumitem') ----
 \usepackage{amsmath, amssymb, bm, mathtools, mathrsfs, bbm}
+\usepackage{mathptmx} % Times New Roman for text and math (pdfLaTeX/Overleaf-safe)
 \usepackage{graphicx}
 % Images live in latex/imgs (no symlink — Overleaf does not support symlinks).
 % Resolve "imgs/chX/..." against the sibling latex/ directory.
