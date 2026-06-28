@@ -131,72 +131,80 @@ Object Video Tracking for Cross-View Object Correspondence}
 % =====================================================================
 \begin{frame}{Visual representation}
   \begin{columns}
-    \begin{column}{0.5\textwidth}
+    \begin{column}{0.52\textwidth}
       \begin{itemize}
-        \item ViT + self-supervised DINO: semantic patch features, no labels.
-        \item \textbf{Property:} features carry object identity, robust to appearance shift.
-        \item \textbf{Limitation:} even these degrade under the extreme ego-exo gap.
+        \item \textbf{Purpose:} encode an image as fixed-length embeddings --- ViT tokenizes patches, self-supervised DINO learns semantic features with no labels.
+        \item \textbf{Relevance:} a shared latent space to compare regions; cosine similarity on \texttt{CLS} drives frame selection, DINOv2 patch features back the O-MaMa baseline.
+        \item \textbf{Strengths:} features carry object identity and survive appearance shift; object boundaries readable from patch tokens.
+        \item \textbf{Weaknesses:} even the strongest features collapse under the extreme ego-exo gap --- pure feature matching is not enough.
       \end{itemize}
     \end{column}
-    \begin{column}{0.5\textwidth}
+    \begin{column}{0.48\textwidth}
       \includegraphics[width=\textwidth]{imgs/ch2/dinov3-results.png}
     \end{column}
   \end{columns}
 \end{frame}
-\note{(~50s) State the property and the limitation, then the consequence: because the strongest visual features still collapse across this viewpoint gap, pure feature/geometric matching is not enough -- which is what motivates reaching for language. This frames the whole thesis as a response to a limitation of the visual substrate, not a dismissal of it.}
+\note{(~50s) Walk the four boxes: what it does, why we use it, what it buys us, where it breaks. The weakness is the load-bearing one -- because the strongest visual features still collapse across this viewpoint gap, pure feature/geometric matching is insufficient, which is what motivates reaching for language. Frame the whole thesis as a response to a limitation of the visual substrate, not a dismissal of it.}
 
 % =====================================================================
 % Slide 6 — Segmentation
 % =====================================================================
 \begin{frame}{Segmentation}
   \begin{columns}
-    \begin{column}{0.5\textwidth}
+    \begin{column}{0.52\textwidth}
       \begin{itemize}
-        \item SAM: promptable masks. SAM 2: memory-based propagation through video.
-        \item \textbf{Property:} tracks robustly through occlusion and fast motion.
-        \item \textbf{Limitation:} it faithfully propagates whatever seed it is given.
+        \item \textbf{Purpose:} predict a binary object mask --- SAM makes it promptable, SAM 2 adds memory to propagate masks through video.
+        \item \textbf{Relevance:} supplies temporal completeness; once the object is found on a seed frame, SAM 2 fills every other frame --- the sub-problem we delegate.
+        \item \textbf{Strengths:} tracks robustly through occlusion and fast motion; constant marginal cost per frame; occlusion head suppresses absent objects.
+        \item \textbf{Weaknesses:} conditioning compounds error --- it faithfully propagates whatever seed it is given, and cannot rescue a bad anchor.
       \end{itemize}
     \end{column}
-    \begin{column}{0.5\textwidth}
+    \begin{column}{0.48\textwidth}
       \includegraphics[width=\textwidth]{imgs/ch2/sam2.png}
     \end{column}
   \end{columns}
 \end{frame}
-\note{(~50s) SAM 2 is the right tool for temporal completeness, so we delegate that to it. But the same fidelity means a wrong seed propagates perfectly to a wrong answer -- flag this now, because it explains later why propagation contributes ~0\% of our failures yet cannot rescue a bad anchor.}
+\note{(~50s) SAM 2 is the right tool for temporal completeness, so we delegate that to it. The weakness is the mirror image of the strength: the same fidelity that tracks through occlusion means a wrong seed propagates perfectly to a wrong answer -- flag it now, because it explains later why propagation contributes ~0\% of our failures yet cannot rescue a bad anchor.}
 
 % =====================================================================
 % Slide 7 — Language grounding
 % =====================================================================
 \begin{frame}{Language grounding}
-  \begin{itemize}
-    \item CLIP $\to$ Grounding DINO $\to$ SAM 3: align text to image regions.
-    \item \textbf{Property:} open-vocabulary --- locate a concept from words.
-    \item \textbf{Limitation:} contrastive training aligns whole image to whole caption.
-  \end{itemize}
-  \begin{center}
-    \includegraphics[width=0.85\textwidth]{latex/imgs/ch2/sam-3-simplified-architecture.png}
-  \end{center}
+  \begin{columns}
+    \begin{column}{0.54\textwidth}
+      \begin{itemize}
+        \item \textbf{Purpose:} map a phrase to pixels --- CLIP aligns image and text, G-DINO localizes a phrase to a box, SAM 3 turns it into masks.
+        \item \textbf{Relevance:} the cross-view bridge --- a description is viewpoint-invariant, so it carries object identity across the gap where visual features fail; G-DINO scores also rank destination frames.
+        \item \textbf{Strengths:} open-vocabulary localization from words; SAM 3 detects, segments and tracks every instance; presence token cuts false detections; detector re-anchors the tracker against drift.
+        \item \textbf{Weaknesses:} CLIP aligns whole image to whole caption, so long attribute paragraphs dilute the match; SAM 3 is trained on short ($\le$32-token) phrases.
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.46\textwidth}
+      \includegraphics[width=\textwidth]{latex/imgs/ch2/sam-3-simplified-architecture.png}
+    \end{column}
+  \end{columns}
 \end{frame}
-\note{(~55s) This chain is the bridge: words become a location. The limitation is the load-bearing detail -- because alignment is image-to-caption, a paragraph of attributes dilutes the match while a short noun phrase concentrates it. That is exactly why Stage 3 compresses the description into a phrase, a design choice that falls directly out of how CLIP was trained.}
+\note{(~55s) This chain is the bridge: words become a location. The weakness is the load-bearing detail -- because alignment is image-to-caption, a paragraph of attributes dilutes the match while a short noun phrase concentrates it. That is exactly why Stage 3 compresses the description into a phrase, and why the SAM 3 agent (next slide) exists to get past the 32-token limit. Both design choices fall directly out of how these models were trained.}
 
 % =====================================================================
 % Slide 8 — Foundation models and agents
 % =====================================================================
 \begin{frame}{Foundation models and agents}
   \begin{columns}
-    \begin{column}{0.5\textwidth}
+    \begin{column}{0.52\textwidth}
       \begin{itemize}
-        \item LLM/Qwen + ReAct: reason, call a tool, observe, repeat.
-        \item \textbf{Property:} the VLM can describe an object and self-verify masks.
-        \item \textbf{Limitation:} it reports what it perceives, not what is annotated.
+        \item \textbf{Purpose:} a VLM (Qwen) reasons jointly over image and text; ReAct wraps it in a reason $\to$ act $\to$ observe loop that calls tools and self-corrects.
+        \item \textbf{Relevance:} the VLM writes the object description (Stage 2), and the SAM 3 agent segments complex prompts while self-verifying its masks.
+        \item \textbf{Strengths:} instruction-following yields consistent descriptions; built-in verification; the reasoning trace keeps every decision legible.
+        \item \textbf{Weaknesses:} it reports what it perceives, not what is annotated --- a tiny target makes it name the larger salient neighbour.
       \end{itemize}
     \end{column}
-    \begin{column}{0.5\textwidth}
+    \begin{column}{0.48\textwidth}
       \includegraphics[width=\textwidth]{imgs/ch2/react-scheme.png}
     \end{column}
   \end{columns}
 \end{frame}
-\note{(~55s) The agentic loop gives us both the description and a built-in verification step, and it keeps every step legible. The limitation foreshadows the dominant failure mode: when the target is tiny, the model honestly names the salient neighbour it can actually see. We return to this as the single largest source of error.}
+\note{(~55s) The agentic loop gives us both the description and a built-in verification step, and it keeps every step legible. The weakness foreshadows the dominant failure mode: when the target is tiny, the model honestly names the salient neighbour it can actually see -- not a hallucination, a perceptual limit. We return to this as the single largest source of error.}
 
 \begin{frame}{Segmentation with Complex Prompts}
 \begin{center}

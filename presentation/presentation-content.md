@@ -5,7 +5,7 @@
 **Slides:** 22.
 **Timing budget:** Title 0:20 · Introduction 3:00 · Theory 3:30 · Method 3:30 · Results & Analysis 9:00 · Conclusion 1:00 (≈20:20).
 
-**Emphasis (assessment rationale):** the board rewards critical reasoning and analytical skill over re-explaining known models. So theory is framed as *tool → property we exploit → limitation that bites later*; method is rapid-fire and carries one idea (the transfer/completeness split); the analysis of the pipeline's own failures is the centerpiece.
+**Emphasis (assessment rationale):** the board rewards critical reasoning and analytical skill over re-explaining known models. So theory is framed in four boxes per family — *purpose → relevance → strengths → weaknesses* — where the weakness of each family is the load-bearing detail that motivates the next; method is rapid-fire and carries one idea (the transfer/completeness split); the analysis of the pipeline's own failures is the centerpiece.
 
 Conventions per slide: `FIGURE:` names a file under `latex/imgs/...` (verified to exist) or is marked **to-create**. Slide bullets stay terse; numbers live in `NOTES`. All figure paths below were checked against the repository.
 
@@ -56,35 +56,39 @@ NOTES (~60s): State the hypothesis: natural language is a semantic channel that 
 
 ---
 
-### Theory — 3.5 min (one family per slide; framed property → limitation → design consequence)
+### Theory — 3.5 min (one family per slide; four boxes each: purpose → relevance → strengths → weaknesses)
 
 ## Slide 5 — Visual representation
 FIGURE: `latex/imgs/ch2/dinov3-results.png`
-- ViT + self-supervised DINO: semantic patch features, no labels.
-- Property: features carry object identity, robust to appearance shift.
-- Limitation: even these degrade under the extreme ego-exo gap.
-NOTES (~50s): State the property and the limitation, then the consequence: because the strongest visual features still collapse across this viewpoint gap, pure feature/geometric matching is not enough — which is what motivates reaching for language. This frames the whole thesis as a response to a limitation of the visual substrate, not a dismissal of it.
+- Purpose: encode an image as fixed-length embeddings — ViT tokenizes patches, self-supervised DINO learns semantic features with no labels.
+- Relevance: a shared latent space to compare regions; cosine similarity on CLS drives frame selection, DINOv2 patch features back the O-MaMa baseline.
+- Strengths: features carry object identity and survive appearance shift; object boundaries readable from patch tokens without segmentation labels.
+- Weaknesses: even the strongest features collapse under the extreme ego-exo gap — pure feature/geometric matching is not enough.
+NOTES (~50s): Walk the four boxes — what it does, why we use it, what it buys us, where it breaks. The weakness is load-bearing: because the strongest visual features still collapse across this viewpoint gap, pure feature matching is insufficient, which is what motivates reaching for language. Frame the whole thesis as a response to a limitation of the visual substrate, not a dismissal of it.
 
 ## Slide 6 — Segmentation
 FIGURE: `latex/imgs/ch2/sam2.png`
-- SAM: promptable masks. SAM 2: memory-based propagation through video.
-- Property: tracks robustly through occlusion and fast motion.
-- Limitation: it faithfully propagates whatever seed it is given.
-NOTES (~50s): SAM 2 is the right tool for temporal completeness, so we delegate that to it. But the same fidelity means a wrong seed propagates perfectly to a wrong answer — flag this now, because it explains later why propagation contributes ~0% of our failures yet cannot rescue a bad anchor.
+- Purpose: predict a binary object mask — SAM makes it promptable, SAM 2 adds memory to propagate masks through video (VOS).
+- Relevance: supplies temporal completeness — once the object is found on a seed frame, SAM 2 fills every other frame; the sub-problem we delegate.
+- Strengths: tracks robustly through occlusion and fast motion; constant marginal cost per frame; occlusion head suppresses absent objects.
+- Weaknesses: conditioning compounds error — it faithfully propagates whatever seed it is given and cannot rescue a bad anchor.
+NOTES (~50s): SAM 2 is the right tool for temporal completeness, so we delegate that to it. The weakness mirrors the strength: the same fidelity that tracks through occlusion means a wrong seed propagates perfectly to a wrong answer — flag this now, because it explains later why propagation contributes ~0% of our failures yet cannot rescue a bad anchor.
 
 ## Slide 7 — Language grounding
-FIGURE: `latex/imgs/ch2/gdino-architecture-examples.png`
-- CLIP → Grounding DINO → SAM 3: align text to image regions.
-- Property: open-vocabulary — locate a concept from words.
-- Limitation: contrastive training aligns whole image to whole caption.
-NOTES (~55s): This chain is the bridge: words become a location. The limitation is the load-bearing detail — because alignment is image-to-caption, a paragraph of attributes dilutes the match while a short noun phrase concentrates it. That is exactly why Stage 3 compresses the description into a phrase, a design choice that falls directly out of how CLIP was trained.
+FIGURE: `latex/imgs/ch2/sam-3-simplified-architecture.png`
+- Purpose: map a phrase to pixels — CLIP aligns image and text, Grounding DINO localizes a phrase to a box, SAM 3 turns it into masks.
+- Relevance: the cross-view bridge — a description is viewpoint-invariant, so it carries object identity across the gap where visual features fail; G-DINO scores also rank destination frames.
+- Strengths: open-vocabulary localization from words; SAM 3 detects/segments/tracks every instance; presence token cuts false detections; detector re-anchors the tracker against drift.
+- Weaknesses: CLIP aligns whole image to whole caption, so long attribute paragraphs dilute the match; SAM 3 trained on short (≤32-token) phrases.
+NOTES (~55s): This chain is the bridge: words become a location. The weakness is the load-bearing detail — because alignment is image-to-caption, a paragraph of attributes dilutes the match while a short noun phrase concentrates it. That is exactly why Stage 3 compresses the description into a phrase, and why the SAM 3 agent (next slide) exists to get past the 32-token limit — both design choices fall out of how these models were trained.
 
 ## Slide 8 — Foundation models and agents
 FIGURE: `latex/imgs/ch2/react-scheme.png`
-- LLM/Qwen + ReAct: reason, call a tool, observe, repeat.
-- Property: the VLM can describe an object and self-verify masks.
-- Limitation: it reports what it perceives, not what is annotated.
-NOTES (~55s): The agentic loop gives us both the description and a built-in verification step, and it keeps every step legible. The limitation foreshadows the dominant failure mode: when the target is tiny, the model honestly names the salient neighbour it can actually see. We return to this as the single largest source of error.
+- Purpose: a VLM (Qwen) reasons jointly over image and text; ReAct wraps it in a reason → act → observe loop that calls tools and self-corrects.
+- Relevance: the VLM writes the object description (Stage 2), and the SAM 3 agent segments complex prompts while self-verifying its masks.
+- Strengths: instruction-following yields consistent descriptions; built-in verification; the reasoning trace keeps every decision legible.
+- Weaknesses: it reports what it perceives, not what is annotated — a tiny target makes it name the larger salient neighbour.
+NOTES (~55s): The agentic loop gives us both the description and a built-in verification step, and it keeps every step legible. The weakness foreshadows the dominant failure mode: when the target is tiny, the model honestly names the salient neighbour it can actually see — a perceptual limit, not a hallucination. We return to this as the single largest source of error.
 
 ---
 
