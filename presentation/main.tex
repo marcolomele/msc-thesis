@@ -75,7 +75,7 @@ Object Video Tracking for Cross-View Object Correspondence}
 
 \begin{frame}{}
     \begin{center}
-        $\text{Introduction}$
+        $\text{Introduction.}$
     \end{center}
 \end{frame}
 
@@ -88,7 +88,7 @@ Object Video Tracking for Cross-View Object Correspondence}
       \begin{itemize}
         \item Same object, two synchronized cameras: egocentric and exocentric.
         \item Given the object's mask track in one view, recover it in the other.
-        \item Matters for AR, robotics, and collaboration between agents.
+        \item Applied in AR, robotics, in general collaboration between agents with vision.
       \end{itemize}
     \end{column}
     \begin{column}{0.5\textwidth}
@@ -137,7 +137,7 @@ Object Video Tracking for Cross-View Object Correspondence}
 % #####################################################################
 \begin{frame}{}
     \begin{center}
-        $\text{Theory Review}$
+        $\text{Theory Review.}$
     \end{center}
 \end{frame}
 
@@ -170,12 +170,12 @@ Object Video Tracking for Cross-View Object Correspondence}
       \begin{itemize}
         \item \textbf{Purpose:} predict a binary object mask.
         \item \textbf{Relevance:} the concrete task we execute on the destination frames, conditioned on information coming from the other view.
-        \item \textbf{Strengths:} SAM makes it promptable; SAM 2 adds memory to propagate masks through video.
-        \item \textbf{Weaknesses:} no cross-view ability on its own, so it must be embedded in a larger pipeline.
+        \item \textbf{Strengths:} SAM makes it promptable; SAM 2 adds memory to propagate masks through video; SAM 3 tracks concepts from text prompts. 
+        \item \textbf{Weaknesses:} no native cross-view ability.
       \end{itemize}
     \end{column}
     \begin{column}{0.48\textwidth}
-      \includegraphics[width=\textwidth]{imgs/ch2/sam2.png}
+      \includegraphics[width=\textwidth]{latex/imgs/ch2/sam1-examples.png}
     \end{column}
   \end{columns}
 \end{frame}
@@ -195,7 +195,7 @@ Object Video Tracking for Cross-View Object Correspondence}
       \end{itemize}
     \end{column}
     \begin{column}{0.46\textwidth}
-      \includegraphics[width=\textwidth]{latex/imgs/ch2/sam-3-simplified-architecture.png}
+      \includegraphics[width=\textwidth]{latex/imgs/ch2/sam3-pcs.png}
     \end{column}
   \end{columns}
 \end{frame}
@@ -216,6 +216,7 @@ Object Video Tracking for Cross-View Object Correspondence}
     \end{column}
     \begin{column}{0.48\textwidth}
       \includegraphics[width=\textwidth]{imgs/ch2/react-scheme.png}
+      \includegraphics[width=\textwidth]{latex/imgs/ch2/qwen-training.png}
     \end{column}
   \end{columns}
 \end{frame}
@@ -234,21 +235,21 @@ Object Video Tracking for Cross-View Object Correspondence}
 
 \begin{frame}{}
     \begin{center}
-        $\text{Method}$
+        $\text{Method.}$
     \end{center}
 \end{frame}
 
 % =====================================================================
 % Slide 9 — Task formulation and the key insight
 % =====================================================================
-\begin{frame}{Task formulation and the key insight}
+\begin{frame}{Task formulation}
   \begin{itemize}
     \item Input: object mask track in the source view. Output: mask for every destination frame.
-    \item Two orthogonal sub-problems: cross-view transfer (hard) vs. temporal completeness (solved).
-    \item Spend effort on transfer via language; delegate completeness to SAM 2.
+    \item Two orthogonal sub-problems: (a) cross-view matching vs. (b) temporal completeness.
+    \item Our approach: language bridge on (a), SAM 2 video tracking for (b).
   \end{itemize}
   \begin{center}
-    \fbox{\parbox{0.7\textwidth}{\centering\textbf{TO CREATE:} optional two-box schematic --- ``transfer (hard) vs. completeness (solved)''. Could reuse part of the pipeline figure instead.}}
+    \includegraphics[width=0.6\textwidth]{latex/imgs/ch2/related-works.png}
   \end{center}
 \end{frame}
 \note{(~50s) Now the method. If you remember one idea from this talk, let it be this one. The input is an object mask track in the source view; the output is a mask for every destination frame. This splits into two orthogonal sub-problems. One is cross-view transfer, getting the object across the viewpoint gap, and that is hard. The other is temporal completeness, covering every frame, and that one is essentially solved by trackers. So my strategy is simple. I spend all my effort on transfer, through language, and I delegate completeness to SAM 2. Every design choice downstream follows from this split.}
@@ -275,7 +276,7 @@ Object Video Tracking for Cross-View Object Correspondence}
     \item Pick the clearest seed frame by a visibility score.
   \end{itemize}
   \begin{center}
-    \includegraphics[width=0.9\textwidth]{latex/imgs/ch3/pipeline_horizontal.png}
+    \includegraphics[width=0.9\textwidth]{latex/imgs/ch3/block-1-focus.png}
   \end{center}
 \end{frame}
 \note{(~30s) Stage one, source frame selection. I pick the clearest frame by a visibility score, dominated by object area. A bigger object simply gives the VLM more to describe. One good frame is enough, so I take just one. The mechanics I am happy to take in questions.}
@@ -288,7 +289,7 @@ Object Video Tracking for Cross-View Object Correspondence}
     \item Generate view- and time-independent description.
   \end{itemize}
   \begin{center}
-    \includegraphics[width=0.9\textwidth]{latex/imgs/ch3/pipeline_horizontal.png}
+    \includegraphics[width=0.9\textwidth]{latex/imgs/ch3/block-2-focus.png}
   \end{center}
 \end{frame}
 \note{(~30s) Stage two, the description. The VLM writes down only intrinsic attributes, independent of view and of time, so the description holds from any angle, at any moment. It sees the masked frame, which points it at the right object, and the raw frame, which preserves the true appearance. In goes the image, out comes structured JSON.}
@@ -301,7 +302,7 @@ Object Video Tracking for Cross-View Object Correspondence}
     \item Select anchor frames by Grounding DINO confidence in the destination.
     \end{itemize}
   \begin{center}
-    \includegraphics[width=0.85\textwidth]{latex/imgs/ch3/pipeline_horizontal.png}
+    \includegraphics[width=0.85\textwidth]{latex/imgs/ch3/block-3-1-focus.png}
   \end{center}
 \end{frame}
 \note{(~40s) Stage three, anchor grounding. Grounding DINO takes the description and re-selects the best anchors by confidence in the destination view; I keep the top three. Then the SAM 3 agent segments them and verifies itself. One line of reasoning to keep. The matching time index is rarely the best destination frame, the correlation is only 0.14, so re-selecting really matters. And notice the bridge stays linguistic here, but the anchor signal is swappable; I could plug in geometry, like RoMa, instead.}
@@ -311,7 +312,7 @@ Object Video Tracking for Cross-View Object Correspondence}
     \item SAM 3 agent loop simplifies, segments, and selects.
   \end{itemize}
   \begin{center}
-    \includegraphics[width=0.4\textwidth]{latex/imgs/ch3/pipeline-block-3.png}
+    \includegraphics[width=0.9\textwidth]{latex/imgs/ch3/block-3-2-focus.png}
   \end{center}
 \end{frame}
 \note{(~30s) Here is the segmentation in detail. It is a loop. The agent proposes a prompt, generates candidate masks, validates them against the description, and selects the best, iterating until it is satisfied. This is how I get a reliable mask out of SAM 3 even on a complex object.}
@@ -324,7 +325,7 @@ Object Video Tracking for Cross-View Object Correspondence}
     \item SAM 2 memory tracker spreads predictions to all frames bidirectionally.
   \end{itemize}
   \begin{center}
-    \includegraphics[width=0.9\textwidth]{latex/imgs/ch3/pipeline_horizontal.png}
+    \includegraphics[width=0.9\textwidth]{latex/imgs/ch3/block-4-focus.png}
   \end{center}
 \end{frame}
 \note{(~30s) Stage four, propagation. The SAM 2 memory tracker fills in every remaining frame. It runs in both directions, and each frame is served by its nearest reliable anchor. When the frames nearby fail, memory can reach back to a distant good anchor. The two passes meet, so every single frame has a short path to a solid anchor.}
@@ -335,7 +336,7 @@ Object Video Tracking for Cross-View Object Correspondence}
 
 \begin{frame}{}
     \begin{center}
-        $\text{Experiments}$
+        $\text{Experiments.}$
     \end{center}
 \end{frame}
 
@@ -367,7 +368,7 @@ Object Video Tracking for Cross-View Object Correspondence}
     \item Ours: 37.7 (Ego2Exo) / 40.6 (Exo2Ego) IoU.
     \item Last year challenge: ObjectRelator (35.3 / 40.3), O-Mama (42.6 / 44.1)
     \item Strongest comparable: V2-SAM (46.3 / 49.6).
-    \item Strongest published: LM-EEC (54.98 / 65.77).
+    \item Strongest published (fine-tuned on Ego-Exo4D): LM-EEC (54.98 / 65.77).
   \end{itemize}
 \end{frame}
 \note{(~80s) So how does it compare? My pipeline reaches 37.7 IoU ego-to-exo and 40.6 exo-to-ego, and it trains nothing. That already beats ObjectRelator, and mine is the only method that is at once free of training, agnostic to the camera, and agnostic to the dataset. The strongest published result is LM-EEC, at roughly 55 and 66, and I present it plainly as the strongest published number. I sit a few points back on raw IoU, but I pay none of the supervision cost, and I generalize where they cannot. Now, let me show you that this raw gap hides something much more interesting. [Option A framing: strongest-published, no upper-bound argument.]}  
