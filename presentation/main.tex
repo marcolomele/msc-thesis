@@ -397,7 +397,26 @@ Object Video Tracking for Cross-View Object Correspondence}
     \item Propagation matches per-frame agent (37.7 vs. 35.5) at $\sim$25$\times$ speed (0.82 vs. 21.30 s/frame).
   \end{itemize}
   \begin{center}
-    \fbox{\parbox{0.75\textwidth}{\centering\textbf{TO CREATE:} ablation table from \texttt{04b-experiments-ablations.tex} (\texttt{tab:abl-summary}), simplified to IoU + time/frame; consider a bar chart.}}
+    \small
+    \setlength{\tabcolsep}{10pt}
+    \renewcommand{\arraystretch}{1.1}
+    \begin{tabular}{lrr}
+      \toprule
+      Stage added & IoU$\uparrow$ & $t$/frame\,(s)$\downarrow$ \\
+      \midrule
+      Baseline            & 10.6 & 1.32 \\
+      Baseline Oracle     & 17.0 & 0.12 \\
+      \midrule
+      (A) Best Single Frame & 16.8 & 0.13 \\
+      (B) SAM3 Agent Loop   & 35.5 & 21.30 \\
+      (C) Propagation       & 37.7 & 0.82 \\
+      (D) G-DINO            & \textbf{38.1} & 0.90 \\
+      \midrule
+      \% change vs. Baseline
+        & \textcolor[rgb]{0,0.55,0}{$+259.8\%$}
+        & \textcolor[rgb]{0,0.55,0}{$-31.8\%$} \\
+      \bottomrule
+    \end{tabular}
   \end{center}
 \end{frame}
 \note{(~70s) This ablation validates the design split. A naive baseline sits at 10.6 IoU; the full pipeline lifts that by 260 percent. Two rows matter most. My frame selection, with no privileged information, essentially matches an oracle, 16.8 against 17.0. And propagation matches running the SAM 3 agent on every single frame, 37.7 against 35.5, but at twenty-five times the speed, under a second per frame instead of twenty-one. Running the agent on every frame would take 59 hours; propagation recovers the same accuracy for almost nothing. The numbers say the split was the right call.}
@@ -460,7 +479,21 @@ Object Video Tracking for Cross-View Object Correspondence}
     \item Negatives point the same way: the fix must use the VLM better, not pre-process the image.
   \end{itemize}
   \begin{center}
-    \fbox{\parbox{0.75\textwidth}{\centering\textbf{TO CREATE:} small 2--3 row interventions strip from \S4.5 (on/off deltas); or reuse \texttt{vlm-description-failure.png}.}}
+    \small
+    \setlength{\tabcolsep}{9pt}
+    \renewcommand{\arraystretch}{1.15}
+    \begin{tabular}{lccc}
+      \toprule
+      Intervention & Off & On & $\Delta$ \\
+      \midrule
+      Scene-vocabulary conditioning & 37.8 & 38.9 & \textcolor[rgb]{0,0.55,0}{$+1.1$} \\
+      Destination crop hint          & 37.8 & 33.4 & \textcolor[rgb]{0.7,0,0}{$-4.4$} \\
+      Frame brightening              & 37.8 & 34.1 & \textcolor[rgb]{0.7,0,0}{$-3.7$} \\
+      \bottomrule
+    \end{tabular}
+
+    \vspace{0.4em}
+    {\footnotesize \textit{Ego2Exo} IoU, 25\% validation, anchors ranked by confidence.}
   \end{center}
 \end{frame}
 \note{(~80s) To test that diagnosis, I ran a set of disciplined interventions, and I want to frame these as method, not as a list of misses. I tried conditioning on the scene vocabulary, cropping the destination, and brightening the frame. Every one of them hurt overall. Cropping is telling; it helps the failing frames, but it corrupts the many that were already correct. Brightening confirms that raw pixels are not the constraint. So the negatives are informative precisely because they kill the cheap fixes, vocabulary, cropping, lighting, and isolate the real constraint, which is how the VLM perceives small objects. That is where the answer has to come from. I leave the two concrete fixes that follow from this for future work. [Option A: end on the diagnosis.]}
