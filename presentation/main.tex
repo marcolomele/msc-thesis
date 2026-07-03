@@ -273,11 +273,16 @@ Object Video Tracking for Cross-View Object Correspondence}
 % =====================================================================
 \begin{frame}{Stage 1: source frame selection}
   \begin{itemize}
-    \item Pick the clearest seed frame by a visibility score.
+    \item Score each annotated frame by a visibility heuristic; take the highest.
   \end{itemize}
-  \begin{center}
-    \includegraphics[width=0.9\textwidth]{latex/imgs/ch3/block-1-focus.png}
-  \end{center}
+  \[
+    s_t = 0.99\,a_t + 0.01\,c_t, \qquad
+    a_t = \frac{A_t}{H \cdot W}
+  \]
+  \begin{itemize}
+    \item $a_t$: normalised mask area (dominant term); $c_t$: mask centrality (tie-breaker).
+    \item A larger object gives the VLM more signal to describe.
+  \end{itemize}
 \end{frame}
 
 \note{(~30s) Stage one, source frame selection. I pick the clearest frame by a visibility score, dominated by object area. A bigger object simply gives the VLM more to describe. One good frame is enough, so I take just one. The mechanics I am happy to take in questions.}
