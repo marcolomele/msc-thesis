@@ -243,16 +243,34 @@ Object Video Tracking for Cross-View Object Correspondence}
 % Slide 9 — Task formulation and the key insight
 % =====================================================================
 \begin{frame}{Task formulation}
+  \textbf{Input:} a masklet in the source view $S$ — a binary mask for each annotated frame:
+  \[
+    \bigl\{ M^\tau_S \bigr\}_{\tau \in \mathcal{T}}, \qquad M^\tau_S \in \{0,1\}^{H \times W}
+  \]
+  \textbf{Output:} a mask for \emph{every} destination frame:
+  \[
+    \hat{M}^\tau_D \quad \forall\, \tau \in \{1,\ldots,T\}
+  \]
+  \medskip
+  Two orthogonal sub-problems:
   \begin{itemize}
-    \item Input: object mask track in the source view. Output: mask for every destination frame.
-    \item Two orthogonal sub-problems: (a) cross-view matching vs. (b) temporal completeness.
-    \item Our approach: language bridge on (a), SAM 2 video tracking for (b).
+    \item \textbf{Cross-view transfer} — bridge the viewpoint gap. \emph{Hard.}
+    \item \textbf{Temporal completeness} — cover every frame. \emph{Solved by trackers.}
   \end{itemize}
-  \begin{center}
-    \includegraphics[width=0.6\textwidth]{latex/imgs/ch2/related-works.png}
-  \end{center}
+  \medskip
+  Strategy: language bridge for transfer; SAM 2 for completeness.
 \end{frame}
 \note{(~50s) Now the method. If you remember one idea from this talk, let it be this one. The input is an object mask track in the source view; the output is a mask for every destination frame. This splits into two orthogonal sub-problems. One is cross-view transfer, getting the object across the viewpoint gap, and that is hard. The other is temporal completeness, covering every frame, and that one is essentially solved by trackers. So my strategy is simple. I spend all my effort on transfer, through language, and I delegate completeness to SAM 2. Every design choice downstream follows from this split.}
+
+% =====================================================================
+% Slide 9b — Related works
+% =====================================================================
+\begin{frame}{Related works}
+  \begin{center}
+    \includegraphics[width=0.82\textwidth]{latex/imgs/ch2/related-works.png}
+  \end{center}
+\end{frame}
+\note{}
 
 % =====================================================================
 % Slide 10 — Pipeline overview
