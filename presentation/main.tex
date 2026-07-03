@@ -279,6 +279,7 @@ Object Video Tracking for Cross-View Object Correspondence}
     \includegraphics[width=0.9\textwidth]{latex/imgs/ch3/block-1-focus.png}
   \end{center}
 \end{frame}
+
 \note{(~30s) Stage one, source frame selection. I pick the clearest frame by a visibility score, dominated by object area. A bigger object simply gives the VLM more to describe. One good frame is enough, so I take just one. The mechanics I am happy to take in questions.}
 
 % =====================================================================
@@ -312,7 +313,7 @@ Object Video Tracking for Cross-View Object Correspondence}
     \item SAM 3 agent loop simplifies, segments, and selects.
   \end{itemize}
   \begin{center}
-    \includegraphics[width=0.9\textwidth]{latex/imgs/ch3/block-3-2-focus.png}
+    \includegraphics[width=0.8\textwidth]{latex/imgs/ch3/block-3-2-focus.png}
   \end{center}
 \end{frame}
 \note{(~30s) Here is the segmentation in detail. It is a loop. The agent proposes a prompt, generates candidate masks, validates them against the description, and selects the best, iterating until it is satisfied. This is how I get a reliable mask out of SAM 3 even on a complex object.}
@@ -443,7 +444,7 @@ Object Video Tracking for Cross-View Object Correspondence}
 % =====================================================================
 % Slide 19 — Where the loss is born
 % =====================================================================
-\begin{frame}{Where the loss is born}
+\begin{frame}{Cases with IoU = 0}
   \begin{itemize}
     \item Charging each failure to its first failing stage.
     \item Stage 2 naming: 59\% (Ego2Exo) / 81\% (Exo2Ego) of dead mass.
