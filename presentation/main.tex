@@ -271,18 +271,24 @@ Object Video Tracking for Cross-View Object Correspondence}
 % =====================================================================
 % Slide 11 — Stage 1: source frame selection (rapid)
 % =====================================================================
-\begin{frame}{Stage 1: source frame selection}
+\begin{frame}{Stage 1: Source Frame Selection}
   \begin{itemize}
-    \item Score each annotated frame by a visibility heuristic; take the highest.
+    \item Score each annotated frame by a visibility heuristic and take the highest.
   \end{itemize}
+  \begin{center}
+  \includegraphics[width=0.8\textwidth]{latex/imgs/ch3/block-1-focus.png}
+  \end{center}
   \[
-    s_t = 0.99\,a_t + 0.01\,c_t, \qquad
-    a_t = \frac{A_t}{H \cdot W}
+    s_\tau = 0.99\,a_\tau + 0.01\,c_\tau, \qquad
+    a_\tau = \frac{A_\tau}{H \cdot W}, \qquad
+    c_\tau = 
+    1 -
+    \frac{\sqrt{\left(c_{y,\tau} - \frac{H}{2}\right)^2 +
+    \left(c_{x,\tau} - \frac{W}{2}\right)^2}
+    }{\sqrt{\left(\frac{H}{2}\right)^2 +
+    \left(\frac{W}{2}\right)^2}},
   \]
-  \begin{itemize}
-    \item $a_t$: normalised mask area (dominant term); $c_t$: mask centrality (tie-breaker).
-    \item A larger object gives the VLM more signal to describe.
-  \end{itemize}
+  \hspace{4mm} where $a_\tau$ is the normalised mask area and $c_\tau$ is the mask's centrality.
 \end{frame}
 
 \note{(~30s) Stage one, source frame selection. I pick the clearest frame by a visibility score, dominated by object area. A bigger object simply gives the VLM more to describe. One good frame is enough, so I take just one. The mechanics I am happy to take in questions.}
@@ -290,7 +296,7 @@ Object Video Tracking for Cross-View Object Correspondence}
 % =====================================================================
 % Slide 12 — Stage 2: object description (rapid)
 % =====================================================================
-\begin{frame}{Stage 2: object description}
+\begin{frame}{Stage 2: Target Object Description}
   \begin{itemize}
     \item Generate view- and time-independent description.
   \end{itemize}
@@ -315,10 +321,10 @@ Object Video Tracking for Cross-View Object Correspondence}
 
 \begin{frame}{Stage 3.2: Agentic Segmentation}
   \begin{itemize}
-    \item SAM 3 agent loop simplifies, segments, and selects.
+    \item Iteratively, simplify the text prompt, segment candidates, and select the final mask against the original description.
   \end{itemize}
   \begin{center}
-    \includegraphics[width=0.8\textwidth]{latex/imgs/ch3/block-3-2-focus.png}
+    \includegraphics[width=0.7\textwidth]{latex/imgs/ch3/block-3-2-focus.png}
   \end{center}
 \end{frame}
 \note{(~30s) Here is the segmentation in detail. It is a loop. The agent proposes a prompt, generates candidate masks, validates them against the description, and selects the best, iterating until it is satisfied. This is how I get a reliable mask out of SAM 3 even on a complex object.}
@@ -326,7 +332,7 @@ Object Video Tracking for Cross-View Object Correspondence}
 % =====================================================================
 % Slide 14 — Stage 4: propagation (rapid)
 % =====================================================================
-\begin{frame}{Stage 4: propagation}
+\begin{frame}{Stage 4: Predicted Mask Propagation}
   \begin{itemize}
     \item SAM 2 memory tracker spreads predictions to all frames bidirectionally.
   \end{itemize}
