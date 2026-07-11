@@ -243,23 +243,24 @@ Object Video Tracking for Cross-View Object Correspondence}
 % Slide 9 — Task formulation and the key insight
 % =====================================================================
 \begin{frame}{Task formulation}
-  \textbf{Input:} a masklet in the source view $S$ — a binary mask for each annotated frame:
+  \textbf{Input:} video from source camera $\textbf{I}^s$ of $T$ frames and binary mask for each annotated frame:
   \[
-    \bigl\{ M^\tau_S \bigr\}_{\tau \in \mathcal{T}}, \qquad M^\tau_S \in \{0,1\}^{H \times W}
+    \bigl\{ M_\tau^S \bigr\}_{\tau \in \mathit{T}}, \qquad M_\tau^S \in \{0,1\}^{H \times W}
   \]
-  \textbf{Output:} a mask for \emph{every} destination frame:
+  \textbf{Output:} a mask for every frame of destination video $\textbf{I}^D$:
   \[
-    \hat{M}^\tau_D \quad \forall\, \tau \in \{1,\ldots,T\}
+    \hat{M}_\tau^D \quad \forall\, \tau \in \{1,\ldots,T\}
   \]
   \medskip
-  Two orthogonal sub-problems:
+  Two problems:
   \begin{itemize}
-    \item \textbf{Cross-view transfer} — bridge the viewpoint gap. \emph{Hard.}
-    \item \textbf{Temporal completeness} — cover every frame. \emph{Solved by trackers.}
+    \item \textit{Cross-view transfer}: segment the object in one view conditioned on the mask from the other view. 
+    \item \textit{Temporal completeness}: predict on every frame.
   \end{itemize}
   \medskip
-  Strategy: language bridge for transfer; SAM 2 for completeness.
+\textbf{Our pipeline:} language bridge for transfer; SAM 2 for completeness.
 \end{frame}
+
 \note{(~50s) Now the method. If you remember one idea from this talk, let it be this one. The input is an object mask track in the source view; the output is a mask for every destination frame. This splits into two orthogonal sub-problems. One is cross-view transfer, getting the object across the viewpoint gap, and that is hard. The other is temporal completeness, covering every frame, and that one is essentially solved by trackers. So my strategy is simple. I spend all my effort on transfer, through language, and I delegate completeness to SAM 2. Every design choice downstream follows from this split.}
 
 % =====================================================================
@@ -267,7 +268,7 @@ Object Video Tracking for Cross-View Object Correspondence}
 % =====================================================================
 \begin{frame}{Related works}
   \begin{center}
-    \includegraphics[width=0.82\textwidth]{latex/imgs/ch2/related-works.png}
+    \includegraphics[width=0.9\textwidth]{latex/imgs/ch2/related-works.png}
   \end{center}
 \end{frame}
 \note{}
@@ -278,10 +279,10 @@ Object Video Tracking for Cross-View Object Correspondence}
 \begin{frame}{Pipeline overview}
   4 stages:
   \begin{enumerate}
-      \item Seed Selection
-      \item Target Description
-      \item Anchor Selection + Agentic Segmentation
-      \item Prediction Propagation
+      \item Seed Frame Selection
+      \item Target Object Description
+      \item SAM 3 Agentic Grounding (Anchor Selection + Segmentation) 
+      \item Predicted Mask Propagation
   \end{enumerate}
 \end{frame}
 \note{(~40s) Here is the full pipeline, left to right. Four stages: I select a source frame, describe the object, ground that description into an anchor in the other view, and propagate. The thing I want to stress is legibility. The seed frame, the description, the anchor masks, every intermediate output is something a human can read and inspect. Now let me go through the stages quickly.}
@@ -290,12 +291,10 @@ Object Video Tracking for Cross-View Object Correspondence}
 % Slide 11 — Stage 1: source frame selection (rapid)
 % =====================================================================
 \begin{frame}{Stage 1: Source Frame Selection}
-  \begin{itemize}
-    \item Score each annotated frame by a visibility heuristic and take the highest.
-  \end{itemize}
   \begin{center}
   \includegraphics[width=0.8\textwidth]{latex/imgs/ch3/block-1-focus.png}
   \end{center}
+  Visibility Scorer computes score $s_\tau$:
   \[
     s_\tau = 0.99\,a_\tau + 0.01\,c_\tau, \qquad
     a_\tau = \frac{A_\tau}{H \cdot W}, \qquad
@@ -315,9 +314,6 @@ Object Video Tracking for Cross-View Object Correspondence}
 % Slide 12 — Stage 2: object description (rapid)
 % =====================================================================
 \begin{frame}{Stage 2: Target Object Description}
-  \begin{itemize}
-    \item Generate view- and time-independent description.
-  \end{itemize}
   \begin{center}
     \includegraphics[width=0.9\textwidth]{latex/imgs/ch3/block-2-focus.png}
   \end{center}
@@ -328,9 +324,6 @@ Object Video Tracking for Cross-View Object Correspondence}
 % Slide 13 — Stage 3: anchor grounding (rapid)
 % =====================================================================
 \begin{frame}{Stage 3.1: Anchor Selection}
-  \begin{itemize}
-    \item Select anchor frames by Grounding DINO confidence in the destination.
-    \end{itemize}
   \begin{center}
     \includegraphics[width=0.85\textwidth]{latex/imgs/ch3/block-3-1-focus.png}
   \end{center}
@@ -338,9 +331,6 @@ Object Video Tracking for Cross-View Object Correspondence}
 \note{(~40s) Stage three, anchor grounding. Grounding DINO takes the description and re-selects the best anchors by confidence in the destination view; I keep the top three. Then the SAM 3 agent segments them and verifies itself. One line of reasoning to keep. The matching time index is rarely the best destination frame, the correlation is only 0.14, so re-selecting really matters. And notice the bridge stays linguistic here, but the anchor signal is swappable; I could plug in geometry, like RoMa, instead.}
 
 \begin{frame}{Stage 3.2: Agentic Segmentation}
-  \begin{itemize}
-    \item Iteratively, simplify the text prompt, segment candidates, and select the final mask against the original description.
-  \end{itemize}
   \begin{center}
     \includegraphics[width=0.7\textwidth]{latex/imgs/ch3/block-3-2-focus.png}
   \end{center}
@@ -351,9 +341,6 @@ Object Video Tracking for Cross-View Object Correspondence}
 % Slide 14 — Stage 4: propagation (rapid)
 % =====================================================================
 \begin{frame}{Stage 4: Predicted Mask Propagation}
-  \begin{itemize}
-    \item SAM 2 memory tracker spreads predictions to all frames bidirectionally.
-  \end{itemize}
   \begin{center}
     \includegraphics[width=0.9\textwidth]{latex/imgs/ch3/block-4-focus.png}
   \end{center}
@@ -394,12 +381,9 @@ Object Video Tracking for Cross-View Object Correspondence}
 
 
 \begin{frame}{Quantitative Results}
-  \begin{itemize}
-    \item Ours: 37.7 (Ego2Exo) / 40.6 (Exo2Ego) IoU.
-    \item Last year challenge: ObjectRelator (35.3 / 40.3), O-Mama (42.6 / 44.1)
-    \item Strongest comparable: V2-SAM (46.3 / 49.6).
-    \item Strongest published (fine-tuned on Ego-Exo4D): LM-EEC (54.98 / 65.77).
-  \end{itemize}
+\begin{center}
+    \includegraphics[width=0.9\textwidth]{latex/imgs/ch4/results-commented.png}
+\end{center}
 \end{frame}
 \note{(~80s) So how does it compare? My pipeline reaches 37.7 IoU ego-to-exo and 40.6 exo-to-ego, and it trains nothing. That already beats ObjectRelator, and mine is the only method that is at once free of training, agnostic to the camera, and agnostic to the dataset. The strongest published result is LM-EEC, at roughly 55 and 66, and I present it plainly as the strongest published number. I sit a few points back on raw IoU, but I pay none of the supervision cost, and I generalize where they cannot. Now, let me show you that this raw gap hides something much more interesting. [Option A framing: strongest-published, no upper-bound argument.]}  
 % === POST-SUBMISSION (Option B) — uncomment if supervisor approves ===
@@ -420,11 +404,10 @@ Object Video Tracking for Cross-View Object Correspondence}
 % =====================================================================
 % Slide 17 — Ablation: what each stage contributes
 % =====================================================================
-\begin{frame}{Ablation: what each stage contributes}
+\begin{frame}{Contribution of each stage}
   \begin{itemize}
-    \item Naive baseline 10.6 IoU $\to$ full pipeline +259.8\%.
-    \item Frame selection $\approx$ oracle (16.8 vs. 17.0), no privileged info.
-    \item Propagation matches per-frame agent (37.7 vs. 35.5) at $\sim$25$\times$ speed (0.82 vs. 21.30 s/frame).
+    \item Baseline: query the VLM independently on every source frame and run one-shot SAM 3 per destination frame.
+    \item Baseline Oracle: baseline substituting VLM descriptions with object labels from metadata. 
   \end{itemize}
   \begin{center}
     \small
@@ -460,11 +443,11 @@ Object Video Tracking for Cross-View Object Correspondence}
       \begin{itemize}
         \item $\sim$32\% (Ego2Exo) / 31\% (Exo2Ego) ``dead mass'': near-zero IoU.
         \item Surviving cases (working mode): 56.9 / 61.7 IoU.
-        \item Remove the dead mass $\to$ average rises $\sim$18, level with LM-EEC.
+        \item Remove the dead mass $\to$ mean IoU rises $\sim$18, level with LM-EEC.
       \end{itemize}
     \end{column}
     \begin{column}{0.5\textwidth}
-      \includegraphics[width=\textwidth]{imgs/ch4/pipeline-lmeec.png}
+      \includegraphics[width=0.9\textwidth]{imgs/ch4/pipeline-lmeec.png}
     \end{column}
   \end{columns}
 \end{frame}
@@ -473,11 +456,9 @@ Object Video Tracking for Cross-View Object Correspondence}
 % =====================================================================
 % Slide 19 — Where the loss is born
 % =====================================================================
-\begin{frame}{Cases with IoU = 0}
+\begin{frame}{Dead mass}
   \begin{itemize}
-    \item Charging each failure to its first failing stage.
-    \item Stage 2 naming: 59\% (Ego2Exo) / 81\% (Exo2Ego) of dead mass.
-    \item Stages 2+3 together: 74\% / 92\%. Propagation: 0\% by construction.
+    \item Bottle Neck: stage 2 naming, responsible for 59\% (Ego2Exo) / 81\% (Exo2Ego) of dead mass.
   \end{itemize}
   \begin{center}
     \includegraphics[width=0.8\textwidth]{imgs/ch4/grounding-examples.png}
