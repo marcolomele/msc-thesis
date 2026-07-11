@@ -1,71 +1,88 @@
 # Introduction 
-280 words.
+218 words.
 
 ## Title
 What is the strongest compression medium humans have known for the last 1000 years? It's language.
 
-My name is Marco, and today, I will present my MSc thesis. 
-
-This work was developed in colaboration with prof Chiara Plizzari and the help of two other MSc students. I'm proud to say that it is on track to be submitted to WACV 2027. 
+My name is Marco. Today I present my MSc thesis, developed with prof Chiara Plizzari and two other MSc students, and on track for submission to the WACV 2027 conference.
 
 ## Cross-view object correspondence
-I believe in a future of increased integration between our daily lives and technology. One of these technologies will be vision, in the form smart glasses, a technology already available to consumers. 
+I believe in a future of integration between daily life and technology. One of these being vision, in the form of smart glasses, already on the market.
 
-Have you ever found yourself in a situation where you are looking for your keys at home? 
+Have you ever found yourself looking for your keys at home? Smart glasses, combined with the cameras in your house, could give you many eyes. This concept extendes to any context where agents, whether human or robotic, collaborate.
 
-Smart glasses could help solve that. Combined with the cameras in your house, you could have many eyes. This finds applications in several fields where agents, whether humans or robots, collaborate together. 
+Technically, this is object recognition; we focus on cross-view object correspondence, matching objects across synchronized recordings of the same scene. Given a mask track on a target object in one view, the goal is to predict its mask in the other, using Ego-Exo4D, the largest public resource for this task.
 
-Technically, this task is called object recognition. We will focus on a specific form of this task called cross-view object correspondence. 
+The task encapsulates two problems. First, matching the object's mask across views, hard because viewpoint changes between ego and exocentric footage affect object size and shape. Second, temporal completeness, hard due to motion blur, occlusions, and scene changes.
 
-Cross-view object correspondence aims at matching objects across synchonized video recordings of the same scene. Given a video from one perspective with a mask track on a target object, the goal is to predict the mask of the same object in the other perspective. 
-
-We will work with Ego-Exo4D dataset, the larget public resource for this cross view object correspondence. 
-
-The task is particularly challenging because it encapsulates two problems in one. The first is matching the mask of an object across the two videos, challenging due to viewpoint changes across ego and exocentric, which affect object size and shape. The second is temporal completeness in the video, diffiuclt due to motion blur, temporary occlusions, and scene changes. 
-
-We impose an additional restriction which complicates: we can only use visual information, since no geometric calibration between cameras is available. 
+We impose one further restriction: only visual information, since no geometric calibration between cameras is available.
 
 
 # Related Works
-420 words.
+440 words.
 
 ## Related works title
-To address cross-view object correspondence, we first need some theoretical foundations. In the next minutes, I will walk you through the related works and highlight their relevance to our method. 
+Before our pipeline, we need theoretical foundations. Let me walk quickly through the related works.
 
 ## Visual representation
-In order to segment objects in videos, which are just sequences of images, we need to encode them numerically. In machine learning terms, this translates to mapping images to vector embeddings.
+Segmenting video means encoding images as vector embeddings. 
 
-For this we use Vision Transformers. They divide the image into patches, then use query-key-value attention to create an embedding for each patch that aggregates information across patches and produces a classification token that summarises the information contained in the image. However, transformers require relatievly large amounts of labelled data to be trained, which is expensive.
+Vision Transformers patch the image and apply query-key-value attention, producing a token summarizing it. However, transformers need large labelled datasets. 
 
-To this end, researches have developed self-supervised learning, which replaces labels with a pretext task, such as predicting a masked patch of the image. This approach allows models to autonomously learn how to distinguish relevant objects from noisy background, and has lead to the DINO family, which is the current state of the art for creating general purpose image embeddings.
+Self-supervised learning replaced labels with a pretext task, like predicting a masked patch. This gave rise to the DINO family, today's state of the art for image embeddings.
 
 ## Segmentation
-Image embeddings empower several machine learning tasks. We focus on segmentation, which involves predicting a binary mask over the image that indicates which pixels belong to a
-specific object. 
+Embeddings power segmentation, predicting a binary mask over an object. Mask R-CNN and RITM pioneered dense and promptable masks, but remained narrow due to task specific training and small datasets. 
 
-Early methods like Mask R-CNN focused on predicting dense per-pixel predictions, and some methods like RITM, also allowed for promptable segmentation with points and bounding boxes. However, they were all trained on relatvively small datasets and were desiged for specific settings, making their applicability narrow and limited. 
+In 2023, Meta's FAIR lab introduced Segment Anything, the first general purpose promptable segmenter, trained on over a billion masks for zero-shot inference. SAM 2 extended this to video, and in November 2025 SAM 3 added concept tracking from short text prompts. 
 
-In 2023, Meta's FAIR lab introduced the Segment Anything Model as the first general purpose, promptable foundational model for image segmentaion. They they SAM on a dataset of 1 billion images and achieve zero-shot inference on unseen prompts and images. SAM 2 followed with an extention that allowed promptable segmentation on video. In november 2025, the latest iteration SAM 3 was released, which enabled advanced segmentation that tracked instances of concepts on videos via short textual prompts.
-
-Simple prompts like short text and points are not powerful enough for object segmentation across two videos. We need a more expressive bridge. We combine two directions. 
+But short prompts alone can't bridge two viewpoints. We need detailed language descriptions.
 
 ## Language Grounding
+Language grounding maps expressions to the pixels they describe. 
 
-The first is language grounding, which aims at mapping natural language expressions to the image pixels that show what the expressions names. 
+CLIP first aligned images and captions in a shared space via contrastive loss. Grounding DINO added open-vocabulary detection, localizing any textual description. 
 
-CLIP is the first effort of this kind, producing via contrastive loss a shared vector representation in which an image and a captions describing it land close together. Later, Grounding DINO enriches this field by introducing open-vocabulary detection, the ability to localise an object in an image from any textual description. 
-
-SAM 3 lands in this area as well. The most interesting contribution is its detector, which uses several modules to procude image representations informed by the text that then are used to propose segmentation candidates. However, the authors limit the textual prompts to 32 tokens with the architecture. 
+SAM 3's detector builds on this, conditioning image features on the text prompt to propose segmentation candidates. Unfortunately, it but caps prompts at 32 tokens.
 
 ## Foundation Models and Agents
-We overcome this limit Vision Language Models, the last piece of the puzzle of our pipeline. These are general purpose large foundations models that can reason over images and text simultaneously. 
+We overcome this limit with Vision Language Models. These are general purpose large foundation models that can reason simultaneously over images and text.
 
-## Cross-View Object Correspondence Related Methods
-So now that we have theoretical foundations, let's have a look at what other people have done to solve cross-view object correspondence.
+Qwen is the strongest open source family; Qwen 3 adds prolonged reasoning and strong grounding. 
 
+VLMs become even more powerful inside agent designs: loops for reasoning, acting through tools, and conditioning on the results. SAM 3 offers such an interface, letting a VLM segment from relational descriptions and even logical riddles.
 
+## Cross-View Object Correspondence Related Methods title
+With the building blocks set, what have others done for cross-view correspondence?
+
+## Official baselines
+Ego-Exo4D proposes two baselines: XSegTx, adapting a co-segmentation model to the target object, and XView-XMem, adapting a video tracker to propagate masks across views. Since these are adaptation, both score low.
+
+## 2025 challenge submission
+Last year's challenge saw two strong submissions. 
+
+ObjectRelator fuses visual and language features through a Multimodal Condition Fusion block, aligning views with a self-supervised XObjAlign loss. 
+
+O-MaMa reframes the task as mask matching: candidates from FastSAM, pooled DINOv2 features, cross-attention fusion, and a contrastive matching head. O-MaMa won using only 1% of ObjectRelator's trainable parameters.
+
+## Latest developments
+Two later methods surpass the challenge. 
+
+V²-SAM adds three experts atop SAM 2, anchoring correspondences from DINOv3 features alongside structural and fusion experts. 
+
+LM-EEC, the strongest, adapts SAM 2 with a Memory-View Mixture-of-Experts fusion module and separate ego and exo memory banks, reaching state of the art. 
+
+It fine-tunes SAM 2's full backbone, so it isn't directly comparable to the others.
+
+## Common Limitations
+Every method trains a dedicated fusion component on labelled data. This has two implicatios:
+
+1. Each mask match is hidden in weights and complex architectures; there are no interpretable intermediate steps to inspect for wrong outputs. 
+2. Arguably, training on a single datasets limits the generalisability to other datasets and other camera configurations. 
 
 # Method
+Our method addresses both these implications and is 1. training-free and in principle 2.camera and dataset agnostic. 
+
 1120 words.
 
 # Experiments
