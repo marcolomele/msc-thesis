@@ -82,7 +82,7 @@ Every method we saw trains a dedicated fusion component on labelled data, which 
 2. Training on a single dataset arguably limits generalisation to other datasets and other camera configurations.
 
 # Method
-Max 1120 words.
+Max 1050 words.
 
 ## A new paradigm?
 Looking for solutions to these limitations, one of our first ideas was to check what modern foundation models can already do. Over the last five years, they emerged as the new paradigm in machine learning, showing in both language and vision that training on broad data, without task-specific fine-tuning, can exceed specialist systems.
@@ -130,8 +130,34 @@ Crucially, no component is fine-tuned for the task. And because the bridge betwe
 
 Let's look at each stage in detail.
 
-## Stage 1 
+## Stage 1
+Stage one selects the source frame. For every annotated frame tau, we compute a visibility score, s of tau, from two cues read off the ground-truth mask. First, a of tau, the normalised mask area, the fraction of pixels the object occupies. Second, c of tau, its centrality, one minus the normalised distance from the mask centroid to the frame centre.
 
+Area weighs 0.99 and centrality 0.01, because a large object gives the vision language model far more to describe than a small but perfectly centred one. The top K frames form the seed set S, and we set K to one.
+
+## Stage 2
+Stage two writes the description. We use Qwen 3.5 to reads the seed frame and return a JSON object W, the object description.
+
+It must satisfy two properties: view independence, so that it holds from the radically different destination viewpoint, and time independence, so that it holds at every destination frame, not just the seed's moment. We enforce both by asking only for intrinsic attributes, namely colour, canonical identity, material, and structural parts, which change neither with the camera nor with time.
+
+We pass two images: the frame with the mask overlaid in red, which tells the VLM which object to describe, and the raw frame, which preserves its true appearance as well as scene context. 
+
+## Stage 3.1
+Stage three splits into where to look, and what is there.
+
+For where, Grounding DINO runs open-vocabulary detection on every destination frame with the description w as the query. A frame scores highly when the detector localises the described object with high confidence, and the top three form the anchor set A.
+
+The bridge stays linguistic here, with no geometry and no calibration. And this re-selection matters, because the destination frame synchronised with the seed is rarely the best place to segment: the correlation between the two views' visibility is only 0.14.
+
+## Stage 3.2
+For what is there, each anchor is segmented independently by a SAM 3 agent loop, orchestrated by the same VLM.
+
+The agent first simplifies the description into a short noun phrase, because contrastive alignment pools a sentence into one embedding, so a paragraph of attributes dilutes the match. SAM 3 then segments every instance matching that phrase, and the agent inspects each candidate mask against the original description, accepting or rejecting it. If all are rejected, the loop restarts with a different phrase. The accepted masks are our anchor masks on A.
+
+## Stage 4
+Stage four completes the track in time. SAM 2's video tracker propagates the anchor masks across the remaining destination frames, conditioning each prediction on a memory bank that holds all the anchors and the recently processed frames. This matterls, particularly in egocentric video, where motion blur and occlusion often make the previous frame a poor reference, so attention reaches back to a distant anchor instead.
+
+We propagate bidirectionally, forward from the earliest anchor and backward from the latest, keeping for each frame the prediction from the pass arriving from its nearest anchor.
 
 # Experiments
 840 words.
