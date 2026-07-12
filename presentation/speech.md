@@ -160,7 +160,61 @@ Stage four completes the track in time. SAM 2's video tracker propagates the anc
 We propagate bidirectionally, forward from the earliest anchor and backward from the latest, keeping for each frame the prediction from the pass arriving from its nearest anchor.
 
 # Experiments
-840 words.
+851 words.
+
+## Evaluating the pipeline
+Is this approach any good?
+
+## Quantitative results
+Let's start with the quantitative results. On Intersection over Union we reach 37.7 Ego2Exo and 40.6 Exo2Ego, surpassing both official baselines and the ObjectRelator submission, and trailing O-MaMa by about ten percent. The gap widens against the most recent works.
+
+Location error is lower than the baseline, so we recover the correct object region but place it with coarser spatial precision than our competitors.
+
+The results are moderate, but foundation models never trained together on this task recover significant quality, with the remaining gap explained by direct supervision on Ego-Exo4D. That is our first evidence that language as a bridge works.
+
+## Qualitative results
+Looking at our successes, the masks themselves are of high quality. So how can the gap to the state of the art be so large?
+
+## Dead mass
+In my opinion, most of the responsibility lies with what I call dead mass.
+
+Plotting the distribution of our predictions against the state of the art, roughly a third of all cases, 32% Ego2Exo and 31% Exo2Ego, score essentially zero IoU. The cases that survive score 56.9 and 61.7, already level with the state of the art. So the deficit is not uniform sloppiness. Remove the dead mass, and our mean IoU rises by about eighteen points, up to LM-EEC.
+
+I then looked for the variable that explained it. Scenario and object size hinted at small, fine-grained objects, but the one that truly separated the buckets was anchor IoU.
+
+And that exposes the main weakness of the pipeline. Everything hinges on the bridge. If we land on the wrong object, that wrong mask propagates faithfully across the entire take.
+
+## Naming issue
+So where is the dead mass born? To find out, we walk the pipeline in order and charge every dead case to the first stage that breaks.
+
+The answer is stark. Stage two, the naming itself, is the single largest cause by a wide margin: 59% of the dead mass in Ego2Exo, and 81% in Exo2Ego. Anchor selection in stage three is next, and the two together explain 74% and 92% of all dead cases. Grounding DINO boxing the wrong object, and the agent segmenting the wrong thing inside a good box, are minor by comparison.
+
+And propagation? Zero, by construction. The loss is born in cross-view transfer, not in tracking, exactly the hard sub-problem we flagged at the start.
+
+## Perception issue
+So why does the VLM mislabel? On the dead cases, the source mask we hand it is three to six times smaller than on the successful ones, and in Exo2Ego half the failures show the object at under 0.1% of the frame.
+
+And when it misnames, it names a real, larger neighbour. In 38% of Ego2Exo failures, that neighbour is itself annotated in the same take. It never hallucinates an absent object. It honestly describes the container, the tool, or the surface the tiny target is resting on, and true vocabulary near misses are a small minority.
+
+That diagnosis rules out the cheap explanations. It is not a weak prompt, and it is not a poor vocabulary. It is perception. The model cannot see a small enough object well enough to name it.
+
+## Diagnosis tests
+We tested this diagnosis with three interventions, and I present them as method, not as misses.
+
+Conditioning the description on a scene vocabulary gave 1.1 points, a gain that did not survive the larger subset. Cropping the destination around the Grounding DINO box cost 4.4 points, and brightening the frame cost 3.7.
+
+The crop is the informative one. Stratifying by frame, the hint rescues frames we were already failing, but corrupts the many we already handled, and that larger population drives the mean negative. Cropping the source is worse still: a tight crop halves IoU, from 41.1 to 18.0, because the identity of a small object is carried by its surroundings.
+
+So the negatives kill the cheap fixes and isolate the real constraint. The fix must use the VLM better, not pre-process the image.
+
+## Ablations
+So we know where the pipeline breaks and why. The question now is where to spend our next effort, and for that we need to see what each block actually contributes. We add the stages one at a time.
+
+The naive baseline, describing every source frame and running SAM 3 once per destination frame, scores 10.6. Replacing our description with the ground-truth object name lifts it to 17.0, which again isolates naming as the bottleneck. Our frame selection reaches 16.8, matching that oracle with no privileged information.
+
+The SAM 3 agent on every frame scores 35.5, but at 21 seconds per frame, 59 hours for the run. Propagation matches it, 37.7, at 0.82 seconds per frame, 25 times faster, and Grounding DINO anchors close at 38.1.
+
+That is 260% over the baseline at a third of the time, so the split was the right call. But read the same table as a map of headroom, and it tells us where to go next: selection and propagation are already at their ceiling, while description is the one block that an oracle beats. That is where the remaining points are, and where the future work goes.
 
 # Conclusions
 140 words. 
