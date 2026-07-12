@@ -163,60 +163,80 @@ We propagate bidirectionally, forward from the earliest anchor and backward from
 851 words.
 
 ## Evaluating the pipeline
-Is this approach any good?
+How does this approach fair?
 
 ## Quantitative results
 Let's start with the quantitative results. On Intersection over Union we reach 37.7 Ego2Exo and 40.6 Exo2Ego, surpassing both official baselines and the ObjectRelator submission, and trailing O-MaMa by about ten percent. The gap widens against the most recent works.
 
-Location error is lower than the baseline, so we recover the correct object region but place it with coarser spatial precision than our competitors.
+Location error is lower than the baseline, so the pipeline recovers the correct object region but places it with coarser spatial precision than our competitors.
 
-The results are moderate, but foundation models never trained together on this task recover significant quality, with the remaining gap explained by direct supervision on Ego-Exo4D. That is our first evidence that language as a bridge works.
+The results are moderate, but are a first evidence that language as a bridge works. That's because foundation models never trained together on this task recover significant quality, and the remaining gap is explained by direct training on Ego-Exo4D.
 
 ## Qualitative results
-Looking at our successes, the masks themselves are of high quality. So how can the gap to the state of the art be so large?
+Looking at our successes, the masks themselves are of high quality. 
+
+So how can the gap to the state of the art be so large?
 
 ## Dead mass
-In my opinion, most of the responsibility lies with what I call dead mass.
+The main symptom is what I call dead mass.
 
-Plotting the distribution of our predictions against the state of the art, roughly a third of all cases, 32% Ego2Exo and 31% Exo2Ego, score essentially zero IoU. The cases that survive score 56.9 and 61.7, already level with the state of the art. So the deficit is not uniform sloppiness. Remove the dead mass, and our mean IoU rises by about eighteen points, up to LM-EEC.
+Plotting the distribution of our predictions against the state of the art, roughly a third of all cases, 32% Ego2Exo and 31% Exo2Ego, score zero IoU. Remove the dead mass, and our mean IoU rises by about eighteen points, up to LM-EEC's terrain, with an average score of 56.9 and 61.7. 
 
-I then looked for the variable that explained it. Scenario and object size hinted at small, fine-grained objects, but the one that truly separated the buckets was anchor IoU.
+This means that there are specific failure points, and the pipeline is not uniformly weak.
 
-And that exposes the main weakness of the pipeline. Everything hinges on the bridge. If we land on the wrong object, that wrong mask propagates faithfully across the entire take.
+I then looked grouped results into 4 categories, compared directly with LM-EEC, and searched the variables in the data that could the gap. 
+
+First, it appeared that scenarios with small objects were challenging. But then, object size showed medium objects to be the dominant weakness wrt LM-EEC. 
+
+The aspect that best separated the buckets was anchor IoU.
+
+This exposes the main weakness of the pipeline. Everything hinges on the bridge. If we land on the wrong object, that wrong mask propagates faithfully across the entire take.
 
 ## Naming issue
-So where is the dead mass born? To find out, we walk the pipeline in order and charge every dead case to the first stage that breaks.
+So where is the dead mass born? To find out, I checked the intermediate results for all runs, and charge every dead case to the first stage of the pipeline that breaks.
 
-The answer is stark. Stage two, the naming itself, is the single largest cause by a wide margin: 59% of the dead mass in Ego2Exo, and 81% in Exo2Ego. Anchor selection in stage three is next, and the two together explain 74% and 92% of all dead cases. Grounding DINO boxing the wrong object, and the agent segmenting the wrong thing inside a good box, are minor by comparison.
+The finding was clear. The second stage of description generation is the single largest cause: 59% of the dead mass in Ego2Exo, and 81% in Exo2Ego. Anchor selection in stage three is next, and the two together explain 74% and 92% of all dead cases. 
 
-And propagation? Zero, by construction. The loss is born in cross-view transfer, not in tracking, exactly the hard sub-problem we flagged at the start.
+For comparison, Grounding DINO boxing the wrong object, and the agent segmenting the wrong thing inside a good box are minor problems.
+
+Crucially, zero cases from the dead mass group originated at propagation.
 
 ## Perception issue
-So why does the VLM mislabel? On the dead cases, the source mask we hand it is three to six times smaller than on the successful ones, and in Exo2Ego half the failures show the object at under 0.1% of the frame.
+The following question thus is: why does the VLM mislabel an object? 
 
-And when it misnames, it names a real, larger neighbour. In 38% of Ego2Exo failures, that neighbour is itself annotated in the same take. It never hallucinates an absent object. It honestly describes the container, the tool, or the surface the tiny target is resting on, and true vocabulary near misses are a small minority.
+The answer is the size of the source mask. On the dead cases, the selected source mask is three to six times smaller than on the successful cases. In Exo2Ego, half the failures show the object at under 0.1% of the frame.
+
+Interestingly, rather then hallucinating, the VLM names a real larger neighbour. It honestly describes the container, the tool, or the surface the small target object is resting on. In comparison, true vocabulary near misses are negligible. 
 
 That diagnosis rules out the cheap explanations. It is not a weak prompt, and it is not a poor vocabulary. It is perception. The model cannot see a small enough object well enough to name it.
 
 ## Diagnosis tests
-We tested this diagnosis with three interventions, and I present them as method, not as misses.
+To strengthen the diagnosis, I tested three interventions.
 
-Conditioning the description on a scene vocabulary gave 1.1 points, a gain that did not survive the larger subset. Cropping the destination around the Grounding DINO box cost 4.4 points, and brightening the frame cost 3.7.
+First, I assisted the VLM by providing a scene vocabulary at the description generation stage. This gave a mere 1.1 point improvement on a small set, but the change became negligible on the validation set. Next, I brightening the frames to make small objects more visibile. However, this lead to a worsening of 3.7 points. 
 
-The crop is the informative one. Stratifying by frame, the hint rescues frames we were already failing, but corrupts the many we already handled, and that larger population drives the mean negative. Cropping the source is worse still: a tight crop halves IoU, from 41.1 to 18.0, because the identity of a small object is carried by its surroundings.
+Finall, I cropped the anchor frame around the bounding box proposed Grounding DINO, hoping that this would help the VLM guiding SAM 3 discern the small object from the neightbour. However, this costed 4.4 points.
 
-So the negatives kill the cheap fixes and isolate the real constraint. The fix must use the VLM better, not pre-process the image.
+To get a better understanding of the decrease in quality, I took the last test, all frames, and stratified by frame. Curiously, the hint rescues frames we were already failing, but corrupts the ones that were already positively before, and that larger population drives the mean negative. 
+
+As a final check, I tried cropping the source frame on the target object. However, a tight crop severely lower IoU, from 41.1 to 18.0, because the identity of a small object is carried by its surroundings.
+
+This isolates the real constraint: the signal of the target object in the embedding is obfuscated by the other dominant signals in the frame. 
 
 ## Ablations
-So we know where the pipeline breaks and why. The question now is where to spend our next effort, and for that we need to see what each block actually contributes. We add the stages one at a time.
+After discovreing where the pipeline breaks and why, the next question is where to spend the effort to improve it. 
 
-The naive baseline, describing every source frame and running SAM 3 once per destination frame, scores 10.6. Replacing our description with the ground-truth object name lifts it to 17.0, which again isolates naming as the bottleneck. Our frame selection reaches 16.8, matching that oracle with no privileged information.
+For that, we do ablations. First, I looked at what each block actually contributes. To have a comparison, I defined a naive baseline: describe every source frame and run SAM 3 one shot per destination frame. This scored 10.6 IoU. Replacing our description with the ground-truth object name lifts it to 17.0, which again isolates naming as the bottleneck. 
+
+Adding the frame selection reached 16.8, matching that oracle with no privileged information.
 
 The SAM 3 agent on every frame scores 35.5, but at 21 seconds per frame, 59 hours for the run. Propagation matches it, 37.7, at 0.82 seconds per frame, 25 times faster, and Grounding DINO anchors close at 38.1.
 
-That is 260% over the baseline at a third of the time, so the split was the right call. But read the same table as a map of headroom, and it tells us where to go next: selection and propagation are already at their ceiling, while description is the one block that an oracle beats. That is where the remaining points are, and where the future work goes.
+That is 260% over the baseline at a third of the time, so the split was the right call. 
+
+But read the same table as a map of headroom, and it tells us where to go next: selection and propagation are already at their ceiling, while description and segmentation are where the future works should go.
 
 # Conclusions
 140 words. 
 
-This was part of a research project with prof Plizzari and two other MSc students, and is on track for submission to the Winter Conference on Applications of Computer Vision 2027 conference.
+In fact, the future work continued. My thesis was part of a research project with prof Plizzari and two other MSc students, and is on track for submission to the Winter Conference on Applications of Computer Vision 2027 conference.
