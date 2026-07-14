@@ -163,6 +163,157 @@ Object Video Tracking for Cross-View Object Correspondence}
 \end{center}
 \end{frame}
 
+% =====================================================================
+% Related works — cumulative results table
+% =====================================================================
 
+\begin{frame}
+\begin{center}
+{\large Official Baselines}
+\end{center}
+\begin{columns}
+  \begin{column}{0.55\textwidth}
+    \centering
+    \small
+    \begin{tabular}{lcc}
+      \toprule
+      Method & Exo2Ego IoU & Ego2Exo IoU \\
+      \midrule
+      XSegTx      & 27.1 & 18.9 \\
+      XMem        & 16.6 & 19.3 \\
+      XMem+XSegTx & 25.0 & 34.9 \\
+      \bottomrule
+    \end{tabular}
+    \\[0.6em]
+    {\scriptsize Ego-Exo4D Correspondences v2, test split.}
+  \end{column}
+  \begin{column}{0.45\textwidth}
+    \mbox{}
+  \end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}
+\begin{center}
+{\large First Language Fusion}
+\end{center}
+\begin{columns}
+  \begin{column}{0.55\textwidth}
+    \centering
+    \small
+    \begin{tabular}{lcc}
+      \toprule
+      Method & Exo2Ego IoU & Ego2Exo IoU \\
+      \midrule
+      XSegTx      & 27.1 & 18.9 \\
+      XMem        & 16.6 & 19.3 \\
+      XMem+XSegTx & 25.0 & 34.9 \\
+      \midrule
+      \textbf{ObjectRelator} & \textbf{40.3} & \textbf{35.3} \\
+      \bottomrule
+    \end{tabular}
+    \\[0.6em]
+    {\scriptsize Ego-Exo4D Correspondences v2, test split.}
+  \end{column}
+  \begin{column}{0.45\textwidth}
+    \mbox{}
+  \end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}
+\begin{center}
+{\large Challenge Winner: DINOv3 and Experts}
+\end{center}
+\begin{columns}
+  \begin{column}{0.55\textwidth}
+    \centering
+    \small
+    \begin{tabular}{lcc}
+      \toprule
+      Method & Exo2Ego IoU & Ego2Exo IoU \\
+      \midrule
+      XSegTx      & 27.1 & 18.9 \\
+      XMem        & 16.6 & 19.3 \\
+      XMem+XSegTx & 25.0 & 34.9 \\
+      \midrule
+      ObjectRelator & 40.3 & 35.3 \\
+      \midrule
+      \textbf{O-MaMa} & \textbf{44.1} & \textbf{42.6} \\
+      \bottomrule
+    \end{tabular}
+    \\[0.6em]
+    {\scriptsize Ego-Exo4D Correspondences v2, test split.}
+  \end{column}
+  \begin{column}{0.45\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{imgs/ch2/o-mama-simple-arch.png}
+  \end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}
+\begin{center}
+{\large Enhancing SAM 2}
+\end{center}
+\begin{columns}
+  \begin{column}{0.55\textwidth}
+    \centering
+    \small
+    \begin{tabular}{lcc}
+      \toprule
+      Method & Exo2Ego IoU & Ego2Exo IoU \\
+      \midrule
+      XSegTx      & 27.1 & 18.9 \\
+      XMem        & 16.6 & 19.3 \\
+      XMem+XSegTx & 25.0 & 34.9 \\
+      \midrule
+      ObjectRelator & 40.3 & 35.3 \\
+      O-MaMa        & 44.1 & 42.6 \\
+      \midrule
+      \textbf{V\textsuperscript{2}-SAM} & \textbf{49.6} & \textbf{46.3} \\
+      \bottomrule
+    \end{tabular}
+    \\[0.6em]
+    {\scriptsize Ego-Exo4D Correspondences v2, test split.}
+  \end{column}
+  \begin{column}{0.45\textwidth}
+    \mbox{}
+  \end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}
+\begin{center}
+{\large Finetuning SAM 2}
+\end{center}
+\begin{columns}
+  \begin{column}{0.55\textwidth}
+    \centering
+    \small
+    \begin{tabular}{lcc}
+      \toprule
+      Method & Exo2Ego IoU & Ego2Exo IoU \\
+      \midrule
+      XSegTx      & 27.1 & 18.9 \\
+      XMem        & 16.6 & 19.3 \\
+      XMem+XSegTx & 25.0 & 34.9 \\
+      \midrule
+      ObjectRelator     & 40.3 & 35.3 \\
+      O-MaMa            & 44.1 & 42.6 \\
+      V\textsuperscript{2}-SAM & 49.6 & 46.3 \\
+      \midrule
+      \textbf{LM-EEC} & \textbf{65.77} & \textbf{54.98} \\
+      \bottomrule
+    \end{tabular}
+    \\[0.6em]
+    {\scriptsize Ego-Exo4D Correspondences v2, test split.}
+  \end{column}
+  \begin{column}{0.45\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{imgs/ch2/lm-eec-arch.png}
+  \end{column}
+\end{columns}
+\end{frame}
 
 \end{document}
