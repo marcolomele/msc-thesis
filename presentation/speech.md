@@ -12,14 +12,16 @@ Is language the most effective medium humans have invented for communicating inf
 ## Language and technology
 I ask because language has become our prominent interface with technology. Raise your hand if you have prompted a large language model in the last 24 hours.
 
-I believe this integration of technology and daily life will continue, and that the next step is vision, in the form of smart glasses, already on the market.
+I believe this integration of technology and daily life will continue, and that the next step is vision in the form of smart glasses, which are already on the consumer market.
 
 ## Cross-view object correspondence
 Smart glasses, combined with the cameras in your house, could give you many more eyes than you have today, and help you find your keys faster. The idea extends to any context where agents, human or robotic, collaborate.
 
-Technically, this is cross-view object correspondence. Given a mask track on a target object in one view, the goal is to predict its mask in the other.
+Technically, this is cross-view object correspondence. Given a mask track on a target object in one video, the goal is to predict its mask in a second video of the same scene.
 
-It encapsulates two problems. First, matching the mask across views is hard, because viewpoint changes object size and shape. Second, temporal completeness is challenging, because over time cameras face motion blur, occlusions, and scene changes.
+The task's proving ground is Ego-Exo4D, pairing a head-mounted camera with one fixed in the room. That pairing produces the strongest viewpoint change of any cross-view benchmark: the same object can fill the frame from one eye level and shrink to a handful of pixels from the other.
+
+This exacerbates the two problems baked into cross-view correspondence itself. First, matching the mask across views is hard, because viewpoint changes object size and shape. Second, temporal completeness is challenging, because over time cameras face motion blur, occlusions, and scene changes.
 
 It gets even more interesting if we assume simple cameras with no geometric calibration, meaning we can only use visual information.
 
@@ -30,16 +32,10 @@ It gets even more interesting if we assume simple cameras with no geometric cali
 Let me walk you through the theoretical foundations for solving cross-view object correspondence.
 
 ## Visual representation
-Segmenting video means encoding images as vector embeddings.
-
-Vision Transformers patch the image and apply query-key-value attention, producing a token that summarises it. However, transformers need large labelled datasets.
-
-Self-supervised learning replaced labels with a pretext task, like predicting a masked patch. This gave rise to the DINO family, today's state of the art for image embeddings.
+Segmenting video starts with encoding images as vector embeddings. Vision Transformers patch and attend over the image to produce a summarising token, and self-supervised pretext tasks free this from labelled data, giving rise to the DINO family, today's state of the art.
 
 ## Segmentation
-Embeddings power segmentation, predicting a binary mask over an object. Mask R-CNN and RITM pioneered dense and promptable masks, but stayed narrow, limited by task-specific training on small datasets.
-
-In 2023, Meta's FAIR lab introduced Segment Anything, the first general purpose promptable segmenter, trained on over a billion masks for zero-shot inference. SAM 2 extended this to video, and in November 2025 SAM 3 added concept tracking from short text prompts.
+Embeddings power segmentation, predicting a binary mask over an object. Early work, Mask R-CNN and RITM, stayed narrow, trained on small task-specific datasets, until Segment Anything, in 2023, trained on a billion masks for zero-shot promptable segmentation. SAM 2 extended this to video, and SAM 3, in 2025, added concept tracking from short text prompts.
 
 But short prompts alone cannot bridge two viewpoints. We need richer language.
 
@@ -49,7 +45,7 @@ Language grounding maps expressions to the pixels they describe. CLIP first alig
 SAM 3's detector builds on this, conditioning image features on the text prompt to propose segmentation candidates. Unfortunately, it caps prompts at 32 tokens.
 
 ## Foundation Models and Agents
-We overcome this limit with Vision Language Models, large foundation models that reason simultaneously over images and text. Qwen is the strongest open source family; Qwen 3 adds prolonged reasoning and strong grounding.
+We overcome this limit with Vision Language Models, large foundation models that reason jointly over images and text. Qwen is the strongest open source family; Qwen 3 adds prolonged reasoning and stronger grounding.
 
 VLMs become even more powerful inside agent loops: reasoning, acting through tools, and conditioning on the results. SAM 3 offers such an interface, letting a VLM segment from relational descriptions and even logical riddles.
 
@@ -57,23 +53,23 @@ VLMs become even more powerful inside agent loops: reasoning, acting through too
 But what have others done for cross-view object correspondence?
 
 ## Official baselines
-The main dataset is Ego-Exo4D: roughly 4 million annotated frames, giving more than 700K cross-view paired masks. What makes it hard is the extreme viewpoint gap, since one video follows a person's eyes and the other a camera fixed in the room.
+Ego-Exo4D provides roughly 4 million annotated frames, giving more than 700K cross-view paired masks.
 
-Its authors propose two baselines: XSegTx, adapting a co-segmentation model to the target object, and XView-XMem, adapting a video tracker to propagate masks across views. Being adaptations, both score poorly.
+Its authors propose two baselines: XSegTx, conditioning a co-segmentation model on the query mask, and XView-XMem, treating the second view as the next tracked frame. Being adaptations, both score poorly.
 
 ## 2025 challenge submission
 Last year's Ego-Exo4D challenge saw two strong submissions.
 
-ObjectRelator fuses visual and language features through a Multimodal Condition Fusion block, aligning views with a self-supervised XObjAlign loss.
+ObjectRelator fuses visual and language features through cross-attention, conditioning visual mask features on a language category name, backed by a self-supervised loss that pulls matching ego and exo embeddings together. Language here is auxiliary; the correspondence itself lives in the trained visual embedding space.
 
-O-MaMa instead reframes the task as mask matching: candidates from FastSAM, pooled DINOv2 features, cross-attention fusion, and a contrastive matching head. It won using only 1% of ObjectRelator's trainable parameters.
+O-MaMa instead reframes the task as mask matching. FastSAM proposes candidate masks in the destination view, an encoder pools DINOv2 features over each into a fixed descriptor, cross-attention lets the source and destination descriptors inform each other, and a contrastive head pulls the true pair together while pushing away hard negatives, masks spatially adjacent to the target. It won using only 1% of ObjectRelator's trainable parameters.
 
 ## Latest developments
 In late 2025, two new methods pushed results higher still.
 
-V²-SAM adds three experts atop SAM 2, anchoring correspondences from DINOv3 features.
+V²-SAM adds three experts atop a shared SAM 2 mask decoder. One matches DINOv3 patch features across views by cosine similarity, turning confident matches into a geometric prompt. A second reconstructs the target's shape from geometric priors through two small mapping networks, yielding an appearance-guided prompt. A third fuses both, and a consistency check at inference picks whichever prompt survives being applied both ways.
 
-LM-EEC is the strongest to date, adapting SAM 2 with a Memory-View Mixture-of-Experts fusion module and separate ego and exo memory banks. However, it fine-tunes SAM 2's full backbone, making it an in-distribution upper bound rather than a fair comparison.
+LM-EEC is the strongest to date, adapting SAM 2 with a two-branch mixture of experts, one reweighing channels via pooling and small MLPs, the other reweighing space via convolutions, plus separate ego and exo memory banks. However, it fine-tunes SAM 2's full backbone, making it an in-distribution upper bound rather than a fair comparison.
 
 ## Common Limitations
 Every method we saw trains a dedicated fusion component on labelled data, which has two implications:
@@ -118,15 +114,17 @@ Using Ego-Exo4D, we have two directions: Ego2Exo, with egocentric as source and 
 ## Pipeline overview
 The pipeline works in four stages.
 
-First, it takes a source-view mask track and selects the single highest-quality seed frame.
+First, source video and mask track in, highest-quality seed frame out.
 
-Second, a vision language model generates a view- and time-independent description of the target object in that frame.
+Second, seed frame in, object description out, via the vision language model.
 
-Third, that description feeds two coordinated processes: an open-vocabulary detector scores destination frames by object-text alignment to select the most informative anchor frames, and a SAM 3 agentic loop localises and segments the object in each anchor frame, using the same description as grounding signal.
+Third, description in, anchor frames and anchor masks out, via an open-vocabulary detector and a SAM 3 agentic loop.
 
-Fourth, SAM 2's video tracker completes the mask track across the remaining destination frames, propagating predictions conditioned on a memory bank of anchor and recently processed frames.
+Fourth, anchor masks in, completed destination track out, via SAM 2's video tracker.
 
 Crucially, no component is fine-tuned for the task. And because the bridge between views is a human-readable JSON description, any erroneous prediction can be localised to the stage whose output is at fault.
+
+Four assumptions carry this design. First, language captures enough detail to separate the target from clutter. Second, the foundation models we compose interpret that language consistently, so the same phrase points to the same concept across their backbones. Third, a handful of reliable anchors in the destination view is enough for a tracker to complete the rest. Fourth, because the bridge is a written description rather than a live signal, prediction can happen offline.
 
 Let's look at each stage in detail.
 
@@ -135,12 +133,16 @@ Stage one selects the source frame. For every annotated frame tau, we compute a 
 
 Area weighs 0.99 and centrality 0.01, because a large object gives the vision language model far more to describe than a small but perfectly centred one. The top K frames form the seed set S, and we set K to one.
 
+This rests on an assumption we'll come back to: the more of the frame the object fills, the better the model can describe it.
+
 ## Stage 2
 Stage two writes the description. We use Qwen 3.5 to reads the seed frame and return a JSON object W, the object description.
 
 It must satisfy two properties: view independence, so that it holds from the radically different destination viewpoint, and time independence, so that it holds at every destination frame, not just the seed's moment. We enforce both by asking only for intrinsic attributes, namely colour, canonical identity, material, and structural parts, which change neither with the camera nor with time.
 
 We pass two images: the frame with the mask overlaid in red, which tells the VLM which object to describe, and the raw frame, which preserves its true appearance as well as scene context. 
+
+We settled on this pairing by ablation: raw frame plus mask overlay reached 41.2 IoU, adding a crop on top changed nothing at 41.1, but a tight crop alone collapsed to 18.0, since a small object's identity lives in its surroundings, not just its pixels.
 
 ## Stage 3.1
 Stage three splits into where to look, and what is there.
@@ -223,6 +225,8 @@ As a final check, I tried cropping the source frame on the target object. Howeve
 
 This isolates the real constraint: the signal of the target object in the embedding is obfuscated by the other dominant signals in the frame. 
 
+Cropping was the blunt version of this fix. A sharper one, foveated tokenisation, is on our list, and it is exactly the Stage 1 assumption catching up with us.
+
 ## Ablations
 After discovreing where the pipeline breaks and why, the I wanted to understand which component of the pipeline deserved the most attention for future improvements. To this end, I ran ablations. 
 
@@ -231,6 +235,8 @@ First, I looked at what each block actually contributes. The naive version of th
 Swapping in she SAM 3 agent on every frame raised the score to 35.5, but costed 21 seconds per frame, or 59 hours for the validation run. Propagation solves the timing constraing at 0.82 seconds per frame, and Grounding DINO anchors further raise IoU at 38.1.
 
 That is 260% over the baseline at a third of the time.
+
+Two softer limits are worth naming here too: the bridge itself rests on just a handful of frames, and language carries an irreducible ambiguity no amount of engineering removes.
 
 The conclusion from this ladder is clear: selection and propagation are already at their ceiling, while description and segmentation are where future efforts should go.
 
@@ -245,5 +251,16 @@ The key innovations have been adding an VLM call to judge resulting segmentation
 Motivated by the results, we are on track for submission to the Winter Conference on Applications of Computer Vision 2027 conference.
 
 ## What about language?
-But does all of this anwer our language as a bridge hypothesis?
+But does all of this answer our language as a bridge hypothesis?
 
+Yes, partially. Language bridges foundation models without training, especially useful when the foundation models have different embedding backbones. 
+
+A trending question this year is emerging: if intelligent agents already compute on rich abstract embeddings, why should they communicate in natural language at all? A shared mathematical space could be more efficient due to no decoding step, consume less energy, and possibly produce more accurate results since embeddings focus on true signal, not noise of connectors and filler words.
+
+But it raises a human question too. If agents reason in a space we cannot read, do we become supervisors once removed, or are we pushed out entirely? 
+
+Not saying bad, like humans now don't build cars eanymore. 
+
+Worth asking which tasks we want automated, and which we simply enjoy doing for the sake of doing. 
+
+Thank you!
