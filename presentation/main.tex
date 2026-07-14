@@ -7,7 +7,9 @@
 \setbeamercolor{structure}{fg=black}
 \setbeamercolor{normal text}{fg=black,bg=white}
 \setbeamertemplate{navigation symbols}{} % remove nav icons
-\setbeamertemplate{footline}[frame number]
+\setbeamertemplate{footline}{%
+  \hfill\usebeamerfont{page number in head/foot}\insertframenumber\kern1.5em\vskip1.5ex
+}
 
 
 % ---- Packages (NO 'caption', NO 'enumitem') ----
@@ -42,10 +44,10 @@ Object Video Tracking for Cross-View Object Correspondence}
   \end{center}
 \end{frame}
 
-\begin{frame}[plain]
+\begin{frame}
 \begin{center}
     {\large Is natural language the most effective medium for \\ communicating information?}
-\end{center}    
+\end{center}
 \end{frame}
 
 \begin{frame}[plain]

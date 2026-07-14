@@ -9,9 +9,9 @@ My name is Marco, and today I will present my MSc thesis. I would like to start 
 ## question
 Is language the most effective medium humans have invented for communicating information?
 
-## Language and technology
 I ask because language has become our prominent interface with technology. Raise your hand if you have prompted a large language model in the last 24 hours.
 
+## Language and technology
 I believe this integration of technology and daily life will continue, and that the next step is vision in the form of smart glasses, which are already on the consumer market.
 
 ## Cross-view object correspondence
