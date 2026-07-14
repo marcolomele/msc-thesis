@@ -215,7 +215,7 @@ To strengthen the diagnosis, I tested three interventions.
 
 First, I assisted the VLM by providing a scene vocabulary at the description generation stage. This gave a mere 1.1 point improvement on a small set, but the change became negligible on the validation set. Next, I brightening the frames to make small objects more visibile. However, this lead to a worsening of 3.7 points. 
 
-Finall, I cropped the anchor frame around the bounding box proposed Grounding DINO, hoping that this would help the VLM guiding SAM 3 discern the small object from the neightbour. However, this costed 4.4 points.
+Finally, I cropped the anchor frame around the bounding box proposed Grounding DINO, hoping that this would help the VLM guiding SAM 3 discern the small object from the neightbour. However, this costed 4.4 points.
 
 To get a better understanding of the decrease in quality, I took the last test, all frames, and stratified by frame. Curiously, the hint rescues frames we were already failing, but corrupts the ones that were already positively before, and that larger population drives the mean negative. 
 
@@ -224,19 +224,26 @@ As a final check, I tried cropping the source frame on the target object. Howeve
 This isolates the real constraint: the signal of the target object in the embedding is obfuscated by the other dominant signals in the frame. 
 
 ## Ablations
-After discovreing where the pipeline breaks and why, the next question is where to spend the effort to improve it. 
+After discovreing where the pipeline breaks and why, the I wanted to understand which component of the pipeline deserved the most attention for future improvements. To this end, I ran ablations. 
 
-For that, we do ablations. First, I looked at what each block actually contributes. To have a comparison, I defined a naive baseline: describe every source frame and run SAM 3 one shot per destination frame. This scored 10.6 IoU. Replacing our description with the ground-truth object name lifts it to 17.0, which again isolates naming as the bottleneck. 
+First, I looked at what each block actually contributes. The naive version of the pipeline is: describe every source frame and run SAM 3 one shot per destination frame. This scored 10.6 IoU. Replacing our description with the ground-truth object name lifted it to 17.0, which again isolated naming as the bottleneck. Nonetheless, most of the oracle advantage was captured back with frame selection startegy.
 
-Adding the frame selection reached 16.8, matching that oracle with no privileged information.
+Swapping in she SAM 3 agent on every frame raised the score to 35.5, but costed 21 seconds per frame, or 59 hours for the validation run. Propagation solves the timing constraing at 0.82 seconds per frame, and Grounding DINO anchors further raise IoU at 38.1.
 
-The SAM 3 agent on every frame scores 35.5, but at 21 seconds per frame, 59 hours for the run. Propagation matches it, 37.7, at 0.82 seconds per frame, 25 times faster, and Grounding DINO anchors close at 38.1.
+That is 260% over the baseline at a third of the time.
 
-That is 260% over the baseline at a third of the time, so the split was the right call. 
-
-But read the same table as a map of headroom, and it tells us where to go next: selection and propagation are already at their ceiling, while description and segmentation are where the future works should go.
+The conclusion from this ladder is clear: selection and propagation are already at their ceiling, while description and segmentation are where future efforts should go.
 
 # Conclusions
 140 words. 
 
-In fact, the future work continued. My thesis was part of a research project with prof Plizzari and two other MSc students, and is on track for submission to the Winter Conference on Applications of Computer Vision 2027 conference.
+## Recent developments
+In fact, ever since submitting my thesis, there have been more efforts. My work was born from a research project with prof Plizzari and two other MSc students. Over the last weeks, we further developed the pipeline. 
+
+The key innovations have been adding an VLM call to judge resulting segmentations and leveraging SAM'3 negative exemplars to discern better target object from neighbours. Together, these changes brough our results to 43.7 on Ego2Exo and 48.1 on Exo2Ego, a few points shy than the comparable state of the art. 
+
+Motivated by the results, we are on track for submission to the Winter Conference on Applications of Computer Vision 2027 conference.
+
+## What about language?
+But does all of this anwer our language as a bridge hypothesis?
+
