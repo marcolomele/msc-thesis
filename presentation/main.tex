@@ -518,4 +518,369 @@ Object Video Tracking for Cross-View Object Correspondence}
 \end{center}
 \end{frame}
 
+\begin{frame}[t]
+\begin{center}
+{\large Quantitative Results}
+\end{center}
+\vfill
+\begin{center}
+\includegraphics[width=0.95\textwidth]{imgs/ch4/results-commented.png}
+\end{center}
+\vfill
+\begin{center}
+{\scriptsize Ego-Exo4D Correspondences v2, test split. The only entry that is training free, camera agnostic, and dataset agnostic.}
+\end{center}
+\end{frame}
+
+\begin{frame}[t]
+\begin{center}
+{\large Qualitative Results}
+\end{center}
+\vfill
+\begin{center}
+\includegraphics[width=1\textwidth]{imgs/ch4/pipeline-qualitative-examples.png}
+\end{center}
+\vfill
+\begin{center}
+{\scriptsize Successful correspondences (take mean IoU $>$ 95). Masks themselves are high quality.}
+\end{center}
+\end{frame}
+
+\begin{frame}[t]
+\begin{center}
+{\large Dead Mass}
+\end{center}
+\vfill
+\begin{columns}
+  \begin{column}{0.40\textwidth}
+    \large
+    \begin{itemize}
+        \item $\sim\!1/3$ of cases score zero IoU.
+        \item Not uniformly weak, but specific failure points.
+        \item Anchor IoU best separates success from failure.
+    \end{itemize}
+  \end{column}
+  \begin{column}{0.60\textwidth}
+    \centering
+    \includegraphics[height=0.78\textheight]{imgs/ch4/pipeline-lmeec.png}
+  \end{column}
+\end{columns}
+\vfill
+\end{frame}
+
+\begin{frame}[t]
+\begin{center}
+{\large Remove the Dead Mass}
+\end{center}
+\vfill
+\begin{columns}
+  \begin{column}{0.50\textwidth}
+    \centering
+    \small
+    \begin{tabular}{lcc}
+      \toprule
+      & \textit{Ego2Exo} & \textit{Exo2Ego} \\
+      \midrule
+      Mean IoU (all cases)         & 38.9 & 42.8 \\
+      Dead mass (IoU $<$ 0.01)     & 32\% & 31\% \\
+      Mean IoU (working mode)      & \textbf{56.9} & \textbf{61.7} \\
+      Lift from removal            & $+18.0$ & $+18.9$ \\
+      \bottomrule
+    \end{tabular}
+    \\[0.6em]
+    {\scriptsize Validation split. Working mode keeps cases with IoU $>$ 0.01.}
+  \end{column}
+  \begin{column}{0.50\textwidth}
+    \large
+    Removing the dead mass lifts the mean by $\sim\!18$ points, level with LM-EEC.
+  \end{column}
+\end{columns}
+\vfill
+\end{frame}
+
+\begin{frame}[t]
+\begin{center}
+{\large The Loss is Born at the Bridge}
+\end{center}
+\vfill
+\begin{center}
+\includegraphics[width=1\textwidth]{imgs/ch4/grounding-examples.png}
+\end{center}
+\vfill
+\begin{center}
+{\scriptsize A wrong anchor propagates faithfully across the whole take. Everything hinges on the bridge.}
+\end{center}
+\end{frame}
+
+\begin{frame}[t]
+\begin{center}
+{\large Failure Waterfall}
+\end{center}
+\vfill
+\begin{columns}
+  \begin{column}{0.60\textwidth}
+    \centering
+    \small
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{llcc}
+      \toprule
+      Stage & First failure & \textit{Ego2Exo} & \textit{Exo2Ego} \\
+      \midrule
+      2 & VLM names a different object        & \textbf{59\%} & \textbf{81\%} \\
+      3 & Anchor lands on a tiny object       & 15\% & 11\% \\
+      3 & Grounding DINO box misses           & 10\% & 2\%  \\
+      3 & Agent segments wrong, good box      & 16\% & 5\%  \\
+      4 & Propagation                         & 0\%  & 0\%  \\
+      \bottomrule
+    \end{tabular}
+    \\[0.6em]
+    {\scriptsize Each dead case charged to the first stage that breaks.}
+  \end{column}
+  \begin{column}{0.40\textwidth}
+    \large
+    \begin{itemize}
+        \item Naming (Stage 2) is the single largest cause.
+        \item Stages 2 and 3 explain 74\% and 92\%.
+        \item Propagation is never at fault.
+    \end{itemize}
+  \end{column}
+\end{columns}
+\vfill
+\end{frame}
+
+\begin{frame}[t]
+\begin{center}
+{\large Why the Model Names the Wrong Object}
+\end{center}
+\vfill
+\begin{center}
+\includegraphics[width=0.9\textwidth]{imgs/ch4/vlm-description-failure.png}
+\end{center}
+\vfill
+\begin{center}
+{\scriptsize The VLM names a real, larger neighbour, the container or surface, rather than hallucinating.}
+\end{center}
+\end{frame}
+
+\begin{frame}[t]
+\begin{center}
+{\large Perception, not Vocabulary}
+\end{center}
+\vfill
+\begin{columns}
+  \begin{column}{0.42\textwidth}
+    \large
+    \begin{itemize}
+        \item Source mask 3--6$\times$ smaller on dead cases.
+        \item In \textit{Exo2Ego}, half fall under 0.1\% of the frame.
+        \item Not a weak prompt, not a poor vocabulary.
+    \end{itemize}
+  \end{column}
+  \begin{column}{0.58\textwidth}
+    \centering
+    \small
+    \begin{tabular}{lcc}
+      \toprule
+      VLM nominates & \textit{Ego2Exo} & \textit{Exo2Ego} \\
+      \midrule
+      Correct target (fails later)   & 41\% & 19\% \\
+      A different annotated object   & 25\% & 23\% \\
+      An unannotated neighbour       & 34\% & 58\% \\
+      \bottomrule
+    \end{tabular}
+    \\[0.6em]
+    {\scriptsize Nominations on the dead cases (anchor IoU $=0$). Neighbour: container, tool, or surface.}
+  \end{column}
+\end{columns}
+\vfill
+\end{frame}
+
+\begin{frame}[t]
+\begin{center}
+{\large Targeted Interventions}
+\end{center}
+\vfill
+\begin{columns}
+  \begin{column}{0.55\textwidth}
+    \centering
+    \small
+    \begin{tabular}{lcc}
+      \toprule
+      Intervention & \textit{Ego2Exo} $\Delta$ & \textit{Exo2Ego} $\Delta$ \\
+      \midrule
+      Scene vocabulary hint    & $+1.1$ & $-0.8$ \\
+      Destination crop hint    & $-4.4$ & $-4.3$ \\
+      Brighten ego frames      & $-3.7$ & $-2.3$ \\
+      \bottomrule
+    \end{tabular}
+    \\[0.6em]
+    {\scriptsize $\Delta$ IoU on 25\% of validation.}
+  \end{column}
+  \begin{column}{0.45\textwidth}
+    \large
+    Outcomes mostly negative. On a legible pipeline, each still localises the constraint.
+  \end{column}
+\end{columns}
+\vfill
+\end{frame}
+
+\begin{frame}[t]
+\begin{center}
+{\large The Crop Paradox}
+\end{center}
+\vfill
+\begin{columns}
+  \begin{column}{0.50\textwidth}
+    \centering
+    \small
+    \begin{tabular}{lcc}
+      \toprule
+      Baseline band & \textit{Ego2Exo} $\Delta$ & \textit{Exo2Ego} $\Delta$ \\
+      \midrule
+      Low $[0,0.25)$    & $+4.9$  & $+5.6$ \\
+      Mid $[0.25,0.6)$  & $+6.3$  & $+5.9$ \\
+      High $[0.6,1]$    & $-19.4$ & $-7.6$ \\
+      \bottomrule
+    \end{tabular}
+    \\[0.6em]
+    {\scriptsize Destination crop hint, stratified by frame baseline IoU.}
+  \end{column}
+  \begin{column}{0.50\textwidth}
+    \large
+    \begin{itemize}
+        \item Hint rescues failing frames, corrupts passing ones.
+        \item Source crop collapses IoU 41.1 $\rightarrow$ 18.0: a small object's identity lives in its surroundings.
+    \end{itemize}
+  \end{column}
+\end{columns}
+\vfill
+\end{frame}
+
+\begin{frame}[t]
+\begin{center}
+{\large Ablation: What Each Block Contributes}
+\end{center}
+\vfill
+\begin{columns}
+  \begin{column}{0.58\textwidth}
+    \centering
+    \small
+    \setlength{\tabcolsep}{5pt}
+    \begin{tabular}{lrrr}
+      \toprule
+      Exp. & IoU$\uparrow$ & $t$/frame\,(s)$\downarrow$ & Total$\downarrow$ \\
+      \midrule
+      Baseline          & 10.6 & 1.32 & 3h\,50m \\
+      Baseline Oracle   & 17.0 & 0.12 & 21m\,20s \\
+      \midrule
+      (A) Best Single Frame & 16.8 & 0.13 & 22m\,53s \\
+      (B) SAM 3 Agent Loop  & 35.5 & 21.30 & 59h\,15m \\
+      (C) Propagation       & 37.7 & 0.82 & 2h\,23m \\
+      (D) G-DINO            & \textbf{38.1} & 0.90 & 2h\,37m \\
+      \bottomrule
+    \end{tabular}
+    \\[0.6em]
+    {\scriptsize Stages added one at a time, \textit{Ego2Exo}, 10\% of validation.}
+  \end{column}
+  \begin{column}{0.42\textwidth}
+    \large
+    \begin{itemize}
+        \item $+260\%$ over the baseline at a third of the time.
+        \item Selection and propagation are at their ceiling.
+        \item Description and segmentation are where to focus.
+    \end{itemize}
+  \end{column}
+\end{columns}
+\vfill
+\end{frame}
+
+\begin{frame}
+\begin{center}
+    {\Large Conclusions.}
+\end{center}
+\end{frame}
+
+\begin{frame}[t]
+\begin{center}
+{\large Since Submission}
+\end{center}
+\vfill
+\begin{columns}
+  \begin{column}{0.48\textwidth}
+    \large
+    \begin{itemize}
+        \item Research project with Prof.\ Plizzari and two MSc students.
+        \item $+$ VLM judge on the segmentations.
+        \item $+$ SAM 3 negative exemplars to separate the target from neighbours.
+        \item On track for WACV 2027.
+    \end{itemize}
+  \end{column}
+  \begin{column}{0.52\textwidth}
+    \centering
+    \small
+    \begin{tabular}{lcc}
+      \toprule
+      & \textit{Ego2Exo} & \textit{Exo2Ego} \\
+      \midrule
+      Thesis pipeline & 37.7 & 40.6 \\
+      \textbf{$+$ judge $+$ exemplars} & \textbf{43.7} & \textbf{48.1} \\
+      \bottomrule
+    \end{tabular}
+    \\[0.6em]
+    {\scriptsize A few points shy of the comparable state of the art.}
+  \end{column}
+\end{columns}
+\vfill
+\end{frame}
+
+\begin{frame}[t]
+\begin{center}
+{\large Does this answer the language-as-a-bridge hypothesis?}
+\end{center}
+\vfill
+\begin{center}
+    {\Large Yes, partially.}\\[1.5em]
+    {\large Language bridges frozen foundation models without training, \\ most useful when their embedding backbones differ.}
+\end{center}
+\vfill
+\end{frame}
+
+\begin{frame}
+\begin{center}
+    {\Large If agents already reason over rich abstract embeddings, \\ why communicate in natural language at all?}
+\end{center}
+\end{frame}
+
+\begin{frame}[t]
+\vfill
+\begin{columns}
+  \begin{column}{0.50\textwidth}
+    \large
+    A shared mathematical space:
+    \begin{itemize}
+        \item no decoding step,
+        \item less energy,
+        \item focuses on signal, not filler.
+    \end{itemize}
+  \end{column}
+  \begin{column}{0.50\textwidth}
+    \large
+    But a human question:
+    \begin{itemize}
+        \item supervisors once removed, or pushed out entirely?
+        \item which tasks do we want automated, and which do we do for their own sake?
+    \end{itemize}
+  \end{column}
+\end{columns}
+\vfill
+\end{frame}
+
+\begin{frame}[plain]
+\begin{center}
+    \vfill
+    {\Large Thank you.}
+    \vfill
+\end{center}
+\end{frame}
+
 \end{document}
