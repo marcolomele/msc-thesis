@@ -445,7 +445,11 @@ Object Video Tracking for Cross-View Object Correspondence}
 \end{center}
 \end{frame}
 
-\begin{frame}{Stage 1: Source Frame Selection}
+\begin{frame}[t]
+\begin{center}
+{\large Stage 1: Source Frame Selection}
+\end{center}
+\vfill
   \begin{center}
   \includegraphics[width=0.8\textwidth]{latex/imgs/ch3/block-1-focus.png}
   \end{center}
@@ -453,7 +457,7 @@ Object Video Tracking for Cross-View Object Correspondence}
   \[
     s_\tau = 0.99\,a_\tau + 0.01\,c_\tau, \qquad
     a_\tau = \frac{A_\tau}{H \cdot W}, \qquad
-    c_\tau = 
+    c_\tau =
     1 -
     \frac{\sqrt{\left(c_{y,\tau} - \frac{H}{2}\right)^2 +
     \left(c_{x,\tau} - \frac{W}{2}\right)^2}
@@ -461,30 +465,51 @@ Object Video Tracking for Cross-View Object Correspondence}
     \left(\frac{W}{2}\right)^2}},
   \]
   \hspace{4mm} where $a_\tau$ is the normalised mask area and $c_\tau$ is the mask's centrality.
+\vfill
 \end{frame}
 
-\begin{frame}{Stage 2: Target Object Description}
+\begin{frame}[t]
+\begin{center}
+{\large Stage 2: Target Object Description}
+\end{center}
+\vfill
   \begin{center}
     \includegraphics[width=0.9\textwidth]{latex/imgs/ch3/block-2-focus.png}
   \end{center}
+\vfill
 \end{frame}
 
-\begin{frame}{Stage 3.1: Anchor Selection}
+\begin{frame}[t]
+\begin{center}
+{\large Stage 3.1: Anchor Selection}
+\end{center}
+\vfill
   \begin{center}
     \includegraphics[width=0.85\textwidth]{latex/imgs/ch3/block-3-1-focus.png}
   \end{center}
+\vfill
 \end{frame}
 
-\begin{frame}{Stage 3.2: Agentic Segmentation}
+\begin{frame}[t]
+\begin{center}
+{\large Stage 3.2: Agentic Segmentation}
+\end{center}
+\vfill
   \begin{center}
     \includegraphics[width=0.7\textwidth]{latex/imgs/ch3/block-3-2-focus.png}
   \end{center}
+\vfill
 \end{frame}
 
-\begin{frame}{Stage 4: Predicted Mask Propagation}
+\begin{frame}[t]
+\begin{center}
+{\large Stage 4: Predicted Mask Propagation}
+\end{center}
+\vfill
   \begin{center}
     \includegraphics[width=0.9\textwidth]{latex/imgs/ch3/block-4-focus.png}
   \end{center}
+\vfill
 \end{frame}
 
 \begin{frame}
