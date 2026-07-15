@@ -25,6 +25,7 @@
 \usetikzlibrary{positioning,fit,backgrounds}
 \usepackage{hyperref}
 \hypersetup{colorlinks=true, linkcolor=blue}
+\usepackage[normalem]{ulem}
 
 % ---- Title metadata ----
 \title{Two Eyes and One Mouth:}
@@ -85,7 +86,7 @@ Object Video Tracking for Cross-View Object Correspondence}
 
 \begin{frame}
 \begin{center}
-    {\large Related Works.}
+    {\Large Related Works.}
 \end{center}
 \end{frame}
 
@@ -160,20 +161,16 @@ Object Video Tracking for Cross-View Object Correspondence}
 
 \begin{frame}
 \begin{center}
-    {\large Related Methods in Cross-View Object Correspondence.}
+    {\Large Related Methods in Cross-View Object Correspondence.}
 \end{center}
 \end{frame}
 
-% =====================================================================
-% Related works — cumulative results table
-% =====================================================================
-
 \begin{frame}
 \begin{center}
-{\large Official Baselines}
+{\large Ego-Exo4D Official Baselines}
 \end{center}
 \begin{columns}
-  \begin{column}{0.55\textwidth}
+  \begin{column}{0.50\textwidth}
     \centering
     \small
     \begin{tabular}{lcc}
@@ -182,13 +179,13 @@ Object Video Tracking for Cross-View Object Correspondence}
       \midrule
       XSegTx      & 27.1 & 18.9 \\
       XMem        & 16.6 & 19.3 \\
-      XMem+XSegTx & 25.0 & 34.9 \\
+     \textbf{ XMem+XSegTx} & \textbf{25.0} & \textbf{34.9} \\
       \bottomrule
     \end{tabular}
     \\[0.6em]
     {\scriptsize Ego-Exo4D Correspondences v2, test split.}
   \end{column}
-  \begin{column}{0.45\textwidth}
+  \begin{column}{0.50\textwidth}
     \mbox{}
   \end{column}
 \end{columns}
@@ -196,10 +193,10 @@ Object Video Tracking for Cross-View Object Correspondence}
 
 \begin{frame}
 \begin{center}
-{\large First Language Fusion}
+{\large First Language Use with Object Relator}
 \end{center}
 \begin{columns}
-  \begin{column}{0.55\textwidth}
+  \begin{column}{0.50\textwidth}
     \centering
     \small
     \begin{tabular}{lcc}
@@ -216,7 +213,7 @@ Object Video Tracking for Cross-View Object Correspondence}
     \\[0.6em]
     {\scriptsize Ego-Exo4D Correspondences v2, test split.}
   \end{column}
-  \begin{column}{0.45\textwidth}
+  \begin{column}{0.50\textwidth}
     \mbox{}
   \end{column}
 \end{columns}
@@ -224,10 +221,10 @@ Object Video Tracking for Cross-View Object Correspondence}
 
 \begin{frame}
 \begin{center}
-{\large Challenge Winner: DINOv3 and Experts}
+{\large 2025 Challenge Winner with Object Mask Matching}
 \end{center}
 \begin{columns}
-  \begin{column}{0.55\textwidth}
+  \begin{column}{0.50\textwidth}
     \centering
     \small
     \begin{tabular}{lcc}
@@ -246,19 +243,19 @@ Object Video Tracking for Cross-View Object Correspondence}
     \\[0.6em]
     {\scriptsize Ego-Exo4D Correspondences v2, test split.}
   \end{column}
-  \begin{column}{0.45\textwidth}
+  \begin{column}{0.50\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{imgs/ch2/o-mama-simple-arch.png}
+    \includegraphics[width=0.86\textwidth]{imgs/ch2/o-mama-simple-arch.png}
   \end{column}
 \end{columns}
 \end{frame}
 
 \begin{frame}
 \begin{center}
-{\large Enhancing SAM 2}
+{\large Enhancing SAM 2 with DINOv3 and Experts}
 \end{center}
 \begin{columns}
-  \begin{column}{0.55\textwidth}
+  \begin{column}{0.50\textwidth}
     \centering
     \small
     \begin{tabular}{lcc}
@@ -278,7 +275,7 @@ Object Video Tracking for Cross-View Object Correspondence}
     \\[0.6em]
     {\scriptsize Ego-Exo4D Correspondences v2, test split.}
   \end{column}
-  \begin{column}{0.45\textwidth}
+  \begin{column}{0.50\textwidth}
     \mbox{}
   \end{column}
 \end{columns}
@@ -286,10 +283,10 @@ Object Video Tracking for Cross-View Object Correspondence}
 
 \begin{frame}
 \begin{center}
-{\large Finetuning SAM 2}
+{\large Finetuning SAM 2 with LM-EEC}
 \end{center}
 \begin{columns}
-  \begin{column}{0.55\textwidth}
+  \begin{column}{0.50\textwidth}
     \centering
     \small
     \begin{tabular}{lcc}
@@ -310,11 +307,120 @@ Object Video Tracking for Cross-View Object Correspondence}
     \\[0.6em]
     {\scriptsize Ego-Exo4D Correspondences v2, test split.}
   \end{column}
-  \begin{column}{0.45\textwidth}
+  \begin{column}{0.50\textwidth}
     \centering
     \includegraphics[width=\textwidth]{imgs/ch2/lm-eec-arch.png}
   \end{column}
 \end{columns}
+\end{frame}
+
+\begin{frame}
+\begin{center}
+    {\large Common Limitations}
+    \begin{enumerate}
+        \item Predictions are not interpretable.
+        \item Training on Ego-Exo4D.
+    \end{enumerate}
+\end{center}
+\end{frame}
+
+\begin{frame}
+\begin{center}
+    {\large A new paradigm}
+    \begin{itemize}
+        \item will composing foundation models at transfer to novel tasks?
+        \item can language descriptions bridge architectures?
+    \end{itemize}
+\end{center}
+\end{frame}
+
+\begin{frame}
+\begin{center}
+    \includegraphics[width=\textwidth]{latex/imgs/ch3/lang-as-bridge-keys.png}
+\end{center}
+\end{frame}
+
+\begin{frame}
+\begin{center}
+    {\large Common Limitations...solved!}
+    \begin{enumerate}
+        \item \sout{Predictions are not interpretable}. \newline
+        \textcolor{green}{Language is interpretable by design.}
+        \item \sout{Training on Ego-Exo4D}. \newline
+        \textcolor{green}{Foundation models already trained for general purpose.}
+    \end{enumerate}
+\end{center}
+\end{frame}
+
+\begin{frame}
+\begin{center}
+{\Large Two Eyes and One Mouth:} \\[1.5em]
+{\large a Training-Free Pipeline with Agentic Image Segmentation and \\
+Object Video Tracking for Cross-View Object Correspondence}
+\end{center}
+\end{frame}
+
+\begin{frame}
+\begin{center}
+{\large Terminology}\\[1em]
+\includegraphics[width=0.8\textwidth]{latex/imgs/ch3/terminology.png}
+\end{center}
+\end{frame}
+
+\begin{frame}
+\begin{center}
+\includegraphics[width=\textwidth]{latex/imgs/ch3/pipeline-stages.png} \\
+\vspace{4mm} 
+{Assumptions: language detail, consistent interpretation, bridge points, offline prediction.}
+\end{center}
+\end{frame}
+
+\begin{frame}{Stage 1: Source Frame Selection}
+  \begin{center}
+  \includegraphics[width=0.8\textwidth]{latex/imgs/ch3/block-1-focus.png}
+  \end{center}
+  Visibility Scorer computes score $s_\tau$:
+  \[
+    s_\tau = 0.99\,a_\tau + 0.01\,c_\tau, \qquad
+    a_\tau = \frac{A_\tau}{H \cdot W}, \qquad
+    c_\tau = 
+    1 -
+    \frac{\sqrt{\left(c_{y,\tau} - \frac{H}{2}\right)^2 +
+    \left(c_{x,\tau} - \frac{W}{2}\right)^2}
+    }{\sqrt{\left(\frac{H}{2}\right)^2 +
+    \left(\frac{W}{2}\right)^2}},
+  \]
+  \hspace{4mm} where $a_\tau$ is the normalised mask area and $c_\tau$ is the mask's centrality.
+\end{frame}
+
+\begin{frame}{Stage 2: Target Object Description}
+  \begin{center}
+    \includegraphics[width=0.9\textwidth]{latex/imgs/ch3/block-2-focus.png}
+  \end{center}
+\end{frame}
+
+\begin{frame}{Stage 3.1: Anchor Selection}
+  \begin{center}
+    \includegraphics[width=0.85\textwidth]{latex/imgs/ch3/block-3-1-focus.png}
+  \end{center}
+\end{frame}
+
+\begin{frame}{Stage 3.2: Agentic Segmentation}
+  \begin{center}
+    \includegraphics[width=0.7\textwidth]{latex/imgs/ch3/block-3-2-focus.png}
+  \end{center}
+\end{frame}
+
+\begin{frame}{Stage 4: Predicted Mask Propagation}
+  \begin{center}
+    \includegraphics[width=0.9\textwidth]{latex/imgs/ch3/block-4-focus.png}
+  \end{center}
+\end{frame}
+
+\begin{frame}
+\begin{center}
+    {\Large Experiments.}
+\end{center}
 \end{frame}
 
 \end{document}
