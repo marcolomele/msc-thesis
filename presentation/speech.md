@@ -15,49 +15,148 @@ I ask because language has become our prominent interface with technology. Raise
 I believe this integration of technology and daily life will continue, and that the next step is vision in the form of smart glasses, which are already on the consumer market.
 
 ## Augemnted vision
-Smart glasses, combined with the cameras in your house, could give you augmented vision, and help you find what your lost keys faster. The idea extends to any context where agents, human or robotic, collaborate.
+Smart glasses, combined with the cameras in your house, could give you augmented vision, and help you find your lost keys in the house faster. The idea extends to any context where agents, human or robotic, collaborate.
 
-## Cross-view object correspondence
-Technically, this is cross-view object correspondence. Given a mask track on a target object in one video, the goal is to predict its mask in a second video of the same scene.
+## The task: Cross-view object correspondence
+Technically, this is cross-view object correspondence. Given a mask track on a target object in one video, the goal is to predict its mask in a second video of the same scene. The quality of the predictions is evaluated using the standard metric for mask prediction: intersection over union.   
 
-## Ego-Exo4D
-Cros-view object correspondence relies on Ego-Exo4D. This dataset provides roughly 4 million annotated frames, giving more than 700K cross-view paired masks.
+## The dataset: Ego-Exo4D
+The main dataset for cross-view object correspondence is Ego-Exo4D. This dataset provides roughly 4 million annotated frames, giving more than 700K cross-view paired masks across 7 scenarios like cooking and playing basketball. 
 
 Each pair of vides combines an egocentric head-mounted camera with one exocentric camera fixed in the room. That pairing produces the strongest viewpoint change of any cross-view benchmark: the same object can fill the frame from one eye level and shrink to a handful of pixels from the other.
 
-This exacerbates the two problems baked into cross-view correspondence itself. First, matching the mask across views is hard, because viewpoint changes object size and shape. Second, temporal completeness is challenging, because over time cameras face motion blur, occlusions, and scene changes.
+```Slide description. Title is 'The dataset: Ego-Exo4D'; the content is divided into three parts: (1) a slim horizontal rectangle at the top with 3 main statistics about the dataset (4 million annotated frames, 700K cross-view paired mask tracks, 7 scenarios); (2) a vertical rectangle on the left with written on the top 'Egocentric' with an example of an egocentric frame (still need to add); (3) a vertical rectangle on the right of (2) with written on top 'Exocentric' with an example of an exocentric frame (still need to add) below. Make actually two slides with first content appearing on first slide and second content appearing on second slide.```
 
-It gets even more interesting if we assume simple cameras with no geometric calibration, meaning we can only use visual information.
+## The challenges
+This exacerbates the two problems baked into cross-view correspondence itself. 
 
-# Related Works
-530 words.
+First, matching the mask across views is hard, because viewpoint changes object size and shape. 
 
-## Related works title
-Let me walk you through the theoretical foundations for solving cross-view object correspondence.
+Second, temporal completeness is challenging, because over time cameras face motion blur, occlusions, and scene changes.
 
-## Visual representation
-Segmenting video starts with encoding images as vector embeddings. 
+Finally, it assumes simple cameras with no geometric calibration, meaning that the correspondence can rely only on the visual information.
 
-Vision Transformers patch and attend over the image to produce a summarising token, and self-supervised pretext tasks free this from labelled data, giving rise to the DINO family, today's state of the art.
+```Slide description. Title is 'The challenges'; the content is divided into three vertical columns, each having a title preeceded by a number and 1 picture below them: (1) viewpoint change; (2)temporal completeness; (3) only visual information.```
+
+## Previous methods
+Since Ego-Exo4d was released two years ago, several works have been published attemping to solve it.
+
+Every method so far creates feature representations for masks and then train ad-hoc fusion component on Ego-Exo4D's labelled data. 
+
+This produces two limitations common to the entire field:
+
+1. The reasoning behind each correspondence is hidden in weights; beyond attention maps, there are no interpretable intermediate steps to inspect when the output is wrong.
+2. Training on a single dataset arguably limits generalisation to other datasets and other camera configurations.
+
+## A new paradigm?
+When looking for solutions to these limitations, one idea was to check what modern foundation models could already do. 
+
+Over the last five years, foundation models emerged as the new paradigm in machine learning, showing in both language and vision that training architectures very large in number of parameters on very large datasets on some pre-text tasks can exceed specialist systems.
+
+So I asked myself and my colleagues: assuming today's foundation models have acquired a sufficient understanding of the world, will composing them at inference time transfer to a novel tasks?
+
+And since language is their main interface, can language descriptions replace abstract learned features and act as a bridge between architectures?
+
+These two questions became the language as a bridge hypothesis, the foundation of my thesis.
+
+## Language as a bridge 
+This paradigm mirrors how humans collaborate, communicating with language and reacting to each other's information. 
+
+At the same time, it addresses both limitations we just saw:
+
+1. Language is interpretable by design, letting a researcher inspect every stage of the pipeline and understand what went wrong for an errouneous prediciton. 
+2. Foundation models save us from training, which in principle makes the pipeline dataset and camera agnostic.
+
+## "Two eyes and one mouth" pipeline
+To this end, this thesis proposes the “two eyes and one mouth” pipeline, where two cameras observe the scene from different perspectives, and a single natural language description mediates the object correspondence between them.
+
+## Some terminology 
+Before the pipeline, let me clear up some terminology that will make everything after it easier to follow.
+
+Every cross-view object correspondence method runs over a take, on a target object, in a specific direction. A take is a single scene recorded simultaneously by a pair of cameras, producing two synchronized videos.
+
+The first video is the input. We call it source, because alongside the video we also have the masks of the object we are interested in.
+
+The second is where we compute the output. We call it destination, because that is where our method must produce its predictions: segmentation masks for the target object.
+
+Each prediction is a mask on a destination frame, indicating the exact pixels corresponding to the target object. Predictions don't have to follow the sequence of time; in other words, they can happen offline.
+
+Using Ego-Exo4D, we have two directions: Ego2Exo, with egocentric as source and exocentric as destination, and Exo2Ego, with the roles swapped.
+
+## Pipeline overview
+The pipeline works in four stages.
+
+First, we select the frame from the source video where the target object is most visible. 
+
+Then, we generate a textual description of the object. 
+
+Third, we guess the frames in the destination video where the object is most visible and run its segmentation, creating anchor masks.
+
+Finally, we propagate the anchor masks to the remaining frames of the destination video. 
+
+Crucially, no component is fine-tuned for the task. And because the bridge between views is a human-readable JSON description, any erroneous prediction can be localised to the stage whose output is at fault.
+
+Four assumptions carry this design. First, language captures enough detail to separate the target from clutter. Second, the foundation models we compose interpret that language consistently, so the same phrase points to the same concept across their backbones. Third, a handful of reliable anchors in the destination view is enough for a tracker to complete the rest. Fourth, because the bridge is a written description rather than a live signal, prediction can happen offline.
+
+Let's look at each stage in detail, connecting to the related works powering the pipeline. 
+
+## Stage 1
+In stage one the pipeline selects the source frame. For every annotated frame tau, we compute a visibility score, s of tau, from two cues read off the ground-truth mask. First, a of tau, the normalised mask area, the fraction of pixels the object occupies. Second, c of tau, its centrality, one minus the normalised distance from the mask centroid to the frame centre.
+
+Area weighs 0.99 and centrality 0.01, because a large object gives the vision language model far more to describe than a small but perfectly centred one. The top frames form the seed set S, and we set this set of size one.
+
+This design rests on a simple principle: the more of the frame the object fills, the more accurate the generated description. 
+
+## Stage 2
+Stage two writes the description. We leveraheQwen 3.5 to read the seed frame and return a JSON object W, the object description.
+
+The description must satisfy two properties: view independence, so that it holds from the radically different destination viewpoint, and time independence, so that it holds at every destination frame, not just the seed's moment. We enforce both by asking only for intrinsic attributes, namely colour, canonical identity, material, and structural parts, which change neither with the camera nor with time.
+
+We pass two images: the frame with the mask overlaid in red, which tells the VLM which object to describe, and the raw frame, which preserves its true appearance as well as scene context. 
+
+## Vision Language Models
+At the heart of stage two is Qwen 3.5, a Vision Language Model. These are large foundation models trained to reason jointly over images and text by letting visual and textual tokens cross-attent to each other. 
+
+Qwen 3.5 uses a Vision Transformer as image encoder. That's why we pass the frame in the source video where the tagret object is the largest. Because it means that the object will cover more patch tokens, which in run will claim a larger weight of the resulting image representation, and therefore transfer more signal for the VLM to generate a more accurate description. 
+
+## Stage 3
+With the description in hand, we move to stage 3. Here, the pipeline consecutively answers two questions: where in the destination video is the target best seen, and then can it be segmented.
+
+## Stage 3.1
+For where, the pipeline uses Grounding DINO to run detection on every destination frame with the description W as the query. 
+
+Grounding DINO is state of the art language grounding model, achieving zero-shop open-vocabulary mapping of expressions to the pixels they describe by outputting bounding boxes. 
+
+Along with the bounding box, it outputs a confidence score, which represents ...
+
+We use this the confidence score as a proxy for quality, and store the top three to form the anchor set A.
+
+This re-selection matters, because the destination frame synchronised with the seed is rarely the best place to segment. The correlation between the two views' visibility scores is only 0.14.
+
+Next, we move to segmenting the target object. 
+
+## Stage 3.2
+Each anchor is segmented independently by a SAM 3 agent loop, orchestrated by Qwen 3.5.
+
+The agent first simplifies the description into a short noun phrase, because contrastive alignment pools a sentence into one embedding, so a paragraph of attributes dilutes the match. 
+
+SAM 3 then segments every instance matching that phrase, and the agent inspects each candidate mask against the original description, accepting or rejecting it. 
+
+If all are rejected, the loop restarts with a different phrase. 
+
+The accepted masks are our anchor masks on A.
 
 ## Segmentation
-Embeddings power segmentation, predicting a binary mask over an object. 
+SAM is not a friend doing the segmentation by hand, but rather stands for Segment Anything Model, the current foundation model for segmentation. 
 
-Early work, Mask R-CNN and RITM, stayed narrow, trained on small task-specific datasets, until Segment Anything, in 2023, trained on a billion masks for zero-shot promptable segmentation. 
+Its first version was introduced n 2023, training on a billion masks. The key cotnribution was zero-shot segmentation starting from visual prompts such as point and bounding boxes. 
 
-SAM 2 extended this to video, and SAM 3, in 2025, added concept tracking from short text prompts.
+SAM 2 extended this to video via a specialised tracker with memory, and SAM 3, in 2025, added segmentation from text prompts. 
 
-But short prompts alone cannot bridge two viewpoints. We need richer language.
+## Stage 4
+Stage four completes the track in time. SAM 2's video tracker propagates the anchor masks across the remaining destination frames, conditioning each prediction on a memory bank that holds all the anchors and the recently processed frames. This matterls, particularly in egocentric video, where motion blur and occlusion often make the previous frame a poor reference, so attention reaches back to a distant anchor instead.
 
-## Language Grounding
-Language grounding maps expressions to the pixels they describe. CLIP first aligned images and captions in a shared space via contrastive loss, and Grounding DINO added open-vocabulary detection, localizing any textual description.
-
-SAM 3's detector builds on this, conditioning image features on the text prompt to propose segmentation candidates. Unfortunately, it caps prompts at 32 tokens.
-
-## Foundation Models and Agents
-We overcome this limit with Vision Language Models, large foundation models that reason jointly over images and text. Qwen is the strongest open source family; Qwen 3 adds prolonged reasoning and stronger grounding.
-
-VLMs become even more powerful inside agent loops: reasoning, acting through tools, and conditioning on the results. SAM 3 offers such an interface, letting a VLM segment from relational descriptions and even logical riddles.
+We propagate bidirectionally, forward from the earliest anchor and backward from the latest, keeping for each frame the prediction from the pass arriving from its nearest anchor.
 
 # Cross-View Object Correspondence Related Methods title
 But what have others done for cross-view object correspondence?
@@ -78,96 +177,6 @@ In late 2025, two new methods pushed results higher still.
 V²-SAM adds three experts atop a shared SAM 2 mask decoder. One matches DINOv3 patch features across views by cosine similarity, turning confident matches into a geometric prompt. A second reconstructs the target's shape from geometric priors through two small mapping networks, yielding an appearance-guided prompt. A third fuses both, and a consistency check at inference picks whichever prompt survives being applied both ways.
 
 LM-EEC is the strongest to date, adapting SAM 2 with a two-branch mixture of experts, one reweighing channels via pooling and small MLPs, the other reweighing space via convolutions, plus separate ego and exo memory banks. However, it fine-tunes SAM 2's full backbone, making it an in-distribution upper bound rather than a fair comparison.
-
-## Common Limitations
-Every method we saw trains a dedicated fusion component on labelled data, which has two implications:
-
-1. The reasoning behind each correspondence is hidden in weights; beyond attention maps, there are no interpretable intermediate steps to inspect when the output is wrong.
-2. Training on a single dataset arguably limits generalisation to other datasets and other camera configurations.
-
-# Method
-Max 1050 words.
-
-## A new paradigm?
-Looking for solutions to these limitations, one of our first ideas was to check what modern foundation models can already do. Over the last five years, they emerged as the new paradigm in machine learning, showing in both language and vision that training on broad data, without task-specific fine-tuning, can exceed specialist systems.
-
-So I asked myself and my colleagues: assuming today's foundation models have acquired a sufficient understanding of the world, will composing them at inference time transfer to novel tasks?
-
-And since language is their main interface, can language descriptions replace abstract learned features and act as a bridge between architectures?
-
-These two questions became the language as a bridge hypothesis, the foundation of my thesis.
-
-## Language as a bridge 
-This paradigm mirrors how humans collaborate, communicating with language and reacting to each other's information. At the same time, it addresses both limitations we just saw:
-
-1. Language is interpretable by design, letting a researcher inspect every stage of the pipeline and understand what went wrong.
-2. Foundation models save us from training, which in principle makes the pipeline dataset and camera agnostic.
-
-## "Two eyes and one mouth" pipeline
-To this end, this thesis proposes the “two eyes and one mouth” pipeline, where two cameras observe the scene from different perspectives, and a single natural language description mediates the object correspondence between them.
-
-## Some terminology 
-Before the pipeline, let me clear up some terminology that will make everything after it easier to follow.
-
-Every cross-view object correspondence method runs over a take, on a target object, in a specific direction. A take is a single scene recorded simultaneously by a pair of cameras, producing two synchronized videos.
-
-The first video is the input. We call it source, because alongside the video we also have the masks of the object we are interested in.
-
-The second is where we compute the output. We call it destination, because that is where our method must produce its predictions: segmentation masks for the target object.
-
-Each prediction is a mask on a destination frame, indicating the exact pixels corresponding to the target object. Predictions need not follow the sequence of time; in other words, they can happen offline.
-
-Using Ego-Exo4D, we have two directions: Ego2Exo, with egocentric as source and exocentric as destination, and Exo2Ego, with the roles swapped.
-
-## Pipeline overview
-The pipeline works in four stages.
-
-First, source video and mask track in, highest-quality seed frame out.
-
-Second, seed frame in, object description out, via the vision language model.
-
-Third, description in, anchor frames and anchor masks out, via an open-vocabulary detector and a SAM 3 agentic loop.
-
-Fourth, anchor masks in, completed destination track out, via SAM 2's video tracker.
-
-Crucially, no component is fine-tuned for the task. And because the bridge between views is a human-readable JSON description, any erroneous prediction can be localised to the stage whose output is at fault.
-
-Four assumptions carry this design. First, language captures enough detail to separate the target from clutter. Second, the foundation models we compose interpret that language consistently, so the same phrase points to the same concept across their backbones. Third, a handful of reliable anchors in the destination view is enough for a tracker to complete the rest. Fourth, because the bridge is a written description rather than a live signal, prediction can happen offline.
-
-Let's look at each stage in detail.
-
-## Stage 1
-Stage one selects the source frame. For every annotated frame tau, we compute a visibility score, s of tau, from two cues read off the ground-truth mask. First, a of tau, the normalised mask area, the fraction of pixels the object occupies. Second, c of tau, its centrality, one minus the normalised distance from the mask centroid to the frame centre.
-
-Area weighs 0.99 and centrality 0.01, because a large object gives the vision language model far more to describe than a small but perfectly centred one. The top K frames form the seed set S, and we set K to one.
-
-This rests on an assumption we'll come back to: the more of the frame the object fills, the better the model can describe it.
-
-## Stage 2
-Stage two writes the description. We use Qwen 3.5 to reads the seed frame and return a JSON object W, the object description.
-
-It must satisfy two properties: view independence, so that it holds from the radically different destination viewpoint, and time independence, so that it holds at every destination frame, not just the seed's moment. We enforce both by asking only for intrinsic attributes, namely colour, canonical identity, material, and structural parts, which change neither with the camera nor with time.
-
-We pass two images: the frame with the mask overlaid in red, which tells the VLM which object to describe, and the raw frame, which preserves its true appearance as well as scene context. 
-
-We settled on this pairing by ablation: raw frame plus mask overlay reached 41.2 IoU, adding a crop on top changed nothing at 41.1, but a tight crop alone collapsed to 18.0, since a small object's identity lives in its surroundings, not just its pixels.
-
-## Stage 3.1
-Stage three splits into where to look, and what is there.
-
-For where, Grounding DINO runs open-vocabulary detection on every destination frame with the description w as the query. A frame scores highly when the detector localises the described object with high confidence, and the top three form the anchor set A.
-
-The bridge stays linguistic here, with no geometry and no calibration. And this re-selection matters, because the destination frame synchronised with the seed is rarely the best place to segment: the correlation between the two views' visibility is only 0.14.
-
-## Stage 3.2
-For what is there, each anchor is segmented independently by a SAM 3 agent loop, orchestrated by the same VLM.
-
-The agent first simplifies the description into a short noun phrase, because contrastive alignment pools a sentence into one embedding, so a paragraph of attributes dilutes the match. SAM 3 then segments every instance matching that phrase, and the agent inspects each candidate mask against the original description, accepting or rejecting it. If all are rejected, the loop restarts with a different phrase. The accepted masks are our anchor masks on A.
-
-## Stage 4
-Stage four completes the track in time. SAM 2's video tracker propagates the anchor masks across the remaining destination frames, conditioning each prediction on a memory bank that holds all the anchors and the recently processed frames. This matterls, particularly in egocentric video, where motion blur and occlusion often make the previous frame a poor reference, so attention reaches back to a distant anchor instead.
-
-We propagate bidirectionally, forward from the earliest anchor and backward from the latest, keeping for each frame the prediction from the pass arriving from its nearest anchor.
 
 # Experiments
 851 words.
@@ -240,7 +249,7 @@ After discovreing where the pipeline breaks and why, the I wanted to understand 
 
 First, I looked at what each block actually contributes. The naive version of the pipeline is: describe every source frame and run SAM 3 one shot per destination frame. This scored 10.6 IoU. Replacing our description with the ground-truth object name lifted it to 17.0, which again isolated naming as the bottleneck. Nonetheless, most of the oracle advantage was captured back with frame selection startegy.
 
-Swapping in she SAM 3 agent on every frame raised the score to 35.5, but costed 21 seconds per frame, or 59 hours for the validation run. Propagation solves the timing constraing at 0.82 seconds per frame, and Grounding DINO anchors further raise IoU at 38.1.
+Swapping in SAM 3 agent on every frame raised the score to 35.5, but costed 21 seconds per frame, or 59 hours for the validation run. Propagation solves the timing constraing at 0.82 seconds per frame, and Grounding DINO anchors further raise IoU at 38.1.
 
 That is 260% over the baseline at a third of the time.
 
@@ -254,9 +263,9 @@ The conclusion from this ladder is clear: selection and propagation are already 
 ## Recent developments
 In fact, ever since submitting my thesis, there have been more efforts. My work was born from a research project with prof Plizzari and two other MSc students. Over the last weeks, we further developed the pipeline. 
 
-The key innovations have been adding an VLM call to judge resulting segmentations and leveraging SAM'3 negative exemplars to discern better target object from neighbours. Together, these changes brough our results to 43.7 on Ego2Exo and 48.1 on Exo2Ego, a few points shy than the comparable state of the art. 
+The key innovations have been adding an VLM call to judge resulting segmentations and leveraging SAM'3 negative exemplars to discern better target object from neighbours. Together, these changes brough our results to 41.5 on Ego2Exo and 48.1 on Exo2Ego, a few points shy than the comparable state of the art. 
 
-Motivated by the results, we are on track for submission to the Winter Conference on Applications of Computer Vision 2027 conference.
+Motivated by the results, we are on track for submitting, at least at a workshop of a conference. 
 
 ## What about language?
 But does all of this answer our language as a bridge hypothesis?
@@ -272,3 +281,6 @@ Not saying bad, like humans now don't build cars eanymore.
 Worth asking which tasks we want automated, and which we simply enjoy doing for the sake of doing. 
 
 Thank you!
+
+## Extentions
+We settled on this pairing by ablation: raw frame plus mask overlay reached 41.2 IoU, adding a crop on top changed nothing at 41.1, but a tight crop alone collapsed to 18.0, since a small object's identity lives in its surroundings, not just its pixels.
