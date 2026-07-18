@@ -520,11 +520,111 @@ Object Video Tracking for Cross-View Object Correspondence}
 
 \begin{frame}[t]
 \begin{center}
-{\large Quantitative Results}
+{\large Quantitative Results: Official Baselines}
 \end{center}
 \vfill
 \begin{center}
-\includegraphics[width=0.95\textwidth]{imgs/ch4/results-commented.png}
+\centering
+\small
+\begin{tabular}{lcc}
+  \toprule
+  Method & \textit{Ego2Exo} IoU & \textit{Exo2Ego} IoU \\
+  \midrule
+  XSegTx      & 18.9 & 27.1 \\
+  XMem        & 19.3 & 16.6 \\
+  XMem+XSegTx & 34.9 & 25.0 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+\vfill
+\begin{center}
+{\scriptsize Ego-Exo4D Correspondences v2, test split.}
+\end{center}
+\end{frame}
+
+\begin{frame}[t]
+\begin{center}
+{\large Quantitative Results: 2025 Challenge Submissions}
+\end{center}
+\vfill
+\begin{center}
+\centering
+\small
+\begin{tabular}{lcc}
+  \toprule
+  Method & \textit{Ego2Exo} IoU & \textit{Exo2Ego} IoU \\
+  \midrule
+  XSegTx      & 18.9 & 27.1 \\
+  XMem        & 19.3 & 16.6 \\
+  XMem+XSegTx & 34.9 & 25.0 \\
+  \midrule
+  ObjectRelator & 35.3 & 40.3 \\
+  O-MaMa        & 42.6 & 44.1 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+\vfill
+\begin{center}
+{\scriptsize Ego-Exo4D Correspondences v2, test split. O-MaMa won the 2025 Ego-Exo4D Correspondences Challenge.}
+\end{center}
+\end{frame}
+
+\begin{frame}[t]
+\begin{center}
+{\large Quantitative Results: Latest Works}
+\end{center}
+\vfill
+\begin{center}
+\centering
+\small
+\begin{tabular}{lcc}
+  \toprule
+  Method & \textit{Ego2Exo} IoU & \textit{Exo2Ego} IoU \\
+  \midrule
+  XSegTx      & 18.9 & 27.1 \\
+  XMem        & 19.3 & 16.6 \\
+  XMem+XSegTx & 34.9 & 25.0 \\
+  \midrule
+  ObjectRelator & 35.3 & 40.3 \\
+  O-MaMa        & 42.6 & 44.1 \\
+  \midrule
+  V\textsuperscript{2}-SAM & 46.3 & 49.6 \\
+  LM-EEC                   & \textbf{54.98} & \textbf{65.77} \\
+  \bottomrule
+\end{tabular}
+\end{center}
+\vfill
+\begin{center}
+{\scriptsize Ego-Exo4D Correspondences v2, test split.}
+\end{center}
+\end{frame}
+
+\begin{frame}[t]
+\begin{center}
+{\large Quantitative Results: Ours}
+\end{center}
+\vfill
+\begin{center}
+\centering
+\small
+\begin{tabular}{lcc}
+  \toprule
+  Method & \textit{Ego2Exo} IoU & \textit{Exo2Ego} IoU \\
+  \midrule
+  XSegTx      & 18.9 & 27.1 \\
+  XMem        & 19.3 & 16.6 \\
+  XMem+XSegTx & 34.9 & 25.0 \\
+  \midrule
+  ObjectRelator & 35.3 & 40.3 \\
+  O-MaMa        & 42.6 & 44.1 \\
+  \midrule
+  V\textsuperscript{2}-SAM & 46.3 & 49.6 \\
+  LM-EEC                   & 54.98 & 65.77 \\
+  \midrule
+  \textbf{Ours} & \textbf{37.7} & \textbf{40.6} \\
+  \% change vs.\ O-MaMa & $-11.5\%$ & $-7.9\%$ \\
+  \bottomrule
+\end{tabular}
 \end{center}
 \vfill
 \begin{center}
