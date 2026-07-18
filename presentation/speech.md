@@ -108,7 +108,7 @@ Area weighs 0.99 and centrality 0.01, because a large object gives the vision la
 This design rests on a simple principle: the more of the frame the object fills, the more accurate the generated description. 
 
 ## Stage 2
-Stage two writes the description. We leveraheQwen 3.5 to read the seed frame and return a JSON object W, the object description.
+Stage two writes the description. We leverage Qwen 3.5 to read the seed frame and return a JSON object W, the object description.
 
 The description must satisfy two properties: view independence, so that it holds from the radically different destination viewpoint, and time independence, so that it holds at every destination frame, not just the seed's moment. We enforce both by asking only for intrinsic attributes, namely colour, canonical identity, material, and structural parts, which change neither with the camera nor with time.
 
@@ -154,49 +154,46 @@ Its first version was introduced n 2023, training on a billion masks. The key co
 SAM 2 extended this to video via a specialised tracker with memory, and SAM 3, in 2025, added segmentation from text prompts. 
 
 ## Stage 4
-Stage four completes the track in time. SAM 2's video tracker propagates the anchor masks across the remaining destination frames, conditioning each prediction on a memory bank that holds all the anchors and the recently processed frames. This matterls, particularly in egocentric video, where motion blur and occlusion often make the previous frame a poor reference, so attention reaches back to a distant anchor instead.
+Stage four completes the track in time. 
+
+SAM 2's video tracker propagates the anchor masks across the remaining destination frames, conditioning each prediction on a memory bank that holds all the anchors and the recently processed frames. 
+
+This matterls, particularly in egocentric video, where motion blur and occlusion often make the previous frame a poor reference, so attention reaches back to a distant anchor instead.
 
 We propagate bidirectionally, forward from the earliest anchor and backward from the latest, keeping for each frame the prediction from the pass arriving from its nearest anchor.
-
-# Cross-View Object Correspondence Related Methods title
-But what have others done for cross-view object correspondence?
-
-## Official baselines
-Ego-Exo4D's authors propose two baselines: XSegTx, conditioning a co-segmentation model on the query mask, and XView-XMem, treating the second view as the next tracked frame. Being adaptations, both score poorly.
-
-## 2025 challenge submission
-Last year's Ego-Exo4D challenge saw two strong submissions.
-
-ObjectRelator fuses visual and language features through cross-attention, conditioning visual mask features on a language category name, backed by a self-supervised loss that pulls matching ego and exo embeddings together. Language here is auxiliary; the correspondence itself lives in the trained visual embedding space.
-
-O-MaMa instead reframes the task as mask matching. FastSAM proposes candidate masks in the destination view, an encoder pools DINOv2 features over each into a fixed descriptor, cross-attention lets the source and destination descriptors inform each other, and a contrastive head pulls the true pair together while pushing away hard negatives, masks spatially adjacent to the target. It won using only 1% of ObjectRelator's trainable parameters.
-
-## Latest developments
-In late 2025, two new methods pushed results higher still.
-
-V²-SAM adds three experts atop a shared SAM 2 mask decoder. One matches DINOv3 patch features across views by cosine similarity, turning confident matches into a geometric prompt. A second reconstructs the target's shape from geometric priors through two small mapping networks, yielding an appearance-guided prompt. A third fuses both, and a consistency check at inference picks whichever prompt survives being applied both ways.
-
-LM-EEC is the strongest to date, adapting SAM 2 with a two-branch mixture of experts, one reweighing channels via pooling and small MLPs, the other reweighing space via convolutions, plus separate ego and exo memory banks. However, it fine-tunes SAM 2's full backbone, making it an in-distribution upper bound rather than a fair comparison.
 
 # Experiments
 851 words.
 
-## Evaluating the pipeline
+## Results
 How does this approach fair?
 
-## Quantitative results
-Let's start with the quantitative results. On Intersection over Union we reach 37.7 Ego2Exo and 40.6 Exo2Ego, surpassing both official baselines and the ObjectRelator submission, and trailing O-MaMa by about ten percent. The gap widens against the most recent works.
+We begin by looking at previously published methods. As a reminder, they all work with abstract feature representations and train specific fusion modules on Ego-Exo4D. 
 
-Location error is lower than the baseline, so the pipeline recovers the correct object region but places it with coarser spatial precision than our competitors.
+## Official Baselines
+Along with the dataset, Ego-Exo4D's authors propose two baselines: XSegTx and XView-XMem. Since both are adaptations of single-view segmentation, they score relatively poorly.
 
-The results are moderate, but are a first evidence that language as a bridge works. That's because foundation models never trained together on this task recover significant quality, and the remaining gap is explained by direct training on Ego-Exo4D.
+## 2025 challenge submission
+Next, we have last year's Ego-Exo4D challenge, which saw two strong submissions: ObjectRelator and O-Mama. The latter won the challenge. 
+
+## Latest developments
+In late 2025, two new methods pushed results higher still: V²-SAM, which  adds three experts atop a shared SAM 2 mask decoder, and LM-EEC, which adapts SAM 2 with a two-branch mixture of experts and a separate memory bank for each video view. However, LM-EEC fine-tunes SAM 2's full backbone, making it an in-distribution upper bound rather than a fair comparison.
+
+## 2 eyes and one mouth pipeline
+On Intersection over Union we reach 37.7 Ego2Exo and 40.6 Exo2Ego, surpassing the official baselines and the ObjectRelator, and trailing O-MaMa by about ten percent. The gap widens against the most recent works.
+
+The results are moderate, but are a first evidence that language as a bridge works. 
+
+Foundation models never trained together on this task are able to recover significant quality against the trained models, and the remaining gap is explained by training and fine-tuning on Ego-Exo4D.
 
 ## Qualitative results
-Looking at our successes, the masks themselves are of high quality. 
+Let's have a look at some successesfull cross-view object segmentations of our pipeline.
+
+As you can see, the masks are very high quality, driven by the capabilities of SAM 3.  
 
 So how can the gap to the state of the art be so large?
 
-## Dead mass
+## Dead mass 
 The main symptom is what I call dead mass.
 
 Plotting the distribution of our predictions against the state of the art, roughly a third of all cases, 32% Ego2Exo and 31% Exo2Ego, score zero IoU. Remove the dead mass, and our mean IoU rises by about eighteen points, up to LM-EEC's terrain, with an average score of 56.9 and 61.7. 
