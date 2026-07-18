@@ -194,15 +194,21 @@ As you can see, the masks are very high quality, driven by the capabilities of S
 So how can the gap to the state of the art be so large?
 
 ## Dead mass 
-The main symptom is what I call dead mass.
+My main finding is the so called dead mass.
 
-Plotting the distribution of our predictions against the state of the art, roughly a third of all cases, 32% Ego2Exo and 31% Exo2Ego, score zero IoU. Remove the dead mass, and our mean IoU rises by about eighteen points, up to LM-EEC's terrain, with an average score of 56.9 and 61.7. 
+It represents all the cases where our pipeline scored 0 intersection over union. 
+
+Plotting the distribution of our predictions against the state of the art, the dead mass becomes evident: roughly a third of all cases score zero IoU fot us. 
+
+Remove the dead mass, and our mean IoU rises by about eighteen points, up to LM-EEC's terrain, with an average score of 56.9 and 61.7. 
 
 This means that there are specific failure points, and the pipeline is not uniformly weak.
 
-I then looked grouped results into 4 categories, compared directly with LM-EEC, and searched the variables in the data that could the gap. 
+To find the source of this discrepancy, I ran an head-to-head analysis with LM-EEC on the results. 
 
-First, it appeared that scenarios with small objects were challenging. But then, object size showed medium objects to be the dominant weakness wrt LM-EEC. 
+First, I set a threhold for successful prediction at 50 IoU. Then, I assigned cases to 4 groups: namely with they were successful in both our pipeline and the state of the art, only our, only LM-EEC, and neither. 
+
+Finally, I looked into variables that best separated the groups.
 
 The aspect that best separated the buckets was anchor IoU.
 
@@ -225,21 +231,6 @@ The answer is the size of the source mask. On the dead cases, the selected sourc
 Interestingly, rather then hallucinating, the VLM names a real larger neighbour. It honestly describes the container, the tool, or the surface the small target object is resting on. In comparison, true vocabulary near misses are negligible. 
 
 That diagnosis rules out the cheap explanations. It is not a weak prompt, and it is not a poor vocabulary. It is perception. The model cannot see a small enough object well enough to name it.
-
-## Diagnosis tests
-To strengthen the diagnosis, I tested three interventions.
-
-First, I assisted the VLM by providing a scene vocabulary at the description generation stage. This gave a mere 1.1 point improvement on a small set, but the change became negligible on the validation set. Next, I brightening the frames to make small objects more visibile. However, this lead to a worsening of 3.7 points. 
-
-Finally, I cropped the anchor frame around the bounding box proposed Grounding DINO, hoping that this would help the VLM guiding SAM 3 discern the small object from the neightbour. However, this costed 4.4 points.
-
-To get a better understanding of the decrease in quality, I took the last test, all frames, and stratified by frame. Curiously, the hint rescues frames we were already failing, but corrupts the ones that were already positively before, and that larger population drives the mean negative. 
-
-As a final check, I tried cropping the source frame on the target object. However, a tight crop severely lower IoU, from 41.1 to 18.0, because the identity of a small object is carried by its surroundings.
-
-This isolates the real constraint: the signal of the target object in the embedding is obfuscated by the other dominant signals in the frame. 
-
-Cropping was the blunt version of this fix. A sharper one, foveated tokenisation, is on our list, and it is exactly the Stage 1 assumption catching up with us.
 
 ## Ablations
 After discovreing where the pipeline breaks and why, the I wanted to understand which component of the pipeline deserved the most attention for future improvements. To this end, I ran ablations. 
@@ -279,5 +270,22 @@ Worth asking which tasks we want automated, and which we simply enjoy doing for 
 
 Thank you!
 
-## Extentions
+# Extentions
+
+## VLM input
 We settled on this pairing by ablation: raw frame plus mask overlay reached 41.2 IoU, adding a crop on top changed nothing at 41.1, but a tight crop alone collapsed to 18.0, since a small object's identity lives in its surroundings, not just its pixels.
+
+## Diagnosis tests
+To strengthen the diagnosis, I tested three interventions.
+
+First, I assisted the VLM by providing a scene vocabulary at the description generation stage. This gave a mere 1.1 point improvement on a small set, but the change became negligible on the validation set. Next, I brightening the frames to make small objects more visibile. However, this lead to a worsening of 3.7 points. 
+
+Finally, I cropped the anchor frame around the bounding box proposed Grounding DINO, hoping that this would help the VLM guiding SAM 3 discern the small object from the neightbour. However, this costed 4.4 points.
+
+To get a better understanding of the decrease in quality, I took the last test, all frames, and stratified by frame. Curiously, the hint rescues frames we were already failing, but corrupts the ones that were already positively before, and that larger population drives the mean negative. 
+
+As a final check, I tried cropping the source frame on the target object. However, a tight crop severely lower IoU, from 41.1 to 18.0, because the identity of a small object is carried by its surroundings.
+
+This isolates the real constraint: the signal of the target object in the embedding is obfuscated by the other dominant signals in the frame. 
+
+Cropping was the blunt version of this fix. A sharper one, foveated tokenisation, is on our list, and it is exactly the Stage 1 assumption catching up with us.
