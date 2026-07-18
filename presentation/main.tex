@@ -864,23 +864,22 @@ Object Video Tracking for Cross-View Object Correspondence}
 \begin{columns}
   \begin{column}{0.58\textwidth}
     \centering
-    \small
-    \setlength{\tabcolsep}{5pt}
-    \begin{tabular}{lrrr}
+    \tiny
+    \setlength{\tabcolsep}{3pt}
+    \begin{tabular}{lccccrr}
       \toprule
-      Exp. & IoU$\uparrow$ & $t$/frame\,(s)$\downarrow$ & Total$\downarrow$ \\
+      Exp. & Frame Sel. & SAM 3 Agent & Propag. & G-DINO Anchor & IoU$\uparrow$ & $t$/frame\,(s)$\downarrow$ \\
       \midrule
-      Baseline          & 10.6 & 1.32 & 3h\,50m \\
-      Baseline Oracle   & 17.0 & 0.12 & 21m\,20s \\
+      Baseline          & $\times$ & $\times$ & $\times$ & $\times$ & 10.6 & 1.32 \\
       \midrule
-      (A) Best Single Frame & 16.8 & 0.13 & 22m\,53s \\
-      (B) SAM 3 Agent Loop  & 35.5 & 21.30 & 59h\,15m \\
-      (C) Propagation       & 37.7 & 0.82 & 2h\,23m \\
-      (D) G-DINO            & \textbf{38.1} & 0.90 & 2h\,37m \\
+      (A) Best Single Frame & $\checkmark$ & $\times$ & $\times$ & $\times$ & 16.8 & 0.13 \\
+      (B) SAM 3 Agent Loop  & $\checkmark$ & $\checkmark$ & $\times$ & $\times$ & 35.5 & 21.30 \\
+      (C) Propagation       & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\times$ & 37.7 & 0.82 \\
+      (D) G-DINO            & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & \textbf{38.1} & 0.90 \\
       \bottomrule
     \end{tabular}
     \\[0.6em]
-    {\scriptsize Stages added one at a time, \textit{Ego2Exo}, 10\% of validation.}
+    {\scriptsize Components added one at a time, \textit{Ego2Exo}, 10\% of validation. Baseline Oracle (17.0 IoU, 0.12s/frame) omitted: a diagnostic ceiling, not decomposable into pipeline stages.}
   \end{column}
   \begin{column}{0.42\textwidth}
     \large

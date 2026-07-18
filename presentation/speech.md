@@ -248,9 +248,6 @@ The conclusion from this ladder is clear: selection and propagation are already 
 # Conclusions
 140 words. 
 
-## Overview
-In this thesis, we presented the Two eyes and one mouth pipeline to address  
-
 ## Recent developments
 In fact, ever since submitting my thesis, there have been more efforts. My work was born from a research project with prof Plizzari and two other MSc students. Over the last weeks, we further developed the pipeline. 
 
@@ -258,20 +255,34 @@ The key innovations have been adding an VLM call to judge resulting segmentation
 
 Motivated by the results, we are on track for submitting, at least at a workshop of a conference. 
 
+## Summary
+In this presentation, we reviews the Two eyes and one mouth pipeline to address cross view object correspondence.
+
+More broadly, my thesis work has become a direct test to the language as a bridge hypothesis: can natual language connect foundational architectures and replace visual features? and can all of this done without training?
+
 ## What about language?
-But does all of this answer our language as a bridge hypothesis?
+Yes, partially. Our pipeline achieved results comparable to last year, and when focusing on the successful cases, the quality rises to that of the State of the art. 
 
-Yes, partially. Language bridges foundation models without training, especially useful when the foundation models have different embedding backbones. 
+Future effort should continue focusing on reducing the dead mass. Given the interpretable nature of the pipeline, I have been to run several tests, far more than I have been able to discuss here today. 
 
-A trending question this year is emerging: if intelligent agents already compute on rich abstract embeddings, why should they communicate in natural language at all? A shared mathematical space could be more efficient due to no decoding step, consume less energy, and possibly produce more accurate results since embeddings focus on true signal, not noise of connectors and filler words.
+There is an additional consideration for the future.
 
-But it raises a human question too. If agents reason in a space we cannot read, do we become supervisors once removed, or are we pushed out entirely? 
+## Future
+A trending question emerging this year in Machine Learning is: if intelligent agents already compute on rich abstract embeddings, why should they communicate in natural language at all? 
 
-Not saying bad, like humans now don't build cars eanymore. 
+A shared mathematical space could be more efficient due to no decoding step, consume less energy, and possibly produce more accurate results since embeddings focus on true signal, not noise of connectors and filler words.
+
+## Question
+But it raises human questions too. 
+
+If agents reason in a space we cannot read, do we become supervisors once removed, or are we pushed out entirely? 
+
+I'm not saying this is bad, like humans now don't build cars or don't make astrophysics sumulations by hand anymore. 
 
 Worth asking which tasks we want automated, and which we simply enjoy doing for the sake of doing. 
 
-Thank you!
+## end
+Thank you for listening!
 
 # Extentions
 
