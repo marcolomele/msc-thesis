@@ -98,27 +98,27 @@ Object Video Tracking for Cross-View Object Correspondence}
 \end{center}
 \end{frame}
 
-\begin{frame}[t]
-\begin{center}
-{\large Encoding Images as Vector Embeddings}
-\end{center}
-\vfill
-\begin{center}
-\includegraphics[width=0.9\textwidth]{latex/imgs/ch2/vit-architecture-attended.png}
-\end{center}
-\vfill
-\end{frame}
+% \begin{frame}[t]
+% \begin{center}
+% {\large Encoding Images as Vector Embeddings}
+% \end{center}
+% \vfill
+% \begin{center}
+% \includegraphics[width=0.9\textwidth]{latex/imgs/ch2/vit-architecture-attended.png}
+% \end{center}
+% \vfill
+% \end{frame}
 
-\begin{frame}[t]
-\begin{center}
-{\large Visual features examples}
-\end{center}
-\vfill
-\begin{center}
-\includegraphics[width=0.75\textwidth]{latex/imgs/ch2/dinov3-results.png}
-\end{center}
-\vfill
-\end{frame}
+% \begin{frame}[t]
+% \begin{center}
+% {\large Visual features examples}
+% \end{center}
+% \vfill
+% \begin{center}
+% \includegraphics[width=0.75\textwidth]{latex/imgs/ch2/dinov3-results.png}
+% \end{center}
+% \vfill
+% \end{frame}
 
 \begin{frame}[t]
 \begin{center}
@@ -181,7 +181,7 @@ Object Video Tracking for Cross-View Object Correspondence}
 \end{center}
 \vfill
 \begin{center}
-\includegraphics[width=0.8\textwidth]{latex/imgs/ch2/react-scheme.png}
+\includegraphics[width=0.95\textwidth]{latex/imgs/ch2/react-scheme.png}
 \end{center}
 \vfill
 \end{frame}
@@ -538,7 +538,7 @@ Object Video Tracking for Cross-View Object Correspondence}
 \end{center}
 \vfill
 \begin{center}
-\includegraphics[width=1\textwidth]{imgs/ch4/pipeline-qualitative-examples.png}
+\includegraphics[width=0.9\textwidth]{imgs/ch4/pipeline-qualitative-examples.png}
 \end{center}
 \vfill
 \begin{center}
@@ -603,34 +603,20 @@ Object Video Tracking for Cross-View Object Correspondence}
 {\large The Loss is Born at the Bridge}
 \end{center}
 \vfill
-\begin{center}
-\includegraphics[width=1\textwidth]{imgs/ch4/grounding-examples.png}
-\end{center}
-\vfill
-\begin{center}
-{\scriptsize A wrong anchor propagates faithfully across the whole take. Everything hinges on the bridge.}
-\end{center}
-\end{frame}
-
-\begin{frame}[t]
-\begin{center}
-{\large Failure Waterfall}
-\end{center}
-\vfill
 \begin{columns}
-  \begin{column}{0.60\textwidth}
+  \begin{column}{0.55\textwidth}
     \centering
     \small
     \setlength{\tabcolsep}{4pt}
-    \begin{tabular}{llcc}
+    \begin{tabular}{lcc}
       \toprule
-      Stage & First failure & \textit{Ego2Exo} & \textit{Exo2Ego} \\
+      First failure & \textit{Ego2Exo} & \textit{Exo2Ego} \\
       \midrule
-      2 & VLM names a different object        & \textbf{59\%} & \textbf{81\%} \\
-      3 & Anchor lands on a tiny object       & 15\% & 11\% \\
-      3 & Grounding DINO box misses           & 10\% & 2\%  \\
-      3 & Agent segments wrong, good box      & 16\% & 5\%  \\
-      4 & Propagation                         & 0\%  & 0\%  \\
+        (2) VLM names a different object        & \textbf{59\%} & \textbf{81\%} \\
+        (3) Anchor lands on a tiny object       & 15\% & 11\% \\
+        (3) Grounding DINO box misses           & 10\% & 2\%  \\
+        (3) Agent segments wrong, good box      & 16\% & 5\%  \\
+        (4) Propagation                         & 0\%  & 0\%  \\
       \bottomrule
     \end{tabular}
     \\[0.6em]
@@ -648,23 +634,23 @@ Object Video Tracking for Cross-View Object Correspondence}
 \vfill
 \end{frame}
 
-\begin{frame}[t]
-\begin{center}
-{\large Why the Model Names the Wrong Object}
-\end{center}
-\vfill
-\begin{center}
-\includegraphics[width=0.9\textwidth]{imgs/ch4/vlm-description-failure.png}
-\end{center}
-\vfill
-\begin{center}
-{\scriptsize The VLM names a real, larger neighbour, the container or surface, rather than hallucinating.}
-\end{center}
-\end{frame}
+% \begin{frame}[t]
+% \begin{center}
+% {\large The Loss is Born at the Bridge}
+% \end{center}
+% \vfill
+% \begin{center}
+% \includegraphics[width=1\textwidth]{imgs/ch4/grounding-examples.png}
+% \end{center}
+% \vfill
+% \begin{center}
+% {\scriptsize A wrong anchor propagates faithfully across the whole take. Everything hinges on the bridge.}
+% \end{center}
+% \end{frame}
 
 \begin{frame}[t]
 \begin{center}
-{\large Perception, not Vocabulary}
+{\large Perception issue, not Vocabulary}
 \end{center}
 \vfill
 \begin{columns}
@@ -689,10 +675,24 @@ Object Video Tracking for Cross-View Object Correspondence}
       \bottomrule
     \end{tabular}
     \\[0.6em]
-    {\scriptsize Nominations on the dead cases (anchor IoU $=0$). Neighbour: container, tool, or surface.}
+    {\scriptsize Nominations on the dead cases (anchor IoU $=0$).}
   \end{column}
 \end{columns}
 \vfill
+\end{frame}
+
+\begin{frame}[t]
+\begin{center}
+{\large Why the Model Names the Wrong Object}
+\end{center}
+\vfill
+\begin{center}
+\includegraphics[width=0.7\textwidth]{imgs/ch4/vlm-description-failure.png}
+\end{center}
+\vfill
+\begin{center}
+{\scriptsize The VLM names a real, larger neighbour, the container or surface, rather than hallucinating.}
+\end{center}
 \end{frame}
 
 \begin{frame}[t]
@@ -802,17 +802,17 @@ Object Video Tracking for Cross-View Object Correspondence}
 
 \begin{frame}[t]
 \begin{center}
-{\large Since Submission}
+{\large Recent Developments}
 \end{center}
 \vfill
 \begin{columns}
   \begin{column}{0.48\textwidth}
     \large
     \begin{itemize}
-        \item Research project with Prof.\ Plizzari and two MSc students.
+        \item Research project with Prof.\ Plizzari, Giovanni Mantovani, and Filippo Dario Paolucci (MSc students).
         \item $+$ VLM judge on the segmentations.
         \item $+$ SAM 3 negative exemplars to separate the target from neighbours.
-        \item On track for WACV 2027.
+        \item Aiming at conference submission.
     \end{itemize}
   \end{column}
   \begin{column}{0.52\textwidth}
@@ -823,7 +823,7 @@ Object Video Tracking for Cross-View Object Correspondence}
       & \textit{Ego2Exo} & \textit{Exo2Ego} \\
       \midrule
       Thesis pipeline & 37.7 & 40.6 \\
-      \textbf{$+$ judge $+$ exemplars} & \textbf{43.7} & \textbf{48.1} \\
+      \textbf{$+$ judge $+$ exemplars} & \textbf{41.5} & \textbf{48.7} \\
       \bottomrule
     \end{tabular}
     \\[0.6em]
@@ -851,34 +851,35 @@ Object Video Tracking for Cross-View Object Correspondence}
 \end{center}
 \end{frame}
 
-\begin{frame}[t]
-\vfill
-\begin{columns}
-  \begin{column}{0.50\textwidth}
-    \large
-    A shared mathematical space:
-    \begin{itemize}
-        \item no decoding step,
-        \item less energy,
-        \item focuses on signal, not filler.
-    \end{itemize}
-  \end{column}
-  \begin{column}{0.50\textwidth}
-    \large
-    But a human question:
-    \begin{itemize}
-        \item supervisors once removed, or pushed out entirely?
-        \item which tasks do we want automated, and which do we do for their own sake?
-    \end{itemize}
-  \end{column}
-\end{columns}
-\vfill
+
+\begin{frame}
+  \begin{columns}
+    \begin{column}{0.4\textwidth}
+      \large
+    A \textit{shared embedding} space has no decoding step, therefore consumes less energy, and allows to focus on signal.
+    \end{column}
+    \begin{column}{0.6\textwidth}
+      \includegraphics[width=\textwidth]{latex/imgs/ch1/embedding-space.png}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}
+\begin{center}
+    {\Large Do we become supervisors, or will we automate \\ 100\% of certain tasks?}
+\end{center}
+\end{frame}
+
+\begin{frame}
+\begin{center}
+    {\Large Which tasks do we want fully automated, and which instead do we want to keep for ourselves just because we enjoy doing them?}
+\end{center}
 \end{frame}
 
 \begin{frame}[plain]
 \begin{center}
     \vfill
-    {\Large Thank you.}
+    {\Large Thank you :)}
     \vfill
 \end{center}
 \end{frame}
