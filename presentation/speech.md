@@ -210,23 +210,23 @@ First, I set a threhold for successful prediction at 50 IoU. Then, I assigned ca
 
 Finally, I looked into variables that best separated the groups.
 
-The aspect that best separated the buckets was anchor IoU.
+The aspect that I found was anchor IoU, the quality of the mask immediately after the bridge.
 
 This exposes the main weakness of the pipeline. Everything hinges on the bridge. If we land on the wrong object, that wrong mask propagates faithfully across the entire take.
 
 ## Naming issue
 So where is the dead mass born? To find out, I checked the intermediate results for all runs, and charge every dead case to the first stage of the pipeline that breaks.
 
-The finding was clear. The second stage of description generation is the single largest cause: 59% of the dead mass in Ego2Exo, and 81% in Exo2Ego. Anchor selection in stage three is next, and the two together explain 74% and 92% of all dead cases. 
+The finding was clear. The second stage of description generation is the single largest cause: 59% of the dead mass in Ego2Exo, and 81% in Exo2Ego. 
 
-For comparison, Grounding DINO boxing the wrong object, and the agent segmenting the wrong thing inside a good box are minor problems.
+Anchor selection in stage three is next, and the two together explain 74% and 92% of all dead cases. 
 
-Crucially, zero cases from the dead mass group originated at propagation.
-
-## Perception issue
 The following question thus is: why does the VLM mislabel an object? 
 
+## Perception issue
 The answer is the size of the source mask. On the dead cases, the selected source mask is three to six times smaller than on the successful cases. In Exo2Ego, half the failures show the object at under 0.1% of the frame.
+
+```Slide design note: have big examples in the middle as columns```
 
 Interestingly, rather then hallucinating, the VLM names a real larger neighbour. It honestly describes the container, the tool, or the surface the small target object is resting on. In comparison, true vocabulary near misses are negligible. 
 
@@ -247,6 +247,9 @@ The conclusion from this ladder is clear: selection and propagation are already 
 
 # Conclusions
 140 words. 
+
+## Overview
+In this thesis, we presented the Two eyes and one mouth pipeline to address  
 
 ## Recent developments
 In fact, ever since submitting my thesis, there have been more efforts. My work was born from a research project with prof Plizzari and two other MSc students. Over the last weeks, we further developed the pipeline. 
