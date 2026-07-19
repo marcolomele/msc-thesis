@@ -40,10 +40,11 @@ Object Video Tracking for Cross-View Object Correspondence}
   \begin{center}
     {\Large \inserttitle}\\[1em]
     {\large \insertsubtitle}\\[1em]
-    \includegraphics[width=0.70\textwidth]{imgs/ch1/lang-as-bridge-intro.png}\\[1.2em]
-    {\normalsize Marco Lomele's MSc thesis supervised by Prof. Chiara Plizzari \\ Bocconi University \\
-    July 2026}
+    \includegraphics[width=0.8\textwidth]{imgs/ch1/lang-as-bridge-intro.png}\\[1.2em]
   \end{center}
+\begin{center}
+{\normalsize Marco Lomele -- MSc Thesis Presentation -- Supervised by Chiara Plizzari \\ July 2026 -- Bocconi University}
+\end{center}
 \end{frame}
 \addtocounter{framenumber}{-1}
 
@@ -258,7 +259,7 @@ Object Video Tracking for Cross-View Object Correspondence}
   \begin{column}{0.48\textwidth}
     \centering
     \assumptionbox{2. Consistent interpretation}{Foundation models map the same phrase as the same concept across their backbones.}\\[0.6em]
-    \assumptionbox{4. Offline prediction}{Cross-view segmentation can happen offline.}
+    \assumptionbox{4. Offline prediction}{Cross-view segmentation can happen forward and backward in time.}
   \end{column}
 \end{columns}
 \vfill
@@ -821,7 +822,7 @@ Our pipeline is the only training-free entry.
   \end{column}
   \begin{column}{0.34\textwidth}
     \large
-    Mean IoU on \textit{Exo2Ego}: 40.6 \textcolor{plotblue}{Our Pipeline} vs 65.77 \textcolor{plotorange}{LM-EEC}.
+    Mean IoU on \textit{Exo2Ego}: 40.6 \textcolor{plotblue}{Our Pipeline} vs \\ 65.77 \textcolor{plotorange}{LM-EEC}.
   \end{column}
 \end{columns}
 \vfill
@@ -829,7 +830,7 @@ Our pipeline is the only training-free entry.
 
 \begin{frame}[t]
 \begin{center}
-{\large Removing the Dead Mass}
+{\large Removing the dead mass}
 \end{center}
 \vfill
 \begin{columns}[c]
@@ -839,7 +840,7 @@ Our pipeline is the only training-free entry.
   \end{column}
   \begin{column}{0.34\textwidth}
     \large
-    Mean IoU on \textit{Exo2Ego} after removing the dead mass: 61.7 \textcolor{plotblue}{Our Pipeline} vs 65.77 \textcolor{plotorange}{LM-EEC}.
+    Mean IoU on \textit{Exo2Ego} after removing the dead mass: 61.7 \textcolor{plotblue}{Our Pipeline} vs \\ 65.77 \textcolor{plotorange}{LM-EEC}.
   \end{column}
 \end{columns}
 \vfill
@@ -847,13 +848,13 @@ Our pipeline is the only training-free entry.
 
 \begin{frame}[t]
 \begin{center}
-{\large Source of the Dead Mass}
+{\large Source of the dead mass}
 \end{center}
 \vfill
 \begin{center}
-\includegraphics[width=0.6\textwidth]{imgs/ch4/gap-analysis-group.png}
+\includegraphics[width=0.75\textwidth]{imgs/ch4/gap-analysis-group.png}
 \end{center}
-\vspace{0.4em}
+\vspace{-2mm}
 \begin{center}
 Main weakness: error of low quality anchor gets propagated to the entire take.
 \end{center}
@@ -872,7 +873,7 @@ Main weakness: error of low quality anchor gets propagated to the entire take.
   \end{column}
   \begin{column}{0.42\textwidth}
     \large
-    The VLM naming a different object than the target is the source of bad anchor masks in \textbf{59\%} of the cases in \textit{Ego2Exo}, and \textbf{81\%} in \textit{Exo2Ego}.
+    Naming a different object in \textbf{59\%} of the cases in \textit{Ego2Exo}, and \textbf{81\%} in \textit{Exo2Ego}.
   \end{column}
 \end{columns}
 \vfill
@@ -886,7 +887,7 @@ Main weakness: error of low quality anchor gets propagated to the entire take.
 \begin{columns}[c]
   \begin{column}{0.48\textwidth}
     \centering
-    {\normalsize Median source mask size}\\[0.4em]
+    {\normalsize Median source mask size as \% of frame area}\\[0.4em]
     \small
     \begin{tabular}{lcc}
       \toprule
@@ -897,10 +898,10 @@ Main weakness: error of low quality anchor gets propagated to the entire take.
       \bottomrule
     \end{tabular}
     \\[0.6em]
-    {\scriptsize In \textit{Exo2Ego}, half the failures fall under 0.1\% of the frame.}
   \end{column}
   \begin{column}{0.50\textwidth}
     \centering
+  {\normalsize Possible solution:}\\[0.4em]
     \includegraphics[height=0.34\textheight]{imgs/ch4/foveated-tokenization.png}
   \end{column}
 \end{columns}
@@ -942,7 +943,7 @@ Main weakness: error of low quality anchor gets propagated to the entire take.
 
 \begin{frame}[t]
 \begin{center}
-{\large Ablation: What Each Block Contributes}
+{\large The contribution of each stage}
 \end{center}
 \vfill
 \begin{center}
@@ -961,63 +962,65 @@ Main weakness: error of low quality anchor gets propagated to the entire take.
       \bottomrule
     \end{tabular}
     \\[0.8em]
-    {\scriptsize \textit{Ego2Exo} on 10\% of the validation set.}
+    {\normalsize Ablation study on Ego2Exo using 10\% of the validation set.}
 \end{center}
 \vfill
 \end{frame}
 
 \begin{frame}
 \begin{center}
-    {\Large Conclusions.}
+    {\Large Recent developments.}
 \end{center}
 \end{frame}
 
 \begin{frame}[t]
 \begin{center}
-{\large Recent Developments}
+{\large A few \% points off the comparable Ego-Exo4D SOTA}
 \end{center}
 \vfill
-\begin{columns}[c]
-  \begin{column}{0.42\textwidth}
-    \centering
-    \small
-    \begin{tabular}{lcc}
-      \toprule
-      & \textit{Ego2Exo} & \textit{Exo2Ego} \\
-      \midrule
-      Thesis pipeline (May)   & 37.7 & 40.6 \\
-      \textbf{Pipeline today} & \textbf{41.5} & \textbf{48.1} \\
-      V\textsuperscript{2}-SAM & 46.3 & 49.6 \\
-      \midrule
-      \% gap to V\textsuperscript{2}-SAM & $-10.4\%$ & $-3.0\%$ \\
-      \bottomrule
-    \end{tabular}
-    \\[0.6em]
-    {\scriptsize Latest pipeline performance on the Ego-Exo4D test set.}
-  \end{column}
-  \begin{column}{0.56\textwidth}
-    \centering
-    \footnotesize
-    \setlength{\tabcolsep}{4pt}
-    \begin{tabular}{llc}
-      \toprule
-      Method & Training data & IoU$\uparrow$ \\
-      \midrule
-      XSegTx & COCO / Self-Gen. Pairs & 1.5 \\
-      SEEM & COCO Pan., RefCOCO/+g & 2.5 \\
-      PSALM & COCO Pan., RefCOCO/+g, etc. & 14.2 \\
-      PSALM & Ego-Exo4D & 39.9 \\
-      ObjectRelator & Ego-Exo4D & 42.8 \\
-      V\textsuperscript{2}-SAM (Single-Expert) & Ego-Exo4D & 66.4 \\
-      V\textsuperscript{2}-SAM (Multi-Experts) & Ego-Exo4D & 77.2 \\
-      \midrule
-      \textbf{Our pipeline} & \textit{training-free} & \textbf{79.56} \\
-      \bottomrule
-    \end{tabular}
-    \\[0.6em]
-    {\scriptsize SOTA performance on the HANDAL-X benchmark.}
-  \end{column}
-\end{columns}
+\centering
+\small
+\begin{tabular}{lcc}
+  \toprule
+  & \textit{Ego2Exo} & \textit{Exo2Ego} \\
+  \midrule
+  Thesis pipeline (May)   & 37.7 & 40.6 \\
+  \textbf{Pipeline today} & \textbf{41.5} & \textbf{48.1} \\
+  V\textsuperscript{2}-SAM & 46.3 & 49.6 \\
+  \midrule
+  \% gap to V\textsuperscript{2}-SAM & $-10.4\%$ & $-3.0\%$ \\
+  \bottomrule
+\end{tabular}
+\\[0.8em]
+{\normalsize Latest pipeline performance on the Ego-Exo4D test set.}
+\vfill
+\end{frame}
+
+\begin{frame}[t]
+\begin{center}
+{\large SOTA on the HANDAL-X benchmark}
+\end{center}
+\vfill
+\centering
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{llc}
+  \toprule
+  Method & Training data & IoU$\uparrow$ \\
+  \midrule
+  XSegTx & COCO / Self-Gen. Pairs & 1.5 \\
+  SEEM & COCO Pan., RefCOCO/+g & 2.5 \\
+  PSALM & COCO Pan., RefCOCO/+g, etc. & 14.2 \\
+  PSALM & Ego-Exo4D & 39.9 \\
+  ObjectRelator & Ego-Exo4D & 42.8 \\
+  V\textsuperscript{2}-SAM (Single-Expert) & Ego-Exo4D & 66.4 \\
+  V\textsuperscript{2}-SAM (Multi-Experts) & Ego-Exo4D & 77.2 \\
+  \midrule
+  \textbf{Our pipeline} & \textit{training-free} & \textbf{79.56} \\
+  \bottomrule
+\end{tabular}
+\\[0.8em]
+{\normalsize Our pipeline's performance on the HANDAL-X benchmark.}
 \vfill
 \end{frame}
 
@@ -1033,14 +1036,15 @@ Main weakness: error of low quality anchor gets propagated to the entire take.
 \vfill
 \end{frame}
 
-\begin{frame}
+\begin{frame}[t]
 \begin{center}
-  {\large A trending question}
-  \end{center}
-  \vfill
-\begin{center}
-    {\Large If agents already reason over rich abstract embeddings, \\ why should they collaborate in natural language at all?}
+{\large A trending question}
 \end{center}
+\vfill
+\begin{center}
+{\Large If agents already reason over rich abstract embeddings, \\ why should they collaborate in natural language at all?}
+\end{center}
+\vfill
 \end{frame}
 
 
@@ -1048,7 +1052,7 @@ Main weakness: error of low quality anchor gets propagated to the entire take.
   \begin{columns}
     \begin{column}{0.4\textwidth}
       \large
-    A \textit{shared embedding} space has no decoding step, therefore consumes less energy, and allows to focus on signal.
+    A \textit{shared embedding space} has no decoding step, consuming less energy, and allows to focus on signal.
     \end{column}
     \begin{column}{0.6\textwidth}
       \includegraphics[width=\textwidth]{imgs/ch1/embedding-space.png}
@@ -1056,23 +1060,42 @@ Main weakness: error of low quality anchor gets propagated to the entire take.
   \end{columns}
 \end{frame}
 
-\begin{frame}
+\begin{frame}[t]
 \begin{center}
-    {\Large Do we become supervisors, or will we automate \\ 100\% of certain tasks?}
+{\large The human question}
 \end{center}
+\vfill
+\begin{center}
+{\Large Do we become supervisors, or will we automate \\ 100\% of certain tasks?}
+\end{center}
+\vfill
 \end{frame}
 
-\begin{frame}
+\begin{frame}[t]
 \begin{center}
-    {\Large Which tasks do we want fully automated, and which instead do we want to keep for ourselves just because we enjoy doing them?}
+{\large Even more interesting}
 \end{center}
+\vfill
+\begin{center}
+{\Large Which tasks do we want fully automated, and which instead do we want to keep for ourselves just because we enjoy doing them?}
+\end{center}
+\vfill
 \end{frame}
 
 \begin{frame}[plain]
 \begin{center}
-    \vfill
-    {\Large Thank you :)}
-    \vfill
+{\color{gray!90}
+{\normalsize Two Eyes and One Mouth: \\ a Training-Free Pipeline with Agentic Image Segmentation and \\ Object Video Tracking for Cross-View Object Correspondence}}
+\end{center}
+\vfill
+\begin{center}
+{\Large Thank you for listening!} \\[0.8em]
+{\large Any questions?}
+\end{center}
+\vfill
+\begin{center}
+{\color{gray!90}
+{\normalsize Marco Lomele -- MSc Thesis Presentation -- Supervised by Chiara Plizzari \\ July 2026 -- Bocconi University}}
 \end{center}
 \end{frame}
 
