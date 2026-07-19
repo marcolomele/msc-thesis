@@ -194,26 +194,36 @@ As you can see, the masks are very high quality, driven by the capabilities of S
 
 So how can the gap to the state of the art be so large?
 
-## Dead mass 
-My main finding is the so called dead mass.
+## Gap analysis
+To find the source of this discrepancy, I ran an head-to-head analysis with LM-EEC on the results. 
 
-It represents all the cases where our pipeline scored 0 intersection over union. 
+Plotting the distribution of our predictions against the state of the art, the issue become evident: on roughly a third of all cases, our pipeline scores zero IoU. 
 
-Plotting the distribution of our predictions against the state of the art, the dead mass becomes evident: roughly a third of all cases score zero IoU fot us. 
+I call this the dead mass, because it drags down the results of our pipeline.
 
-Remove the dead mass, and our mean IoU rises by about eighteen points, up to LM-EEC's terrain, with an average score of 56.9 and 61.7. 
+```Slide design notes: title in the center as usual per other slides; gap-analysis-distribution.png in the middle centered; below centered the following text: "Mean IoU Exo2Ego: 40.5 Our Pipeline (Our Pipeline in plt classic default blue) vs 64.4 LM-EEC (LM-EEC in plt classic default orange)."```
+
+## Removing the dead mass
+In fact, when we remove the dead mass, our mean IoU rises significantly, with an average score of 61.7 in Exo2Ego. 
+
+This is LM-EEC's terrain, the absolute state of the art that did a massive fine-tuning of SAM 2 and representing our in-distribution upper bound. 
 
 This means that there are specific failure points, and the pipeline is not uniformly weak.
 
-To find the source of this discrepancy, I ran an head-to-head analysis with LM-EEC on the results. 
+```Slide design notes: title in the center as usual per other slides; gap-analysis-distribution-removed.png in the middle centered; below centered the following text: "Mean IoU Exo2Ego after removing cases in the dead mass: 61.7 Our Pipeline (Our Pipeline in plt classic default blue) vs 64.4 LM-EEC (LM-EEC in plt classic default orange)."```
 
-First, I set a threhold for successful prediction at 50 IoU. Then, I assigned cases to 4 groups: namely with they were successful in both our pipeline and the state of the art, only our, only LM-EEC, and neither. 
+## Source of the dead mass
+I continued the gap analysis with resect to LM-EEC by first setting a threhold for successful prediction at 50 IoU. 
 
-Finally, I looked into variables that best separated the groups.
+Then, I assigned cases to 4 groups: namely with they were successful in both our pipeline and the state of the art, only our, only LM-EEC, and neither. 
 
-The aspect that I found was anchor IoU, the quality of the mask immediately after the bridge.
+Finally, I looked into variables that best separated the groups: object size, scenario, and anchor quality. 
+
+The defining factor behind the gap became evident: the quality of the mask immediately after the bridge.
 
 This exposes the main weakness of the pipeline. Everything hinges on the bridge. If we land on the wrong object, that wrong mask propagates faithfully across the entire take.
+
+```Slide design notes: title in the center as usual per other slides; ch4/gap-analysis-groups.png in the middle centered; below centered the following text: Anchor mask quality is the determing factor; incorrect bridges propagate error to entire take."```
 
 ## Naming issue
 So where is the dead mass born? To find out, I checked the intermediate results for all runs, and charge every dead case to the first stage of the pipeline that breaks.
