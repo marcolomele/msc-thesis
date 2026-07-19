@@ -278,11 +278,11 @@ First, a consideration from the design itself. Running foundation models at infe
 ## Assumption Level
 Second, some of our assumptions still need work.
 
-On language detail, the evidence isn't conclusive. The most common failure on dead cases was the VLM description, but the cause runs deeper: not enough signal from the target's visual features reaches the VLM, so it simply cannot see the object well enough. I suspect the grid tokenization, and that an approach like foveated tokenization could dramatically improve performance.
+On language detail, the evidence isn't conclusive. The most common failure on dead cases was the VLM description, but the cause runs deeper: not enough signal from the target's visual features reaches the VLM, so it simply cannot see the object well enough. I suspect the root problem is grid tokenization, and hypothesize that an approach like foveated tokenization could dramatically improve performance.
 
 On reliable anchors, we found the pipeline's main weakness. A handful of correct segmentations does complete the track, but a single wrong anchor propagates its error across the whole take.
 
-Consistent interpretation held, since the pipeline still recovered significant quality against published work. And offline prediction held by design; in fact it could extend to live scenarios, since once the bridge is built, only SAM 2's stage-four propagation runs.
+The other two assumptinons held. For Consistent interpretation, the pipeline recovered significant quality against published work. For offline prediction, it held by design; in fact, our pipeline could be extend to live scenarios, since once the bridge is built, only SAM 2's video propagation of stage 4 needs to run.
 
 # Conclusion
 

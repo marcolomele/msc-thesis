@@ -893,30 +893,21 @@ Main weakness: error of low quality anchor gets propagated to the entire take.
 {\large Perception issue}
 \end{center}
 \vfill
-\begin{columns}[c]
-  \begin{column}{0.48\textwidth}
-    \centering
-    {\normalsize Median source mask size as \% of frame area}\\[0.4em]
-    \small
-    \begin{tabular}{lcc}
-      \toprule
-       & Dead cases & Successful cases \\
-      \midrule
-      \textit{Ego2Exo} & 1.43\% & 4.05\% \\
-      \textit{Exo2Ego} & 0.098\% & 0.564\% \\
-      \bottomrule
-    \end{tabular}
-    \\[0.6em]
-  \end{column}
-  \begin{column}{0.50\textwidth}
-    \centering
-  {\normalsize Possible solution:}\\[0.4em]
-    \includegraphics[height=0.34\textheight]{imgs/ch4/foveated-tokenization.png}
-  \end{column}
-\end{columns}
-\vspace{0.6em}
 \begin{center}
-\fbox{\parbox[c][0.26\textheight][c]{0.95\linewidth}{\centering \textit{Examples of failures}\\[0.3em]{\scriptsize (image to add)}}}
+{\normalsize Median source mask size as \% of frame area}\\[0.4em]
+\small
+\begin{tabular}{lcc}
+  \toprule
+   & Dead cases & Successful cases \\
+  \midrule
+  \textit{Ego2Exo} & 1.43\% & 4.05\% \\
+  \textit{Exo2Ego} & 0.098\% & 0.564\% \\
+  \bottomrule
+\end{tabular}
+\end{center}
+\vspace{0.8em}
+\begin{center}
+\includegraphics[height=0.52\textheight]{imgs/ch4/vlm-description-failure.png}
 \end{center}
 \vfill
 \end{frame}
@@ -976,16 +967,38 @@ Main weakness: error of low quality anchor gets propagated to the entire take.
 \vfill
 \end{frame}
 
+\begin{frame}
+  \begin{center}
+      {\Large Considerations.}
+  \end{center}
+  \end{frame}
+
 \begin{frame}[t]
 \begin{center}
-{\large A design consideration}
+{\large Design-level consideration}
+\end{center}
+\vfill
+\begin{center}
+{\large The pipeline runs on a single \textbf{NVIDIA H200 (80\,GB VRAM)}.}
 \end{center}
 \vfill
 \begin{center}
 \begin{tikzpicture}
-  \node[draw, rounded corners, inner sep=10pt, text width=0.86\textwidth] {%
-    \centering Composing frozen foundation models is compute-heavy. The pipeline runs on a single \textbf{NVIDIA H200 (80\,GB VRAM)}, and its cost is front-loaded on the anchors: the agentic segmentation reaches \textbf{$\sim$21\,s per anchor frame}, while propagation then completes the take at \textbf{under 1\,s per frame}.};
+  \node[draw, rounded corners, inner sep=6pt, minimum height=1.5cm, text width=0.92\textwidth] {%
+    \centering
+    \begin{minipage}{0.17\textwidth}\centering {\Large\textbf{14\,s}}\\[0.2em]{\small Stage 2\\description}\end{minipage}%
+    \hfill\vrule\hfill
+    \begin{minipage}{0.17\textwidth}\centering {\Large\textbf{40\,s}}\\[0.2em]{\small Stage 3\\anchors}\end{minipage}%
+    \hfill\vrule\hfill
+    \begin{minipage}{0.17\textwidth}\centering {\Large\textbf{26\,s}}\\[0.2em]{\small Stage 4\\propagation}\end{minipage}%
+    \hfill\vrule\hfill
+    \begin{minipage}{0.17\textwidth}\centering {\Large\textbf{11\,s}}\\[0.2em]{\small VLM\\($\sim$3 calls)}\end{minipage}%
+    \hfill\vrule\hfill
+    \begin{minipage}{0.17\textwidth}\centering {\Large\textbf{97\,s}}\\[0.2em]{\small full take}\end{minipage}%
+  };
 \end{tikzpicture}
+\\[0.4em]
+{\small Averaged across all takes.}
 \end{center}
 \vfill
 \end{frame}
@@ -1013,7 +1026,7 @@ Main weakness: error of low quality anchor gets propagated to the entire take.
 
 \begin{frame}[t]
 \begin{center}
-{\large The four assumptions, revisited}
+{\large Assumption-level considerations}
 \end{center}
 \vfill
 \verdictrow{1}{Language detail}{\opentag{TBD}}{
@@ -1083,7 +1096,7 @@ Small object $\Rightarrow$ small signal to VLM. \\ Potential solution is foveate
 
 \begin{frame}
 \begin{center}
-    {\Large Conclusion.}
+    {\Large Conclusions.}
 \end{center}
 \end{frame}
 
@@ -1186,6 +1199,18 @@ Small object $\Rightarrow$ small signal to VLM. \\ Potential solution is foveate
     {\Large Supplementary Material.}
     \vfill
 \end{center}
+\end{frame}
+
+\begin{frame}[t]
+\begin{center}
+{\large Perception issue: a possible solution}
+\end{center}
+\vfill
+\begin{center}
+{\normalsize Small object $\Rightarrow$ small signal to the VLM. A possible remedy is foveated tokenisation.}\\[0.8em]
+\includegraphics[height=0.5\textheight]{imgs/ch4/foveated-tokenization.png}
+\end{center}
+\vfill
 \end{frame}
 
 \begin{frame}[t]
