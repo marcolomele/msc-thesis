@@ -99,20 +99,20 @@ Object Video Tracking for Cross-View Object Correspondence}
   \begin{tikzpicture}
     \node[draw, rounded corners, inner sep=6pt, minimum height=1.4cm, text width=0.92\textwidth] (bar) {%
       \centering
-      \begin{minipage}{0.30\textwidth}\centering {\Large\textbf{4M}}\\[0.2em] annotated frames\end{minipage}%
+      \begin{minipage}{0.30\textwidth}\centering {\large\textbf{4M}}\\[0.2em] annotated frames\end{minipage}%
       \hfill\vrule\hfill
-      \begin{minipage}{0.34\textwidth}\centering {\Large\textbf{700K}}\\[0.2em] paired mask tracks\end{minipage}%
+      \begin{minipage}{0.34\textwidth}\centering {\large\textbf{700K}}\\[0.2em] paired mask tracks\end{minipage}%
       \hfill\vrule\hfill
-      \begin{minipage}{0.28\textwidth}\centering {\Large\textbf{7}}\\[0.2em] scenarios\end{minipage}%
+      \begin{minipage}{0.28\textwidth}\centering {\large\textbf{7}}\\[0.2em] scenarios\end{minipage}%
     };
   \end{tikzpicture}
   \end{center}%
 }
 
-% Placeholder box for the example frames (to be replaced with real frames).
-\newcommand{\frameplaceholder}[1]{%
-  \fbox{\parbox[c][4.6cm][c]{0.9\linewidth}{\centering \textit{#1 frame}\\[0.4em]{\scriptsize (example to add)}}}%
-}
+% % Placeholder box for the example frames (to be replaced with real frames).
+% \newcommand{\frameplaceholder}[1]{%
+%   \fbox{\parbox[c][4.6cm][c]{0.9\linewidth}{\centering \textit{#1 frame}\\[0.4em]{\scriptsize (example to add)}}}%
+% }
 
 \begin{frame}[t]
 \begin{center}
@@ -125,21 +125,21 @@ Object Video Tracking for Cross-View Object Correspondence}
   \begin{column}{0.48\textwidth}
     \centering
     {\large Egocentric}\\[0.6em]
-    \frameplaceholder{egocentric}
+    \includegraphics[width=0.53\textwidth]{presentation/imgs/ch1/ego-example.png}
   \end{column}
   \begin{column}{0.48\textwidth}
     \centering
     {\large Exocentric}\\[0.6em]
-    \frameplaceholder{exocentric}
+    \includegraphics[width=0.9\textwidth]{presentation/imgs/ch1/exo-example.png}
   \end{column}
 \end{columns}
 \vfill
 \end{frame}
 
-% Placeholder box for the challenge column pictures (to be replaced).
-\newcommand{\challengeplaceholder}[1]{%
-  \fbox{\parbox[c][4.2cm][c]{0.92\linewidth}{\centering \textit{#1}\\[0.4em]{\scriptsize (picture to add)}}}%
-}
+% % Placeholder box for the challenge column pictures (to be replaced).
+% \newcommand{\challengeplaceholder}[1]{%
+%   \fbox{\parbox[c][4.2cm][c]{0.92\linewidth}{\centering \textit{#1}\\[0.4em]{\scriptsize (picture to add)}}}%
+% }
 
 \begin{frame}[t]
 \begin{center}
@@ -150,17 +150,17 @@ Object Video Tracking for Cross-View Object Correspondence}
   \begin{column}{0.32\textwidth}
     \centering
     {\large 1. Viewpoint change}\\[0.6em]
-    \challengeplaceholder{viewpoint change}
+    \includegraphics[width=\textwidth]{presentation/imgs/ch1/view-change.png}
   \end{column}
   \begin{column}{0.32\textwidth}
     \centering
     {\large 2. Temporal completeness}\\[0.6em]
-    \challengeplaceholder{temporal completeness}
+    \includegraphics[width=\textwidth]{presentation/imgs/ch1/temporal-consistency.png}
   \end{column}
   \begin{column}{0.32\textwidth}
     \centering
     {\large 3. Only visual information}\\[0.6em]
-    \challengeplaceholder{only visual information}
+    \includegraphics[width=\textwidth]{presentation/imgs/ch1/visual-info.png}
   \end{column}
 \end{columns}
 \vfill
@@ -338,7 +338,7 @@ Object Video Tracking for Cross-View Object Correspondence}
 \end{center}
 \vfill
 \begin{center}
-\fbox{\parbox[c][0.66\textheight][c]{0.9\linewidth}{\centering \textit{Example of poor cross-view object visibility}\\[0.4em]{\scriptsize (image to add)}}}
+\includegraphics[width=\textwidth]{presentation/imgs/ch3/poor-cross-quality.png}
 \end{center}
 \vfill
 \end{frame}
@@ -395,7 +395,7 @@ Object Video Tracking for Cross-View Object Correspondence}
 \end{center}
 \vfill
 \begin{center}
-\fbox{\parbox[c][0.66\textheight][c]{0.9\linewidth}{\centering \textit{Video tracker propagation example on Ego-Exo4D}\\[0.4em]{\scriptsize (image to add)}}}
+\includegraphics[width=\textwidth]{presentation/imgs/ch3/propagation-example.png}
 \end{center}
 \vfill
 \end{frame}
@@ -596,16 +596,10 @@ Main weakness: error of low quality anchor gets propagated to the entire take.
 {\large Naming issue}
 \end{center}
 \vfill
-\begin{columns}[c]
-  \begin{column}{0.55\textwidth}
-    \centering
-    \fbox{\parbox[c][0.6\textheight][c]{0.92\linewidth}{\centering Examples of naming failures\\[0.4em]{\scriptsize (image to add)}}}
-  \end{column}
-  \begin{column}{0.42\textwidth}
-    \large
-    Naming a different object in 59\% of the cases in Ego2Exo, and 81\% in Exo2Ego.
-  \end{column}
-\end{columns}
+\begin{center}
+\large Naming a different object in 59\% of the cases in Ego2Exo, and 81\% in Exo2Ego. \\[1.0em]
+\includegraphics[width=0.8\textwidth]{presentation/imgs/ch4/naming-failure-eg.png}
+\end{center}
 \vfill
 \end{frame}
 
@@ -628,7 +622,7 @@ Main weakness: error of low quality anchor gets propagated to the entire take.
 \end{center}
 \vspace{0.8em}
 \begin{center}
-\includegraphics[height=0.52\textheight]{imgs/ch4/vlm-description-failure.png}
+\includegraphics[height=0.52\textheight]{presentation/imgs/ch4/perception-issue-eg.png}
 \end{center}
 \vfill
 \end{frame}
@@ -754,7 +748,7 @@ Small object $\Rightarrow$ small signal to VLM. \\ Potential solution is foveate
   & \textit{Ego2Exo} IoU$\uparrow$ & \textit{Exo2Ego} IoU$\uparrow$ \\
   \midrule
   V\textsuperscript{2}-SAM & 46.3 & 49.6 \\
-  Our pipeline (May-end)   & 37.7 & 40.6 \\
+  Our pipeline (end-of-May)   & 37.7 & 40.6 \\
   \midrule
   Our pipeline (today) & \textbf{41.5} & \textbf{48.1} \\
   \% gap to V\textsuperscript{2}-SAM & $-10.4\%$ & $-3.0\%$ \\
@@ -763,6 +757,7 @@ Small object $\Rightarrow$ small signal to VLM. \\ Potential solution is foveate
 \\[0.8em]
 {\normalsize Latest pipeline performance on the Ego-Exo4D test set.}
 \vfill
+\slideref{Pan et al., 2025}
 \end{frame}
 
 \begin{frame}[t]
@@ -786,6 +781,7 @@ Small object $\Rightarrow$ small signal to VLM. \\ Potential solution is foveate
 \\[0.8em]
 {\normalsize Our pipeline's performance on the HANDAL-X benchmark.}
 \vfill
+\slideref{Fu et al., 2025; Pan et al., 2025}
 \end{frame}
 
 \begin{frame}
@@ -796,7 +792,7 @@ Small object $\Rightarrow$ small signal to VLM. \\ Potential solution is foveate
 
 \begin{frame}[t]
 \begin{center}
-{\large In this presentation}
+{\large This thesis}
 \end{center}
 \vfill
 \begin{center}
@@ -849,18 +845,18 @@ Small object $\Rightarrow$ small signal to VLM. \\ Potential solution is foveate
 
 \begin{frame}[t]
 \begin{center}
-{\large The human question}
+{\large The human questions}
 \end{center}
 \vfill
 \begin{center}
-{\Large Do we become supervisors, or will we automate \\ 100\% of certain tasks?}
+{\Large Do we become supervisors, or \\ will we completely automate certain tasks?}
 \end{center}
 \vfill
 \end{frame}
 
 \begin{frame}[t]
 \begin{center}
-{\large Even more interesting}
+{\large The human questions}
 \end{center}
 \vfill
 \begin{center}
