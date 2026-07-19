@@ -887,24 +887,24 @@ Small object $\Rightarrow$ small signal to VLM. \\ Potential solution is foveate
 \end{frame}
 
 % ============================================================
-% Supplementary: Related Work
+% Supplementary: Interventions
 % ============================================================
 
 \begin{frame}[t]
 \begin{center}
-{\large Cross-view video datasets}
+{\large Cropping the input is ineffective}
 \end{center}
 \vfill
 \begin{center}
 \small
-\setlength{\tabcolsep}{6pt}
-\begin{tabular}{lll}
+\setlength{\tabcolsep}{10pt}
+\begin{tabular}{lc}
   \toprule
-  Dataset & Year & Scale and annotations \\
+  What the descriptor-VLM sees & IoU (\textit{Ego2Exo}) \\
   \midrule
-  EPIC-KITCHENS-100 & 2021 & 100h kitchen; actions, narrations, hand/object boxes \\
-  Ego4D             & 2022 & 3,670h egocentric; 74 sites; memory, forecasting \\
-  Ego-Exo4D         & 2024 & 1,280h+ paired ego-exo; object masks (1/30 frames) \\
+  Raw frame + mask overlay & 41.2 \\
+  Raw + overlay + crop     & 41.1 \\
+  Only tight crop          & 18.0 \\
   \bottomrule
 \end{tabular}
 \end{center}
@@ -912,7 +912,7 @@ Small object $\Rightarrow$ small signal to VLM. \\ Potential solution is foveate
 \begin{center}
 \begin{minipage}{0.88\textwidth}
 \small
-Ego-Exo4D is the decisive dataset for this task, pairing a wearable egocentric camera with one or more exocentric cameras filming the same skilled action. It annotates object masks across categories and sizes at roughly one mask per object every 30 frames. This density is what makes cross-view object correspondence measurable.
+Replacing the full frame with a tight crop of the object more than halves IoU, from 41.1 to 18.0. The identity of a small object is carried by its surroundings, so a crop that maximises the object's pixels destroys the very evidence the VLM uses to name it. Appending a zoom alongside the full frame instead neither helps nor harms.
 \end{minipage}
 \end{center}
 \vfill
@@ -920,142 +920,21 @@ Ego-Exo4D is the decisive dataset for this task, pairing a wearable egocentric c
 
 \begin{frame}[t]
 \begin{center}
-{\large Geometric matching: RoMa}
-\end{center}
-\vfill
-\begin{center}
-\includegraphics[width=0.62\textwidth]{../latex/imgs/ch2/roma-exmaples.png}
-\end{center}
-\vspace{0.4em}
-\begin{center}
-\begin{minipage}{0.88\textwidth}
-\small
-RoMa is the strongest geometric matcher, predicting a dense warp field with a per-coordinate confidence rather than a sparse set of keypoints. On Ego-Exo4D the ego-exo viewpoint gap leaves too few confident correspondences, so the warp collapses exactly where it is needed. This failure of geometry motivates grounding the object through language instead.
-\end{minipage}
-\end{center}
-\vfill
-\end{frame}
-
-\begin{frame}[t]
-\begin{center}
-{\large Winning trained architectures}
-\end{center}
-\vfill
-\begin{columns}[c]
-  \begin{column}{0.5\textwidth}
-    \centering
-    {\normalsize O-MaMa}\\[0.4em]
-    \includegraphics[width=\textwidth]{imgs/ch2/o-mama-simple-arch.png}
-  \end{column}
-  \begin{column}{0.5\textwidth}
-    \centering
-    {\normalsize LM-EEC}\\[0.4em]
-    \includegraphics[width=\textwidth]{imgs/ch2/lm-eec-arch.png}
-  \end{column}
-\end{columns}
-\vspace{0.4em}
-\begin{center}
-\begin{minipage}{0.9\textwidth}
-\small
-O-MaMa ranks FastSAM candidate masks with a DINOv2 Mask-Context Encoder and a contrastive matching head, winning the 2025 challenge with 1\% of ObjectRelator's trainable parameters. LM-EEC retrains SAM~2 with a Memory-View Mixture-of-Experts fusion and separate ego and exo memories, holding the 2026 state of the art. Both learn cross-view fusion on the benchmark, which is the limitation our training-free design avoids.
-\end{minipage}
-\end{center}
-\vfill
-\end{frame}
-
-% ============================================================
-% Supplementary: Pipeline
-% ============================================================
-
-\begin{frame}[t]
-\begin{center}
-{\large Full pipeline architecture}
-\end{center}
-\vfill
-\begin{center}
-\includegraphics[width=0.95\textwidth]{../latex/imgs/ch3/pipeline_full_columns.png}
-\end{center}
-\vspace{0.3em}
-\begin{center}
-\begin{minipage}{0.9\textwidth}
-\small
-Stage~1 selects the seed frames where the object is most visible, Stage~2 writes a viewpoint-independent description, Stage~3 grounds that description to anchor frames and segments them with the SAM~3 agent, and Stage~4 propagates with SAM~2. The first three stages carry out the cross-view transfer; the last completes the mask track in time.
-\end{minipage}
-\end{center}
-\vfill
-\end{frame}
-
-\begin{frame}[t]
-\begin{center}
-{\large Bidirectional mask propagation}
-\end{center}
-\vfill
-\begin{center}
-\[
-  \hat{M}^D_i =
-  \begin{cases}
-    \hat{M}^{\rightarrow}_i, & a^\ast(i) \leq i,\\[3pt]
-    \hat{M}^{\leftarrow}_i, & a^\ast(i) > i,
-  \end{cases}
-  \qquad
-  a^\ast(i) = \operatorname*{arg\,min}_{a \in \mathcal{A}} \lvert i - a \rvert
-\]
-\end{center}
-\vspace{0.4em}
-\begin{center}
-\begin{minipage}{0.88\textwidth}
-\small
-SAM~2 propagates the anchor masks forward from the earliest anchor and backward from the latest, both passes carrying every anchor. For each frame the pipeline keeps the prediction from the pass whose nearest anchor $a^\ast(i)$ is closer, so the chain separating a frame from the anchor it leans on stays short. This minimises accumulated drift in the long gaps between anchors.
-\end{minipage}
-\end{center}
-\vfill
-\end{frame}
-
-% ============================================================
-% Supplementary: Experimental setup
-% ============================================================
-
-\begin{frame}[t]
-\begin{center}
-{\large Evaluation metrics}
-\end{center}
-\vfill
-\begin{center}
-\[
-  \text{LE} = \frac{\lVert \varsigma(\hat{M}) - \varsigma(M) \rVert_2}{d},
-  \qquad d = \sqrt{H^2 + W^2},
-  \qquad
-  \text{CA} = \frac{2 P R}{P + R}
-\]
-\end{center}
-\vspace{0.4em}
-\begin{center}
-\begin{minipage}{0.88\textwidth}
-\small
-Intersection over Union is the primary metric, averaged over every evaluated destination frame of a take. Location Error is the distance between predicted and ground-truth mask centroids $\varsigma(\cdot)$, normalised by the image diagonal $d$, so it isolates placement regardless of shape. Contour Accuracy is the boundary F-measure of precision $P$ and recall $R$, isolating outline quality.
-\end{minipage}
-\end{center}
-\vfill
-\end{frame}
-
-\begin{frame}[t]
-\begin{center}
-{\large Pipeline configuration}
+{\large Scene vocabulary conditioning}
 \end{center}
 \vfill
 \begin{center}
 \small
 \setlength{\tabcolsep}{8pt}
-\begin{tabular}{ll}
+\begin{tabular}{llcc}
   \toprule
-  Component & Choice \\
+  Subset & Conditioning & \textit{Ego2Exo} IoU$\uparrow$ & \textit{Exo2Ego} IoU$\uparrow$ \\
   \midrule
-  Seed frames $\lvert\mathcal{S}\rvert$ & 1 \\
-  Anchor frames $\lvert\mathcal{A}\rvert$ & 3 \\
-  Anchor selector & Grounding DINO \\
-  VLM backend (Stages 2 \& 3) & Qwen~3.5~35B \\
-  Video tracker (Stage 4) & SAM~2 \\
-  Hardware & 1$\times$ NVIDIA H200 \\
+  10\% & Off & 37.6 & 32.2 \\
+  10\% & On  & \textbf{40.8} & \textbf{48.0} \\
+  \midrule
+  25\% & Off & 37.8 & \textbf{43.7} \\
+  25\% & On  & \textbf{38.9} & 42.9 \\
   \bottomrule
 \end{tabular}
 \end{center}
@@ -1063,54 +942,162 @@ Intersection over Union is the primary metric, averaged over every evaluated des
 \begin{center}
 \begin{minipage}{0.88\textwidth}
 \small
-Every module runs off the shelf in pure inference, with no fine-tuning on Ego-Exo4D. A single seed frame already yields a description that satisfies view and time independence, while three anchors balance the stability of propagation against its cost. This inference-only setting is the asymmetry against which every trained baseline should be read.
+Classifying the take into its scenario and handing Stage~2 a curated list of plausible object names helps strongly on the 10\% subset, lifting \textit{Exo2Ego} from 32.2 to 48.0. The gain narrows to $+1.1$ and reverses to $-0.8$ on the larger 25\% subset. The scene prior helps small samples but does not generalise.
 \end{minipage}
 \end{center}
 \vfill
 \end{frame}
 
-% ============================================================
-% Supplementary: State of the art
-% ============================================================
+\begin{frame}[t]
+\begin{center}
+{\large Brightening the egocentric view}
+\end{center}
+\vfill
+\begin{center}
+\small
+\setlength{\tabcolsep}{10pt}
+\begin{tabular}{lccc}
+  \toprule
+  Direction & IoU (Off) & IoU (On) & $\Delta$ \\
+  \midrule
+  \textit{Ego2Exo} & 37.8 & 34.1 & $-3.7$ \\
+  \textit{Exo2Ego} & 43.7 & 41.4 & $-2.3$ \\
+  \bottomrule
+\end{tabular}
+\end{center}
+\vspace{0.8em}
+\begin{center}
+\begin{minipage}{0.88\textwidth}
+\small
+Egocentric frames are often dark, suggesting part of the dead mass might be a raw visibility problem. Raising the brightness and contrast of the ego frames before description and segmentation instead lowers IoU, within run-to-run variation. Pixel-level visibility is therefore not the binding constraint, consistent with the dead cases showing the object plainly and failing at naming.
+\end{minipage}
+\end{center}
+\vfill
+\end{frame}
 
 \begin{frame}[t]
 \begin{center}
-{\large Full state-of-the-art comparison}
+{\large ``Ill'' cases and propagation drift}
+\end{center}
+\vfill
+\begin{center}
+\small
+\setlength{\tabcolsep}{8pt}
+\begin{tabular}{lcc}
+  \toprule
+   & \textit{Ego2Exo} & \textit{Exo2Ego} \\
+  \midrule
+  Cases below 0.3 IoU (``ill'')      & 51\% & 49\% \\
+  Share of total IoU deficit         & $\sim$80\% & $\sim$80\% \\
+  Dead-anchor share (vs.\ 95\% at 0) & $\sim$37\% & $\sim$37\% \\
+  Propagation drift among added cases & $\sim$30\% & $\sim$30\% \\
+  \bottomrule
+\end{tabular}
+\end{center}
+\vspace{0.8em}
+\begin{center}
+\begin{minipage}{0.88\textwidth}
+\small
+Widening the target from exact zeros to every case below 0.3 IoU doubles the affected population and captures about 80\% of the total deficit. In this band dead anchors fall to 37\% while a Stage~4 drift mode appears, losing the mask on 65 to 75\% of frames after the anchors. Unlike the silent dead mass, a long run of empty masks is an internal signal that can be exploited.
+\end{minipage}
+\end{center}
+\vfill
+\end{frame}
+
+\begin{frame}[t]
+\begin{center}
+{\large Perception issue: a possible solution}
+\end{center}
+\vfill
+\begin{center}
+{\normalsize Small object $\Rightarrow$ small signal to the VLM. A possible remedy is foveated tokenisation.}\\[0.8em]
+\includegraphics[height=0.65\textheight]{imgs/ch4/foveated-tokenization.png}
+\end{center}
+\vfill
+\end{frame}
+
+\begin{frame}[t]
+\begin{center}
+{\large Extended gap analysis}
+\end{center}
+\vfill
+\begin{center}
+\includegraphics[width=0.8\textwidth]{imgs/ch4/gap-analysis-groups.png}
+\end{center}
+\vspace{0.3em}
+\begin{center}
+\begin{minipage}{0.9\textwidth}
+\small
+Object size and object naming push a case into the dead mass independently. Anchor failure falls monotonically with size in \textit{Ego2Exo}, from 63\% on the smallest quartile to 18\% on the largest. Holding size fixed, a wrong name roughly doubles to triples the failure rate, so the single largest cell in both directions is the object that is at once small and misnamed.
+\end{minipage}
+\end{center}
+\vfill
+\end{frame}
+
+\begin{frame}[t]
+\begin{center}
+{\large Targeted Interventions}
+\end{center}
+\vfill
+\begin{columns}
+  \begin{column}{0.55\textwidth}
+    \centering
+    \small
+    \begin{tabular}{lcc}
+      \toprule
+      Intervention & \textit{Ego2Exo} $\Delta$ & \textit{Exo2Ego} $\Delta$ \\
+      \midrule
+      Scene vocabulary hint    & $+1.1$ & $-0.8$ \\
+      Destination crop hint    & $-4.4$ & $-4.3$ \\
+      Brighten ego frames      & $-3.7$ & $-2.3$ \\
+      \bottomrule
+    \end{tabular}
+    \\[0.6em]
+    {\scriptsize $\Delta$ IoU on 25\% of validation.}
+  \end{column}
+  \begin{column}{0.45\textwidth}
+    \large
+    Outcomes mostly negative. On a legible pipeline, each still localises the constraint.
+  \end{column}
+\end{columns}
+\vfill
+\end{frame}
+
+\begin{frame}[t]
+\begin{center}
+{\large The Crop Paradox}
 \end{center}
 \vfill
 \begin{center}
 \footnotesize
-\setlength{\tabcolsep}{3pt}
-\begin{tabular}{l ccc ccc ccc}
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{lllccc}
   \toprule
-    & \rotatebox{90}{Training Free\;}
-    & \rotatebox{90}{Camera Agnostic\;}
-    & \rotatebox{90}{Dataset Agnostic\;}
-    & \multicolumn{3}{c}{\textit{Ego2Exo}}
-    & \multicolumn{3}{c}{\textit{Exo2Ego}} \\
-  \cmidrule(lr){5-7}\cmidrule(lr){8-10}
-  Method & & &
-    & IoU$\uparrow$ & LE$\downarrow$ & CA$\uparrow$
-    & IoU$\uparrow$ & LE$\downarrow$ & CA$\uparrow$ \\
+  Direction & Rank & Baseline band & IoU (Off) & IoU (On) & $\Delta$ \\
   \midrule
-  XSegTx      & $\times$ & $\times$ & $\times$ & 18.9 & 0.070 & 0.386 & 27.1 & 0.104 & 0.358 \\
-  XMem        & $\times$ & $\times$ & $\times$ & 19.3 & 0.151 & 0.262 & 16.6 & 0.160 & 0.240 \\
-  XMem+XSegTx & $\times$ & $\times$ & $\times$ & 34.9 & 0.038 & 0.559 & 25.0 & 0.117 & 0.237 \\
+  \textit{Ego2Exo} & confidence & Low $[0,0.25)$   & 1.5  & 6.4  & $+4.9$ \\
+  \textit{Ego2Exo} & confidence & Mid $[0.25,0.6)$ & 43.5 & 49.9 & $+6.3$ \\
+  \textit{Ego2Exo} & confidence & High $[0.6,1]$   & 87.0 & 67.6 & $-19.4$ \\
+  \cmidrule(l){2-6}
+  \textit{Ego2Exo} & bbox area  & Low $[0,0.25)$   & 1.1  & 8.8  & $+7.7$ \\
+  \textit{Ego2Exo} & bbox area  & Mid $[0.25,0.6)$ & 43.1 & 31.8 & $-11.3$ \\
+  \textit{Ego2Exo} & bbox area  & High $[0.6,1]$   & 86.6 & 65.1 & $-21.5$ \\
   \midrule
-  ObjectRelator & $\times$ & $\times$ & \checkmark & 35.3 & 0.036 & 0.540 & 40.3 & 0.068 & 0.500 \\
-  O-MaMa        & $\times$ & $\times$ & $\times$ & 42.6 & 0.033 & 0.590 & 44.1 & 0.082 & 0.524 \\
-  V\textsuperscript{2}-SAM & $\times$ & $\times$ & \checkmark & 46.3 & 0.056 & 0.616 & 49.6 & 0.078 & 0.575 \\
-  LM-EEC & $\times$ & $\times$ & $\times$ & \textbf{54.98} & \textbf{0.017} & \textbf{0.778} & \textbf{65.77} & \textbf{0.031} & \textbf{0.774} \\
-  \midrule
-  Ours (this thesis) & \checkmark & \checkmark & \checkmark & 37.7 & 0.071 & 0.471 & 40.6 & 0.114 & 0.468 \\
+  \textit{Exo2Ego} & confidence & Low $[0,0.25)$   & 0.9  & 6.5  & $+5.6$ \\
+  \textit{Exo2Ego} & confidence & Mid $[0.25,0.6)$ & 43.5 & 49.4 & $+5.9$ \\
+  \textit{Exo2Ego} & confidence & High $[0.6,1]$   & 89.6 & 82.0 & $-7.6$ \\
+  \cmidrule(l){2-6}
+  \textit{Exo2Ego} & bbox area  & Low $[0,0.25)$   & 0.7  & 5.1  & $+4.3$ \\
+  \textit{Exo2Ego} & bbox area  & Mid $[0.25,0.6)$ & 43.0 & 22.8 & $-20.2$ \\
+  \textit{Exo2Ego} & bbox area  & High $[0.6,1]$   & 90.2 & 68.5 & $-21.7$ \\
   \bottomrule
 \end{tabular}
 \end{center}
-\vspace{0.6em}
+\vspace{0.5em}
 \begin{center}
 \begin{minipage}{0.9\textwidth}
 \small
-Ours is the only training-free, camera-agnostic, and dataset-agnostic method on the Correspondences v2 test split. It trails challenge winner O-MaMa by roughly five IoU points ($-11.5\%$ and $-7.9\%$) yet overtakes ObjectRelator in both directions. The higher Location Error reflects grounding the object by language rather than by a learned correspondence.
+The large high band drives the aggregate mean negative. An unconditional hint is therefore the wrong tool, and only a gated variant firing on the failing population could net positive.
 \end{minipage}
 \end{center}
 \vfill
@@ -1118,57 +1105,64 @@ Ours is the only training-free, camera-agnostic, and dataset-agnostic method on 
 
 \begin{frame}[t]
 \begin{center}
-{\large Head-to-head against LM-EEC}
+{\large Motivating Stage 3.1: correlation in visibility score across views}
 \end{center}
 \vfill
-\begin{center}
-\includegraphics[width=0.9\textwidth]{imgs/ch4/pipeline-lmeec.png}
-\end{center}
+  \begin{center}
+    \includegraphics[width=0.4\textwidth]{imgs/ch3/visibility-score-correlation.png}
+  \end{center}
 \vspace{0.3em}
 \begin{center}
-\begin{minipage}{0.9\textwidth}
+\begin{minipage}{0.88\textwidth}
 \small
-On 30\% of the \textit{Exo2Ego} validation takes at an IoU threshold of 0.5, the pipeline's IoU distribution is bimodal with a zero mode that drags its mean to 40.5 against LM-EEC's 64.4. Once the cases each system fails outright are removed, our approach levels the SOTA at 73.2 against 70.5. The anchor-IoU panel locates the gap, since LM-EEC dominates exactly where our anchors are poor.
+The composite visibility scores of paired source and destination frames are almost uncorrelated, with a Spearman correlation of 0.14 and a per-object distribution centred on zero. A frame that scores well in one view therefore carries no guarantee of scoring well in the other. Stage~3 consequently selects anchors independently in the destination view by grounding confidence, rather than reusing the source frame index.
 \end{minipage}
 \end{center}
 \vfill
 \end{frame}
 
-% ============================================================
-% Supplementary: Ablations
-% ============================================================
+\begin{frame}[t]
+\begin{center}
+{\large Waterfall analysis}
+\end{center}
+\vfill
+    \centering
+    \small
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{lcc}
+      \toprule
+      First failure & \textit{Ego2Exo} & \textit{Exo2Ego} \\
+      \midrule
+        (2) VLM names a different object        & \textbf{59\%} & \textbf{81\%} \\
+        (3) Anchor lands on a tiny object       & 15\% & 11\% \\
+        (3) Grounding DINO box misses           & 10\% & 2\%  \\
+        (3) Agent segments wrong, good box      & 16\% & 5\%  \\
+        (4) Propagation                         & 0\%  & 0\%  \\
+      \bottomrule
+    \end{tabular}
+    \\[0.6em]
+    {\scriptsize Each dead case charged to the first stage that breaks.}
+\vfill
+\end{frame}
 
 \begin{frame}[t]
 \begin{center}
-{\large Contribution of each component}
+{\large What does the VLM describe?}
 \end{center}
 \vfill
-\begin{center}
-\small
-\setlength{\tabcolsep}{8pt}
-\begin{tabular}{lrrr}
-  \toprule
-  Exp. & IoU$\uparrow$ & $t$/frame\,(s)$\downarrow$ & Total$\downarrow$ \\
-  \midrule
-  Baseline        & 10.6 & 1.32 & 3h\,50m \\
-  Baseline Oracle & 17.0 & 0.12 & 21m\,20s \\
-  \midrule
-  (A) Best Single Frame & 16.8 & 0.13 & 22m\,53s \\
-  (B) SAM 3 Agent Loop  & 35.5 & 21.30 & 59h\,15m \\
-  (C) Propagation       & 37.7 & 0.82 & 2h\,23m \\
-  (D) G-DINO            & \textbf{38.1} & 0.90 & 2h\,37m \\
-  \midrule
-  D \% change vs.\ Baseline & $+259.8\%$ & $-31.8\%$ & $-31.7\%$ \\
-  \bottomrule
-\end{tabular}
-\end{center}
-\vspace{0.6em}
-\begin{center}
-\begin{minipage}{0.9\textwidth}
-\small
-Adding the stages of the pipeline one at a time lifts IoU from 10.6 to 38.1 on 10\% of the \textit{Ego2Exo} validation takes, a relative gain of 259.8\% at lower per-frame cost. The oracle object name (17.0) flags description quality as a bottleneck before any architectural change. Propagation matches the full agent loop (37.7) while running roughly 25 times faster.
-\end{minipage}
-\end{center}
+\centering
+    \small
+    \begin{tabular}{lcc}
+      \toprule
+      VLM nominates & \textit{Ego2Exo} & \textit{Exo2Ego} \\
+      \midrule
+      Correct target (fails later)   & 41\% & 19\% \\
+      A different annotated object   & 25\% & 23\% \\
+      An unannotated neighbour       & 34\% & 58\% \\
+      \bottomrule
+    \end{tabular}
+    \\[0.6em]
+    {\scriptsize Nominations on the dead cases (anchor IoU $=0$).}
 \vfill
 \end{frame}
 
@@ -1269,6 +1263,263 @@ Judged by Gemma~4 on object name and properties, Qwen~3.5~35B attains the highes
 \end{frame}
 
 % ============================================================
+% Supplementary: Related Work
+% ============================================================
+
+\begin{frame}[t]
+\begin{center}
+{\large Cross-view video datasets}
+\end{center}
+\vfill
+\begin{center}
+\small
+\setlength{\tabcolsep}{6pt}
+\begin{tabular}{lll}
+  \toprule
+  Dataset & Year & Scale and annotations \\
+  \midrule
+  EPIC-KITCHENS-100 & 2021 & 100h kitchen; actions, narrations, hand/object boxes \\
+  Ego4D             & 2022 & 3,670h egocentric; 74 sites; memory, forecasting \\
+  Ego-Exo4D         & 2024 & 1,280h+ paired ego-exo; object masks (1/30 frames) \\
+  \bottomrule
+\end{tabular}
+\end{center}
+\vspace{0.8em}
+\begin{center}
+\begin{minipage}{0.88\textwidth}
+\small
+Ego-Exo4D is the decisive dataset for this task, pairing a wearable egocentric camera with one or more exocentric cameras filming the same skilled action. It annotates object masks across categories and sizes at roughly one mask per object every 30 frames. This density is what makes cross-view object correspondence measurable.
+\end{minipage}
+\end{center}
+\vfill
+\end{frame}
+
+\begin{frame}[t]
+\begin{center}
+{\large Geometric matching: RoMa}
+\end{center}
+\vfill
+\begin{center}
+\includegraphics[width=0.62\textwidth]{../latex/imgs/ch2/roma-exmaples.png}
+\end{center}
+\vspace{0.4em}
+\begin{center}
+\begin{minipage}{0.88\textwidth}
+\small
+RoMa is the strongest geometric matcher, predicting a dense warp field with a per-coordinate confidence rather than a sparse set of keypoints. On Ego-Exo4D the ego-exo viewpoint gap leaves too few confident correspondences, so the warp collapses exactly where it is needed. This failure of geometry motivates grounding the object through language instead.
+\end{minipage}
+\end{center}
+\vfill
+\end{frame}
+
+\begin{frame}[t]
+\begin{center}
+{\large Selected trained architectures}
+\end{center}
+\vfill
+\begin{columns}[c]
+  \begin{column}{0.5\textwidth}
+    \centering
+    {\normalsize O-MaMa}\\[0.4em]
+    \includegraphics[width=0.5\textwidth]{imgs/ch2/o-mama-simple-arch.png}
+  \end{column}
+  \begin{column}{0.5\textwidth}
+    \centering
+    {\normalsize LM-EEC}\\[0.4em]
+    \includegraphics[width=\textwidth]{imgs/ch2/lm-eec-arch.png}
+  \end{column}
+\end{columns}
+\vspace{0.4em}
+\begin{center}
+\begin{minipage}{0.9\textwidth}
+\small
+O-MaMa ranks FastSAM candidate masks with a DINOv2 Mask-Context Encoder and a contrastive matching head, winning the 2025 challenge with 1\% of ObjectRelator's trainable parameters. LM-EEC retrains SAM~2 with a Memory-View Mixture-of-Experts fusion and separate ego and exo memories, holding the 2026 state of the art. Both learn cross-view fusion on the benchmark, which is the limitation our training-free design avoids.
+\end{minipage}
+\end{center}
+\vfill
+\end{frame}
+
+% ============================================================
+% Supplementary: Pipeline
+% ============================================================
+
+\begin{frame}[t]
+\begin{center}
+{\large Full pipeline architecture}
+\end{center}
+\vfill
+\begin{center}
+\includegraphics[width=0.7\textwidth]{../latex/imgs/ch3/pipeline_full_columns.png}
+\end{center}
+\vspace{0.3em}
+\begin{center}
+\end{center}
+\vfill
+\end{frame}
+
+\begin{frame}[t]
+\begin{center}
+{\large Bidirectional mask propagation}
+\end{center}
+\vfill
+\begin{center}
+\[
+  \hat{M}^D_i =
+  \begin{cases}
+    \hat{M}^{\rightarrow}_i, & a^\ast(i) \leq i,\\[3pt]
+    \hat{M}^{\leftarrow}_i, & a^\ast(i) > i,
+  \end{cases}
+  \qquad
+  a^\ast(i) = \operatorname*{arg\,min}_{a \in \mathcal{A}} \lvert i - a \rvert
+\]
+\end{center}
+\vspace{0.4em}
+\begin{center}
+\begin{minipage}{0.88\textwidth}
+\small
+SAM~2 propagates the anchor masks forward from the earliest anchor and backward from the latest, both passes carrying every anchor. For each frame the pipeline keeps the prediction from the pass whose nearest anchor $a^\ast(i)$ is closer, so the chain separating a frame from the anchor it leans on stays short. This minimises accumulated drift in the long gaps between anchors.
+\end{minipage}
+\end{center}
+\vfill
+\end{frame}
+
+% ============================================================
+% Supplementary: Experimental setup
+% ============================================================
+
+\begin{frame}[t]
+\begin{center}
+{\large Evaluation metrics}
+\end{center}
+\vfill
+\begin{center}
+\[
+  \text{LE} = \frac{\lVert \varsigma(\hat{M}) - \varsigma(M) \rVert_2}{d},
+  \qquad d = \sqrt{H^2 + W^2},
+  \qquad
+  \text{CA} = \frac{2 P R}{P + R}
+\]
+\end{center}
+\vspace{0.4em}
+\begin{center}
+\begin{minipage}{0.88\textwidth}
+\small
+Intersection over Union is the primary metric, averaged over every evaluated destination frame of a take. Location Error is the distance between predicted and ground-truth mask centroids $\varsigma(\cdot)$, normalised by the image diagonal $d$, so it isolates placement regardless of shape. Contour Accuracy is the boundary F-measure of precision $P$ and recall $R$, isolating outline quality.
+\end{minipage}
+\end{center}
+\vfill
+\end{frame}
+
+\begin{frame}[t]
+\begin{center}
+{\large Pipeline configuration}
+\end{center}
+\vfill
+\begin{center}
+\small
+\setlength{\tabcolsep}{8pt}
+\begin{tabular}{ll}
+  \toprule
+  Component & Choice \\
+  \midrule
+  Seed frames $\lvert{\textit{S}}\rvert$ & 1 \\
+  Anchor frames $\lvert{\textit{A}}\rvert$ & 3 \\
+  Anchor selector & Grounding DINO \\
+  VLM backend (Stages 2 \& 3) & Qwen~3.5~35B \\
+  Hardware & 1$\times$ NVIDIA H200 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+\vspace{0.8em}
+\begin{center}
+\begin{minipage}{0.88\textwidth}
+\small
+Every module runs off the shelf in pure inference, with no fine-tuning on Ego-Exo4D. A single seed frame already yields a description that satisfies view and time independence, while three anchors balance the stability of propagation against its cost. This inference-only setting is the asymmetry against which every trained baseline should be read.
+\end{minipage}
+\end{center}
+\vfill
+\end{frame}
+
+% ============================================================
+% Supplementary: State of the art
+% ============================================================
+
+\begin{frame}[t]
+\begin{center}
+{\large Full state-of-the-art comparison}
+\end{center}
+\vfill
+\begin{center}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{l ccc ccc ccc}
+  \toprule
+    & \rotatebox{90}{Training Free\;}
+    & \rotatebox{90}{Camera Agnostic\;}
+    & \rotatebox{90}{Dataset Agnostic\;}
+    & \multicolumn{3}{c}{\textit{Ego2Exo}}
+    & \multicolumn{3}{c}{\textit{Exo2Ego}} \\
+  \cmidrule(lr){5-7}\cmidrule(lr){8-10}
+  Method & & &
+    & IoU$\uparrow$ & LE$\downarrow$ & CA$\uparrow$
+    & IoU$\uparrow$ & LE$\downarrow$ & CA$\uparrow$ \\
+  \midrule
+  XSegTx      & $\times$ & $\times$ & $\times$ & 18.9 & 0.070 & 0.386 & 27.1 & 0.104 & 0.358 \\
+  XMem        & $\times$ & $\times$ & $\times$ & 19.3 & 0.151 & 0.262 & 16.6 & 0.160 & 0.240 \\
+  XMem+XSegTx & $\times$ & $\times$ & $\times$ & 34.9 & 0.038 & 0.559 & 25.0 & 0.117 & 0.237 \\
+  \midrule
+  ObjectRelator & $\times$ & $\times$ & \checkmark & 35.3 & 0.036 & 0.540 & 40.3 & 0.068 & 0.500 \\
+  O-MaMa        & $\times$ & $\times$ & $\times$ & 42.6 & 0.033 & 0.590 & 44.1 & 0.082 & 0.524 \\
+  V\textsuperscript{2}-SAM & $\times$ & $\times$ & \checkmark & 46.3 & 0.056 & 0.616 & 49.6 & 0.078 & 0.575 \\
+  LM-EEC & $\times$ & $\times$ & $\times$ & \textbf{54.98} & \textbf{0.017} & \textbf{0.778} & \textbf{65.77} & \textbf{0.031} & \textbf{0.774} \\
+  \midrule
+  Ours (this thesis) & \checkmark & \checkmark & \checkmark & 37.7 & 0.071 & 0.471 & 40.6 & 0.114 & 0.468 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+\vspace{0.6em}
+\vfill
+\end{frame}
+
+% ============================================================
+% Supplementary: Ablations
+% ============================================================
+
+\begin{frame}[t]
+\begin{center}
+{\large Contribution of each component}
+\end{center}
+\vfill
+\begin{center}
+\small
+\setlength{\tabcolsep}{8pt}
+\begin{tabular}{lrrr}
+  \toprule
+  Exp. & IoU$\uparrow$ & $t$/frame\,(s)$\downarrow$ & Total$\downarrow$ \\
+  \midrule
+  Baseline        & 10.6 & 1.32 & 3h\,50m \\
+  Baseline Oracle & 17.0 & 0.12 & 21m\,20s \\
+  \midrule
+  (A) Best Single Frame & 16.8 & 0.13 & 22m\,53s \\
+  (B) SAM 3 Agent Loop  & 35.5 & 21.30 & 59h\,15m \\
+  (C) Propagation       & 37.7 & 0.82 & 2h\,23m \\
+  (D) G-DINO            & \textbf{38.1} & 0.90 & 2h\,37m \\
+  \midrule
+  D \% change vs.\ Baseline & $+259.8\%$ & $-31.8\%$ & $-31.7\%$ \\
+  \bottomrule
+\end{tabular}
+\end{center}
+\vspace{0.6em}
+\begin{center}
+\begin{minipage}{0.9\textwidth}
+\small
+Adding the stages of the pipeline one at a time lifts IoU from 10.6 to 38.1 on 10\% of the \textit{Ego2Exo} validation takes, a relative gain of 259.8\% at lower per-frame cost. The oracle object name (17.0) flags description quality as a bottleneck before any architectural change. Propagation matches the full agent loop (37.7) while running roughly 25 times faster.
+\end{minipage}
+\end{center}
+\vfill
+\end{frame}
+
+% ============================================================
 % Supplementary: Mechanistic gap analysis
 % ============================================================
 
@@ -1307,7 +1558,7 @@ About a third of cases sit in a dead mass near zero IoU, while the mean over the
 \end{center}
 \vfill
 \begin{center}
-\includegraphics[width=0.9\textwidth]{imgs/ch4/grounding-examples.png}
+\includegraphics[width=0.7\textwidth]{imgs/ch4/grounding-examples.png}
 \end{center}
 \vspace{0.3em}
 \begin{center}
@@ -1316,332 +1567,6 @@ About a third of cases sit in a dead mass near zero IoU, while the mean over the
 The anchor IoU is exactly zero in 37\% of cases, and only about one in ten of those ever recovers past 0.1. The opposite event, a healthy anchor collapsing during propagation, accounts for only 6 to 8\%, isolating the language bridge and its grounding as the stages that decide the dead mass. A mask is still produced in 93\% of dead cases, so the pipeline commits silently to the wrong object rather than abstaining.
 \end{minipage}
 \end{center}
-\vfill
-\end{frame}
-
-\begin{frame}[t]
-\begin{center}
-{\large Examples of naming failures}
-\end{center}
-\vfill
-\begin{center}
-\includegraphics[width=0.85\textwidth]{imgs/ch4/vlm-description-failure.png}
-\end{center}
-\vspace{0.3em}
-\begin{center}
-\begin{minipage}{0.9\textwidth}
-\small
-Two failure modes of the language bridge. In the first the target is seen only partially in the source frame, so the VLM has little to describe. In the second the description is not specific enough and locks onto another object in the anchor frame. Both push the case into the dead mass before SAM~3 ever runs.
-\end{minipage}
-\end{center}
-\vfill
-\end{frame}
-
-\begin{frame}[t]
-\begin{center}
-{\large VLM naming is a perception failure}
-\end{center}
-\vfill
-\begin{center}
-{\normalsize Median source mask size as \% of frame area}\\[0.5em]
-\small
-\setlength{\tabcolsep}{10pt}
-\begin{tabular}{lcc}
-  \toprule
-   & Dead cases & Successful cases \\
-  \midrule
-  \textit{Ego2Exo} & 1.43\% & 4.05\% \\
-  \textit{Exo2Ego} & 0.098\% & 0.564\% \\
-  \bottomrule
-\end{tabular}
-\end{center}
-\vspace{0.8em}
-\begin{center}
-\begin{minipage}{0.88\textwidth}
-\small
-On the dead cases the source mask handed to the VLM is three to six times smaller than on the successes, and half of the \textit{Exo2Ego} failures show the object under 0.1\% of the frame. A small object gives the model little signal, so it names a larger neighbour it can actually see. The failure is one of perception, not of vocabulary or implementation.
-\end{minipage}
-\end{center}
-\vfill
-\end{frame}
-
-% ============================================================
-% Supplementary: Interventions
-% ============================================================
-
-\begin{frame}[t]
-\begin{center}
-{\large Cropping the input is ineffective}
-\end{center}
-\vfill
-\begin{center}
-\small
-\setlength{\tabcolsep}{10pt}
-\begin{tabular}{lc}
-  \toprule
-  What the descriptor-VLM sees & IoU (\textit{Ego2Exo}) \\
-  \midrule
-  Raw frame + mask overlay & 41.2 \\
-  Raw + overlay + crop     & 41.1 \\
-  Only tight crop          & 18.0 \\
-  \bottomrule
-\end{tabular}
-\end{center}
-\vspace{0.8em}
-\begin{center}
-\begin{minipage}{0.88\textwidth}
-\small
-Replacing the full frame with a tight crop of the object more than halves IoU, from 41.1 to 18.0. The identity of a small object is carried by its surroundings, so a crop that maximises the object's pixels destroys the very evidence the VLM uses to name it. Appending a zoom alongside the full frame instead neither helps nor harms.
-\end{minipage}
-\end{center}
-\vfill
-\end{frame}
-
-\begin{frame}[t]
-\begin{center}
-{\large Scene vocabulary conditioning}
-\end{center}
-\vfill
-\begin{center}
-\small
-\setlength{\tabcolsep}{8pt}
-\begin{tabular}{llcc}
-  \toprule
-  Subset & Conditioning & \textit{Ego2Exo} IoU$\uparrow$ & \textit{Exo2Ego} IoU$\uparrow$ \\
-  \midrule
-  10\% & Off & 37.6 & 32.2 \\
-  10\% & On  & \textbf{40.8} & \textbf{48.0} \\
-  \midrule
-  25\% & Off & 37.8 & \textbf{43.7} \\
-  25\% & On  & \textbf{38.9} & 42.9 \\
-  \bottomrule
-\end{tabular}
-\end{center}
-\vspace{0.8em}
-\begin{center}
-\begin{minipage}{0.88\textwidth}
-\small
-Classifying the take into its scenario and handing Stage~2 a curated list of plausible object names helps strongly on the 10\% subset, lifting \textit{Exo2Ego} from 32.2 to 48.0. The gain narrows to $+1.1$ and reverses to $-0.8$ on the larger 25\% subset. The scene prior helps small samples but does not generalise.
-\end{minipage}
-\end{center}
-\vfill
-\end{frame}
-
-\begin{frame}[t]
-\begin{center}
-{\large Brightening the egocentric view}
-\end{center}
-\vfill
-\begin{center}
-\small
-\setlength{\tabcolsep}{10pt}
-\begin{tabular}{lccc}
-  \toprule
-  Direction & IoU (Off) & IoU (On) & $\Delta$ \\
-  \midrule
-  \textit{Ego2Exo} & 37.8 & 34.1 & $-3.7$ \\
-  \textit{Exo2Ego} & 43.7 & 41.4 & $-2.3$ \\
-  \bottomrule
-\end{tabular}
-\end{center}
-\vspace{0.8em}
-\begin{center}
-\begin{minipage}{0.88\textwidth}
-\small
-Egocentric frames are often dark, suggesting part of the dead mass might be a raw visibility problem. Raising the brightness and contrast of the ego frames before description and segmentation instead lowers IoU, within run-to-run variation. Pixel-level visibility is therefore not the binding constraint, consistent with the dead cases showing the object plainly and failing at naming.
-\end{minipage}
-\end{center}
-\vfill
-\end{frame}
-
-\begin{frame}[t]
-\begin{center}
-{\large Ill cases and propagation drift}
-\end{center}
-\vfill
-\begin{center}
-\small
-\setlength{\tabcolsep}{8pt}
-\begin{tabular}{lcc}
-  \toprule
-   & \textit{Ego2Exo} & \textit{Exo2Ego} \\
-  \midrule
-  Cases below 0.3 IoU (``ill'')      & 51\% & 49\% \\
-  Share of total IoU deficit         & $\sim$80\% & $\sim$80\% \\
-  Dead-anchor share (vs.\ 95\% at 0) & $\sim$37\% & $\sim$37\% \\
-  Propagation drift among added cases & $\sim$30\% & $\sim$30\% \\
-  \bottomrule
-\end{tabular}
-\end{center}
-\vspace{0.8em}
-\begin{center}
-\begin{minipage}{0.88\textwidth}
-\small
-Widening the target from exact zeros to every case below 0.3 IoU doubles the affected population and captures about 80\% of the total deficit. In this band dead anchors fall to 37\% while a Stage~4 drift mode appears, losing the mask on 65 to 75\% of frames after the anchors. Unlike the silent dead mass, a long run of empty masks is an internal signal that can be exploited.
-\end{minipage}
-\end{center}
-\vfill
-\end{frame}
-
-\begin{frame}[t]
-\begin{center}
-{\large Perception issue: a possible solution}
-\end{center}
-\vfill
-\begin{center}
-{\normalsize Small object $\Rightarrow$ small signal to the VLM. A possible remedy is foveated tokenisation.}\\[0.8em]
-\includegraphics[height=0.65\textheight]{imgs/ch4/foveated-tokenization.png}
-\end{center}
-\vfill
-\end{frame}
-
-\begin{frame}[t]
-\begin{center}
-{\large Extended gap analysis}
-\end{center}
-\vfill
-\begin{center}
-\includegraphics[width=0.95\textwidth]{imgs/ch4/gap-analysis-groups.png}
-\end{center}
-\vspace{0.3em}
-\begin{center}
-\begin{minipage}{0.9\textwidth}
-\small
-Object size and object naming push a case into the dead mass independently. Anchor failure falls monotonically with size in \textit{Ego2Exo}, from 63\% on the smallest quartile to 18\% on the largest. Holding size fixed, a wrong name roughly doubles to triples the failure rate, so the single largest cell in both directions is the object that is at once small and misnamed.
-\end{minipage}
-\end{center}
-\vfill
-\end{frame}
-
-\begin{frame}[t]
-\begin{center}
-{\large Targeted Interventions}
-\end{center}
-\vfill
-\begin{columns}
-  \begin{column}{0.55\textwidth}
-    \centering
-    \small
-    \begin{tabular}{lcc}
-      \toprule
-      Intervention & \textit{Ego2Exo} $\Delta$ & \textit{Exo2Ego} $\Delta$ \\
-      \midrule
-      Scene vocabulary hint    & $+1.1$ & $-0.8$ \\
-      Destination crop hint    & $-4.4$ & $-4.3$ \\
-      Brighten ego frames      & $-3.7$ & $-2.3$ \\
-      \bottomrule
-    \end{tabular}
-    \\[0.6em]
-    {\scriptsize $\Delta$ IoU on 25\% of validation.}
-  \end{column}
-  \begin{column}{0.45\textwidth}
-    \large
-    Outcomes mostly negative. On a legible pipeline, each still localises the constraint.
-  \end{column}
-\end{columns}
-\vfill
-\end{frame}
-
-\begin{frame}[t]
-\begin{center}
-{\large The Crop Paradox}
-\end{center}
-\vfill
-\begin{center}
-\footnotesize
-\setlength{\tabcolsep}{5pt}
-\begin{tabular}{lllccc}
-  \toprule
-  Direction & Rank & Baseline band & IoU (Off) & IoU (On) & $\Delta$ \\
-  \midrule
-  \textit{Ego2Exo} & confidence & Low $[0,0.25)$   & 1.5  & 6.4  & $+4.9$ \\
-  \textit{Ego2Exo} & confidence & Mid $[0.25,0.6)$ & 43.5 & 49.9 & $+6.3$ \\
-  \textit{Ego2Exo} & confidence & High $[0.6,1]$   & 87.0 & 67.6 & $-19.4$ \\
-  \cmidrule(l){2-6}
-  \textit{Ego2Exo} & bbox area  & Low $[0,0.25)$   & 1.1  & 8.8  & $+7.7$ \\
-  \textit{Ego2Exo} & bbox area  & Mid $[0.25,0.6)$ & 43.1 & 31.8 & $-11.3$ \\
-  \textit{Ego2Exo} & bbox area  & High $[0.6,1]$   & 86.6 & 65.1 & $-21.5$ \\
-  \midrule
-  \textit{Exo2Ego} & confidence & Low $[0,0.25)$   & 0.9  & 6.5  & $+5.6$ \\
-  \textit{Exo2Ego} & confidence & Mid $[0.25,0.6)$ & 43.5 & 49.4 & $+5.9$ \\
-  \textit{Exo2Ego} & confidence & High $[0.6,1]$   & 89.6 & 82.0 & $-7.6$ \\
-  \cmidrule(l){2-6}
-  \textit{Exo2Ego} & bbox area  & Low $[0,0.25)$   & 0.7  & 5.1  & $+4.3$ \\
-  \textit{Exo2Ego} & bbox area  & Mid $[0.25,0.6)$ & 43.0 & 22.8 & $-20.2$ \\
-  \textit{Exo2Ego} & bbox area  & High $[0.6,1]$   & 90.2 & 68.5 & $-21.7$ \\
-  \bottomrule
-\end{tabular}
-\end{center}
-\vspace{0.5em}
-\begin{center}
-\begin{minipage}{0.9\textwidth}
-\small
-Passing the Grounding DINO box to the SAM~3 agent as a destination crop hint rescues frames the pipeline was already failing, adding 4 to 8 IoU in the low baseline band, yet corrupts frames it already handled, removing 8 to 22 in the high band. The large high band drives the aggregate mean negative. An unconditional hint is therefore the wrong tool, and only a gated variant firing on the failing population could net positive.
-\end{minipage}
-\end{center}
-\vfill
-\end{frame}
-
-\begin{frame}[t]
-\begin{center}
-{\large Motivating Stage 3.1: correlation in visibility score across views}
-\end{center}
-\vfill
-  \begin{center}
-    \includegraphics[width=0.5\textwidth]{imgs/ch3/visibility-score-correlation.png}
-  \end{center}
-\vspace{0.3em}
-\begin{center}
-\begin{minipage}{0.88\textwidth}
-\small
-The composite visibility scores of paired source and destination frames are almost uncorrelated, with a Spearman correlation of 0.14 and a per-object distribution centred on zero. A frame that scores well in one view therefore carries no guarantee of scoring well in the other. Stage~3 consequently selects anchors independently in the destination view by grounding confidence, rather than reusing the source frame index.
-\end{minipage}
-\end{center}
-\vfill
-\end{frame}
-
-\begin{frame}[t]
-\begin{center}
-{\large Waterfall analysis}
-\end{center}
-\vfill
-    \centering
-    \small
-    \setlength{\tabcolsep}{4pt}
-    \begin{tabular}{lcc}
-      \toprule
-      First failure & \textit{Ego2Exo} & \textit{Exo2Ego} \\
-      \midrule
-        (2) VLM names a different object        & \textbf{59\%} & \textbf{81\%} \\
-        (3) Anchor lands on a tiny object       & 15\% & 11\% \\
-        (3) Grounding DINO box misses           & 10\% & 2\%  \\
-        (3) Agent segments wrong, good box      & 16\% & 5\%  \\
-        (4) Propagation                         & 0\%  & 0\%  \\
-      \bottomrule
-    \end{tabular}
-    \\[0.6em]
-    {\scriptsize Each dead case charged to the first stage that breaks.}
-\vfill
-\end{frame}
-
-\begin{frame}[t]
-\begin{center}
-{\large What does the VLM describe?}
-\end{center}
-\vfill
-\centering
-    \small
-    \begin{tabular}{lcc}
-      \toprule
-      VLM nominates & \textit{Ego2Exo} & \textit{Exo2Ego} \\
-      \midrule
-      Correct target (fails later)   & 41\% & 19\% \\
-      A different annotated object   & 25\% & 23\% \\
-      An unannotated neighbour       & 34\% & 58\% \\
-      \bottomrule
-    \end{tabular}
-    \\[0.6em]
-    {\scriptsize Nominations on the dead cases (anchor IoU $=0$).}
 \vfill
 \end{frame}
 
