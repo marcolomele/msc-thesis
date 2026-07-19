@@ -23,6 +23,7 @@
 \usepackage{colortbl} % \rowcolor for highlighted table rows
 \usepackage{microtype}
 \usepackage{tikz}
+\usepackage[dvipsnames]{xcolor}
 \usetikzlibrary{positioning,fit,backgrounds}
 \usepackage{hyperref}
 \hypersetup{colorlinks=true, linkcolor=blue}
@@ -164,15 +165,15 @@ Object Video Tracking for Cross-View Object Correspondence}
 \end{columns}
 \vfill
 \end{frame}
-
+  
 \begin{frame}[t]
   \begin{center}
-      {\large Common Limitations}
+      {\large Common Limitations of Related Methods}
   \end{center}
   \vfill
   \begin{center}
       \begin{enumerate}
-          \item \large Predictions are \textit{not interpretable}.
+          \item \large \textit{Not interpretable} predictions because they are based on abstract embeddings.
           \item \large \textit{Training} on Ego-Exo4D.
       \end{enumerate}
   \end{center}
@@ -206,7 +207,7 @@ Object Video Tracking for Cross-View Object Correspondence}
   \vfill
   \begin{center}
       \begin{enumerate}
-          \item \large \sout{Predictions are not interpretable}. \newline
+          \item \large \sout{Not interpretable predictions because they are based on abstract embeddings}. \newline
           \large \textcolor{green!70!black}{Language is interpretable by design.}
           \item \large \sout{Training on Ego-Exo4D}. \newline
           \large \textcolor{green!70!black}{Foundation models already trained for general purpose.}
@@ -566,9 +567,9 @@ Object Video Tracking for Cross-View Object Correspondence}
 \end{center}
 \vfill
   \begin{center}
-  \includegraphics[width=0.8\textwidth]{imgs/ch3/block-1-focus.png}
+  \includegraphics[width=0.9\textwidth]{imgs/ch3/block-1-focus.png}
   \end{center}
-  Visibility Scorer computes score $s_\tau$:
+  \textcolor{violet}{Visibility Scorer} computes score $s_\tau$:
   \[
     s_\tau = 0.99\,a_\tau + 0.01\,c_\tau, \qquad
     a_\tau = \frac{A_\tau}{H \cdot W}, \qquad
@@ -600,7 +601,7 @@ Object Video Tracking for Cross-View Object Correspondence}
 \end{center}
 \vfill
 \begin{center}
-\includegraphics[width=0.8\textwidth]{imgs/ch2/vlm-slide.png}
+\includegraphics[width=0.9\textwidth]{imgs/ch2/vlm-slide.png}
 \end{center}
 \vfill
 \end{frame}
@@ -611,7 +612,7 @@ Object Video Tracking for Cross-View Object Correspondence}
 \end{center}
 \vfill
   \begin{center}
-    \includegraphics[width=0.85\textwidth]{imgs/ch3/block-3-1-focus.png}
+    \includegraphics[width=0.95\textwidth]{imgs/ch3/block-3-1-focus.png}
   \end{center}
 \vfill
 \end{frame}
@@ -633,7 +634,7 @@ Object Video Tracking for Cross-View Object Correspondence}
 \end{center}
 \vfill
   \begin{center}
-    \includegraphics[width=0.7\textwidth]{imgs/ch3/block-3-2-focus.png}
+    \includegraphics[width=0.85\textwidth]{imgs/ch3/block-3-2-focus.png}
   \end{center}
 \vfill
 \end{frame}
@@ -798,7 +799,7 @@ LM-EEC fine-tuned SAM 2 with additional modules on Ego-Exo4D.
 \end{center}
 \vfill
 \begin{center}
-Our pipeline is the only training-free entry.
+Our pipeline is the only training-free method in the field.
 \end{center}
 \end{frame}
 
@@ -979,26 +980,26 @@ Main weakness: error of low quality anchor gets propagated to the entire take.
 \end{center}
 \vfill
 \begin{center}
-{\large The pipeline runs on a single \textbf{NVIDIA H200 (80\,GB VRAM)}.}
+{\large The pipeline runs on a single NVIDIA H200 141\,GB VRAM} ($\sim$ \$35K).
 \end{center}
 \vfill
 \begin{center}
 \begin{tikzpicture}
   \node[draw, rounded corners, inner sep=6pt, minimum height=1.5cm, text width=0.92\textwidth] {%
     \centering
-    \begin{minipage}{0.17\textwidth}\centering {\Large\textbf{14\,s}}\\[0.2em]{\small Stage 2\\description}\end{minipage}%
+    \begin{minipage}{0.17\textwidth}\centering {\Large\textbf{0\,s}}\\[0.2em]{\small Stage 1\\selection}\end{minipage}%
     \hfill\vrule\hfill
-    \begin{minipage}{0.17\textwidth}\centering {\Large\textbf{40\,s}}\\[0.2em]{\small Stage 3\\anchors}\end{minipage}%
+    \begin{minipage}{0.17\textwidth}\centering {\Large\textbf{10\,s}}\\[0.2em]{\small Stage 2\\description}\end{minipage}%
     \hfill\vrule\hfill
-    \begin{minipage}{0.17\textwidth}\centering {\Large\textbf{26\,s}}\\[0.2em]{\small Stage 4\\propagation}\end{minipage}%
+    \begin{minipage}{0.17\textwidth}\centering {\Large\textbf{40\,s}}\\[0.2em]{\small Stage 3\\segmentation}\end{minipage}%
     \hfill\vrule\hfill
-    \begin{minipage}{0.17\textwidth}\centering {\Large\textbf{11\,s}}\\[0.2em]{\small VLM\\($\sim$3 calls)}\end{minipage}%
+    \begin{minipage}{0.17\textwidth}\centering {\Large\textbf{25\,s}}\\[0.2em]{\small Stage 4\\propagation}\end{minipage}%
     \hfill\vrule\hfill
-    \begin{minipage}{0.17\textwidth}\centering {\Large\textbf{97\,s}}\\[0.2em]{\small full take}\end{minipage}%
+    \begin{minipage}{0.17\textwidth}\centering {\Large\textbf{100\,s}}\\[0.2em]{\small full take}\end{minipage}%
   };
 \end{tikzpicture}
 \\[0.4em]
-{\small Averaged across all takes.}
+{\small Approximate durations per stage, averaged across all takes.}
 \end{center}
 \vfill
 \end{frame}
@@ -1109,9 +1110,8 @@ Small object $\Rightarrow$ small signal to VLM. \\ Potential solution is foveate
 \begin{minipage}{0.86\textwidth}
   \begin{enumerate}
     \item \large \textbf{Presented} the \textit{Two Eyes and One Mouth} pipeline for cross-view object correspondence.
-    \item \large \textbf{Built} four training-free stages: on par with last year, and state of the art once dead cases are set aside.
-    \item \large \textbf{Investigated} the dead mass, exposing VLM description accuracy as the current bottleneck.
-    \item \large \textbf{Tested} the \textit{language as a bridge} hypothesis: connecting frozen architectures and replacing visual features, without training.
+    \item \large \textbf{Evaluated} performance, achieving on par with last year, and near-SOTA once the dead cases are ignored.
+    \item \large \textbf{Investigated} the dead mass, finding VLM description accuracy to be the current bottleneck.
   \end{enumerate}
 \end{minipage}
 \end{center}
@@ -1146,7 +1146,7 @@ Small object $\Rightarrow$ small signal to VLM. \\ Potential solution is foveate
   \begin{columns}
     \begin{column}{0.4\textwidth}
       \large
-    A \textit{shared embedding space} has no decoding step, consuming less energy, and allows to focus on signal.
+    A \textit{shared embedding space} has no decoding step, consuming less energy, and allows to focus on pure signal.
     \end{column}
     \begin{column}{0.6\textwidth}
       \includegraphics[width=\textwidth]{imgs/ch1/embedding-space.png}
@@ -1208,7 +1208,7 @@ Small object $\Rightarrow$ small signal to VLM. \\ Potential solution is foveate
 \vfill
 \begin{center}
 {\normalsize Small object $\Rightarrow$ small signal to the VLM. A possible remedy is foveated tokenisation.}\\[0.8em]
-\includegraphics[height=0.5\textheight]{imgs/ch4/foveated-tokenization.png}
+\includegraphics[height=0.65\textheight]{imgs/ch4/foveated-tokenization.png}
 \end{center}
 \vfill
 \end{frame}
