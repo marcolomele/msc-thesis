@@ -171,8 +171,8 @@ Object Video Tracking for Cross-View Object Correspondence}
   \vfill
   \begin{center}
       \begin{enumerate}
-          \item Predictions are \textit{not interpretable}.
-          \item \textit{Training} on Ego-Exo4D.
+          \item \large Predictions are \textit{not interpretable}.
+          \item \large \textit{Training} on Ego-Exo4D.
       \end{enumerate}
   \end{center}
   \vfill
@@ -185,8 +185,8 @@ Object Video Tracking for Cross-View Object Correspondence}
   \vfill
   \begin{center}
       \begin{itemize}
-          \item[$\bullet$] Will \textit{composing foundation} models at inference transfer to novel tasks?
-          \item[$\bullet$] Can language descriptions \textit{bridge} architectures?
+          \item[$\bullet$] \large Will \textit{composing foundation} models at inference transfer to novel tasks?
+          \item[$\bullet$] \large  Can language descriptions \textit{bridge} architectures?
       \end{itemize}
   \end{center}
   \vfill
@@ -205,10 +205,10 @@ Object Video Tracking for Cross-View Object Correspondence}
   \vfill
   \begin{center}
       \begin{enumerate}
-          \item \sout{Predictions are not interpretable}. \newline
-          \textcolor{green}{Language is interpretable by design.}
-          \item \sout{Training on Ego-Exo4D}. \newline
-          \textcolor{green}{Foundation models already trained for general purpose.}
+          \item \large \sout{Predictions are not interpretable}. \newline
+          \large \textcolor{green!70!black}{Language is interpretable by design.}
+          \item \large \sout{Training on Ego-Exo4D}. \newline
+          \large \textcolor{green!70!black}{Foundation models already trained for general purpose.}
       \end{enumerate}
   \end{center}
   \vfill
@@ -586,7 +586,7 @@ Object Video Tracking for Cross-View Object Correspondence}
 
 \begin{frame}[t]
 \begin{center}
-{\large Vision Language Models: Qwen-VL}
+{\large Vision Language Models}
 \end{center}
 \vfill
 \begin{center}
@@ -603,6 +603,17 @@ Object Video Tracking for Cross-View Object Correspondence}
   \begin{center}
     \includegraphics[width=0.85\textwidth]{imgs/ch3/block-3-1-focus.png}
   \end{center}
+\vfill
+\end{frame}
+
+\begin{frame}[t]
+\begin{center}
+{\large Poor symmetry in view quality across two views}
+\end{center}
+\vfill
+\begin{center}
+\fbox{\parbox[c][0.66\textheight][c]{0.9\linewidth}{\centering \textit{Example of poor cross-view object visibility}\\[0.4em]{\scriptsize (image to add)}}}
+\end{center}
 \vfill
 \end{frame}
 
@@ -661,8 +672,6 @@ Object Video Tracking for Cross-View Object Correspondence}
 \vfill
 \end{frame}
 
-
-
 \begin{frame}
 \begin{center}
     {\Large Experiments.}
@@ -671,7 +680,7 @@ Object Video Tracking for Cross-View Object Correspondence}
 
 \begin{frame}[t]
 \begin{center}
-{\large Quantitative Results: Official Baselines}
+{\large Ego-Exo4D Official Baselines}
 \end{center}
 \vfill
 \begin{center}
@@ -695,7 +704,7 @@ Object Video Tracking for Cross-View Object Correspondence}
 
 \begin{frame}[t]
 \begin{center}
-{\large Quantitative Results: 2025 Challenge Submissions}
+{\large 2025 Challenge Submissions}
 \end{center}
 \vfill
 \begin{center}
@@ -716,7 +725,7 @@ Object Video Tracking for Cross-View Object Correspondence}
 \end{center}
 \vfill
 \begin{center}
-{\scriptsize Ego-Exo4D Correspondences v2, test split. O-MaMa won the 2025 Ego-Exo4D Correspondences Challenge.}
+{\scriptsize Ego-Exo4D Correspondences v2, test split.}
 \end{center}
 \end{frame}
 
@@ -752,7 +761,7 @@ Object Video Tracking for Cross-View Object Correspondence}
 
 \begin{frame}[t]
 \begin{center}
-{\large Quantitative Results: Ours}
+{\large Our pipeline}
 \end{center}
 \vfill
 \begin{center}
@@ -809,11 +818,11 @@ Object Video Tracking for Cross-View Object Correspondence}
 \begin{columns}[c]
   \begin{column}{0.62\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{imgs/ch4/gap-analysis-distribution.png}
+    \includegraphics[width=0.8\textwidth]{imgs/ch4/gap-analysis-distribution.png}
   \end{column}
   \begin{column}{0.34\textwidth}
     \large
-    Mean IoU \textit{Exo2Ego}: 40.5 \textcolor{plotblue}{Our Pipeline} vs 64.4 \textcolor{plotorange}{LM-EEC}.
+    Mean IoU on \textit{Exo2Ego}: 40.6 \textcolor{plotblue}{Our Pipeline} vs 65.77 \textcolor{plotorange}{LM-EEC}.
   \end{column}
 \end{columns}
 \vfill
@@ -827,11 +836,11 @@ Object Video Tracking for Cross-View Object Correspondence}
 \begin{columns}[c]
   \begin{column}{0.62\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{imgs/ch4/gap-analysis-distribution-removed.png}
+    \includegraphics[width=0.8\textwidth]{imgs/ch4/gap-analysis-distribution-removed.png}
   \end{column}
   \begin{column}{0.34\textwidth}
     \large
-    Mean IoU \textit{Exo2Ego} after removing the dead mass: 61.7 \textcolor{plotblue}{Our Pipeline} vs 64.4 \textcolor{plotorange}{LM-EEC}.
+    Mean IoU on \textit{Exo2Ego} after removing the dead mass: 61.7 \textcolor{plotblue}{Our Pipeline} vs 65.77 \textcolor{plotorange}{LM-EEC}.
   \end{column}
 \end{columns}
 \vfill
@@ -843,49 +852,25 @@ Object Video Tracking for Cross-View Object Correspondence}
 \end{center}
 \vfill
 \begin{center}
-\includegraphics[height=0.66\textheight]{imgs/ch4/gap-analysis-groups.png}
+\includegraphics[width=0.6\textwidth]{imgs/ch4/gap-analysis-group.png}
 \end{center}
 \vspace{0.4em}
 \begin{center}
-Anchor mask quality is the determining factor; incorrect bridges propagate error to the entire take.
+Main weakness: error of low quality anchor gets propagated to the entire take.
 \end{center}
 \vfill
 \end{frame}
 
 \begin{frame}[t]
 \begin{center}
-{\large The Loss is Born at the Bridge}
+{\large Naming issue}
 \end{center}
-\vfill
-\begin{columns}
-  \begin{column}{0.55\textwidth}
-    \centering
-    \small
-    \setlength{\tabcolsep}{4pt}
-    \begin{tabular}{lcc}
-      \toprule
-      First failure & \textit{Ego2Exo} & \textit{Exo2Ego} \\
-      \midrule
-        (2) VLM names a different object        & \textbf{59\%} & \textbf{81\%} \\
-        (3) Anchor lands on a tiny object       & 15\% & 11\% \\
-        (3) Grounding DINO box misses           & 10\% & 2\%  \\
-        (3) Agent segments wrong, good box      & 16\% & 5\%  \\
-        (4) Propagation                         & 0\%  & 0\%  \\
-      \bottomrule
-    \end{tabular}
-    \\[0.6em]
-    {\scriptsize Each dead case charged to the first stage that breaks.}
-  \end{column}
-  \begin{column}{0.40\textwidth}
-    \large
-    \begin{itemize}
-        \item Naming (Stage 2) is the single largest cause.
-        \item Stages 2 and 3 explain 74\% and 92\%.
-        \item Propagation is never at fault.
-    \end{itemize}
-  \end{column}
-\end{columns}
-\vfill
+\end{frame}
+
+\begin{frame}[t]
+\begin{center}
+{\large Perception issue}
+\end{center}
 \end{frame}
 
 % \begin{frame}[t]
@@ -902,38 +887,7 @@ Anchor mask quality is the determining factor; incorrect bridges propagate error
 % \end{center}
 % \end{frame}
 
-\begin{frame}[t]
-\begin{center}
-{\large Perception issue, not Vocabulary}
-\end{center}
-\vfill
-\begin{columns}
-  \begin{column}{0.42\textwidth}
-    \large
-    \begin{itemize}
-        \item Source mask 3--6$\times$ smaller on dead cases.
-        \item In \textit{Exo2Ego}, half fall under 0.1\% of the frame.
-        \item Not a weak prompt, not a poor vocabulary.
-    \end{itemize}
-  \end{column}
-  \begin{column}{0.58\textwidth}
-    \centering
-    \small
-    \begin{tabular}{lcc}
-      \toprule
-      VLM nominates & \textit{Ego2Exo} & \textit{Exo2Ego} \\
-      \midrule
-      Correct target (fails later)   & 41\% & 19\% \\
-      A different annotated object   & 25\% & 23\% \\
-      An unannotated neighbour       & 34\% & 58\% \\
-      \bottomrule
-    \end{tabular}
-    \\[0.6em]
-    {\scriptsize Nominations on the dead cases (anchor IoU $=0$).}
-  \end{column}
-\end{columns}
-\vfill
-\end{frame}
+
 
 \begin{frame}[t]
 \begin{center}
@@ -1135,6 +1089,72 @@ Anchor mask quality is the determining factor; incorrect bridges propagate error
     {\Large Thank you :)}
     \vfill
 \end{center}
+\end{frame}
+
+\begin{frame}[plain]
+\begin{center}
+    \vfill
+    {\Large Supplementary Materials}
+    \vfill
+\end{center}
+\end{frame}
+
+\begin{frame}[t]
+\begin{center}
+{\large Motivating Stage 3.1: correlation in visibility score across views}
+\end{center}
+\vfill
+  \begin{center}
+    \includegraphics[width=0.5\textwidth]{presentation/imgs/ch3/visibility-score-correlation.png}
+  \end{center}
+\begin{center}
+\end{center}
+\vfill
+\end{frame}
+
+\begin{frame}[t]
+\begin{center}
+{\large Waterfall analysis}
+\end{center}
+\vfill
+    \centering
+    \small
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{lcc}
+      \toprule
+      First failure & \textit{Ego2Exo} & \textit{Exo2Ego} \\
+      \midrule
+        (2) VLM names a different object        & \textbf{59\%} & \textbf{81\%} \\
+        (3) Anchor lands on a tiny object       & 15\% & 11\% \\
+        (3) Grounding DINO box misses           & 10\% & 2\%  \\
+        (3) Agent segments wrong, good box      & 16\% & 5\%  \\
+        (4) Propagation                         & 0\%  & 0\%  \\
+      \bottomrule
+    \end{tabular}
+    \\[0.6em]
+    {\scriptsize Each dead case charged to the first stage that breaks.}
+\vfill
+\end{frame}
+
+\begin{frame}[t]
+\begin{center}
+{\large What does the VLM describe?}
+\end{center}
+\vfill
+\centering
+    \small
+    \begin{tabular}{lcc}
+      \toprule
+      VLM nominates & \textit{Ego2Exo} & \textit{Exo2Ego} \\
+      \midrule
+      Correct target (fails later)   & 41\% & 19\% \\
+      A different annotated object   & 25\% & 23\% \\
+      An unannotated neighbour       & 34\% & 58\% \\
+      \bottomrule
+    \end{tabular}
+    \\[0.6em]
+    {\scriptsize Nominations on the dead cases (anchor IoU $=0$).}
+\vfill
 \end{frame}
 
 \end{document}
