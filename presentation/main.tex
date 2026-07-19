@@ -245,7 +245,7 @@ Object Video Tracking for Cross-View Object Correspondence}
 \newcommand{\assumptionrow}[3]{%
   \begin{center}
   \begin{tikzpicture}
-    \node[draw, rounded corners, inner sep=8pt, minimum height=1.5cm, text width=0.90\textwidth] {%
+    \node[draw, rounded corners, inner sep=8pt, minimum height=1.3cm, text width=0.90\textwidth] {%
       \begin{minipage}[c]{0.07\textwidth}\centering {\Large\textbf{#1}}\end{minipage}%
       \hfill\vrule\hfill
       \begin{minipage}[c]{0.80\textwidth}\textbf{#2}\\[0.25em]{\small #3}\end{minipage}%
@@ -260,11 +260,11 @@ Object Video Tracking for Cross-View Object Correspondence}
 \end{center}
 \vfill
 \assumptionrow{1}{Language detail}{Language captures enough nuance to separate the target from clutter.}
-\vspace{0.4em}
-\assumptionrow{2}{Consistent interpretation}{Foundation models map the same phrase to the same concept across their backbones.}
-\vspace{0.4em}
-\assumptionrow{3}{Reliable anchors}{Cross-view segmentation can happen on a handful of moments in the video.}
-\vspace{0.4em}
+\vspace{0.2em}
+\assumptionrow{2}{Consistent interpretation}{Foundation models embed the same phrase to the same concept.}
+\vspace{0.2em}
+\assumptionrow{3}{Reliable anchors}{Segmenting cross-view on a few frames is enough for the full video.}
+\vspace{0.2em}
 \assumptionrow{4}{Offline prediction}{Cross-view segmentation can happen forward and backward in time.}
 \vfill
 \end{frame}
