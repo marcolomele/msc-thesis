@@ -96,6 +96,7 @@ Finally, we propagate the anchor masks to the remaining frames of the destinatio
 
 Crucially, no component is fine-tuned for the task. And because the bridge between views is a human-readable JSON description, any erroneous prediction can be localised to the stage whose output is at fault.
 
+## Assumptions
 Four assumptions carry this design. First, language captures enough detail to separate the target from clutter. Second, the foundation models we compose interpret that language consistently, so the same phrase points to the same concept across their backbones. Third, a handful of reliable anchors in the destination view is enough for a tracker to complete the rest. Fourth, because the bridge is a written description rather than a live signal, prediction can happen offline.
 
 Let's look at each stage in detail, connecting to the related works powering the pipeline. 

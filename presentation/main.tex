@@ -234,12 +234,39 @@ Object Video Tracking for Cross-View Object Correspondence}
   
   \begin{frame}
   \begin{center}
-  \includegraphics[width=\textwidth]{imgs/ch3/pipeline-stages.png} \\
-  \vspace{4mm}
-  {Assumptions: language detail, consistent interpretation, bridge points, offline prediction.}
+  \includegraphics[width=\textwidth]{imgs/ch3/pipeline-stages.png}
   \end{center}
   \end{frame}
 
+% Square box holding one design assumption (short title + description).
+\newcommand{\assumptionbox}[2]{%
+  \fbox{\parbox[c][3.6cm][c]{0.9\linewidth}{\centering \textbf{#1}\\[0.5em]{\small #2}}}%
+}
+
+\begin{frame}[t]
+\begin{center}
+{\large Four assumptions carry this design}
+\end{center}
+\vfill
+\begin{columns}[t]
+  \begin{column}{0.48\textwidth}
+    \centering
+    \assumptionbox{1. Language detail}{Language captures enough detail to separate the target from clutter.}\\[0.6em]
+    \assumptionbox{3. Reliable anchors}{A handful of reliable anchors in the destination view lets a tracker complete the rest.}
+  \end{column}
+  \begin{column}{0.48\textwidth}
+    \centering
+    \assumptionbox{2. Consistent interpretation}{The composed foundation models read the same phrase as the same concept across their backbones.}\\[0.6em]
+    \assumptionbox{4. Offline prediction}{The bridge is a written description, not a live signal, so prediction can happen offline.}
+  \end{column}
+\end{columns}
+\vfill
+\end{frame}
+
+% ---- Theory is now merged into the pipeline-stage slides (VLM after Stage 2,
+% Segmentation before Stage 4). The standalone related-works slides below are
+% disabled with \iffalse ... \fi and kept for reference. ----
+\iffalse
 \begin{frame}
 \begin{center}
     {\Large Related Works.}
@@ -350,7 +377,12 @@ Object Video Tracking for Cross-View Object Correspondence}
 \end{center}
 \vfill
 \end{frame}
+\fi
 
+% ---- Related methods are now presented only through the cumulative results
+% tables in the Experiments section. The standalone build-up slides below are
+% disabled with \iffalse ... \fi and kept for reference. ----
+\iffalse
 \begin{frame}
 \begin{center}
     {\Large Related Methods in Cross-View Object Correspondence.}
@@ -515,6 +547,7 @@ Object Video Tracking for Cross-View Object Correspondence}
 \end{columns}
 \vfill
 \end{frame}
+\fi
 
 \begin{frame}[t]
 \begin{center}
@@ -552,6 +585,17 @@ Object Video Tracking for Cross-View Object Correspondence}
 
 \begin{frame}[t]
 \begin{center}
+{\large Vision Language Models: Qwen-VL}
+\end{center}
+\vfill
+\begin{center}
+\includegraphics[width=0.8\textwidth]{imgs/ch2/qwen-training.png}
+\end{center}
+\vfill
+\end{frame}
+
+\begin{frame}[t]
+\begin{center}
 {\large Stage 3.1: Anchor Selection}
 \end{center}
 \vfill
@@ -569,6 +613,28 @@ Object Video Tracking for Cross-View Object Correspondence}
   \begin{center}
     \includegraphics[width=0.7\textwidth]{imgs/ch3/block-3-2-focus.png}
   \end{center}
+\vfill
+\end{frame}
+
+\begin{frame}[t]
+\begin{center}
+{\large Segmentation: SAM 2}
+\end{center}
+\vfill
+\begin{center}
+\includegraphics[width=\textwidth]{imgs/ch2/sam2.png}
+\end{center}
+\vfill
+\end{frame}
+
+\begin{frame}[t]
+\begin{center}
+{\large Segmentation: SAM 3}
+\end{center}
+\vfill
+\begin{center}
+\includegraphics[width=\textwidth]{imgs/ch2/sam3-pcs.png}
+\end{center}
 \vfill
 \end{frame}
 
