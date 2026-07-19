@@ -25,7 +25,7 @@ The main dataset for cross-view object correspondence is Ego-Exo4D. This dataset
 
 Each pair of vides combines an egocentric head-mounted camera with one exocentric camera fixed in the room. That pairing produces the strongest viewpoint change of any cross-view benchmark: the same object can fill the frame from one eye level and shrink to a handful of pixels from the other.
 
-```Slide description. Title is 'The dataset: Ego-Exo4D'; the content is divided into three parts: (1) a slim horizontal rectangle at the top with 3 main statistics about the dataset (4 million annotated frames, 700K cross-view paired mask tracks, 7 scenarios); (2) a vertical rectangle on the left with written on the top 'Egocentric' with an example of an egocentric frame (still need to add); (3) a vertical rectangle on the right of (2) with written on top 'Exocentric' with an example of an exocentric frame (still need to add) below. Make actually two slides with first content appearing on first slide and second content appearing on second slide.```
+```Slide description. Title is 'The dataset: Ego-Exo4D'; the content is divided into three parts: (1) a slim horizontal rectangle at the top with 3 main statistics about the dataset (4 million annotated frames, 700K cross-view paired mask tracks, 7 scenarios); (2) a vertical rectangle on the left with written on the top 'Egocentric' with an example of an egocentric frame (still need to add); (3) a vertical rectangle on the right of (2) with written on top 'Exocentric' with an example of an exocentric frame (still need to add) below. Make actually two slides with element (1) appearing on first slide and elements (2) and (3) appearing on the second slide.```
 
 ## The challenges
 This exacerbates the two problems baked into cross-view correspondence itself. 
@@ -112,7 +112,7 @@ Stage two writes the description. We leverage Qwen 3.5 to read the seed frame an
 
 The description must satisfy two properties: view independence, so that it holds from the radically different destination viewpoint, and time independence, so that it holds at every destination frame, not just the seed's moment. We enforce both by asking only for intrinsic attributes, namely colour, canonical identity, material, and structural parts, which change neither with the camera nor with time.
 
-We pass two images: the frame with the mask overlaid in red, which tells the VLM which object to describe, and the raw frame, which preserves its true appearance as well as scene context. 
+We pass two images: the frame with the mask overlay, which tells the VLM which object to describe, and the raw frame, which preserves its true appearance as well as scene context. 
 
 ## Vision Language Models
 At the heart of stage two is Qwen 3.5, a Vision Language Model. These are large foundation models trained to reason jointly over images and text by letting visual and textual tokens cross-attent to each other. 
@@ -149,7 +149,7 @@ The accepted masks are our anchor masks on A.
 ## Segmentation
 SAM is not a friend doing the segmentation by hand, but rather stands for Segment Anything Model, the current foundation model for segmentation. 
 
-Its first version was introduced n 2023, training on a billion masks. The key cotnribution was zero-shot segmentation starting from visual prompts such as point and bounding boxes. 
+Its first version was introduced in 2023, training on a billion masks. The key cotnribution was zero-shot segmentation starting from visual prompts such as point and bounding boxes. 
 
 SAM 2 extended this to video via a specialised tracker with memory, and SAM 3, in 2025, added segmentation from text prompts. 
 
@@ -158,7 +158,7 @@ Stage four completes the track in time.
 
 SAM 2's video tracker propagates the anchor masks across the remaining destination frames, conditioning each prediction on a memory bank that holds all the anchors and the recently processed frames. 
 
-This matterls, particularly in egocentric video, where motion blur and occlusion often make the previous frame a poor reference, so attention reaches back to a distant anchor instead.
+This matters, particularly in egocentric video, where motion blur and occlusion often make the previous frame a poor reference, so attention reaches back to a distant anchor instead.
 
 We propagate bidirectionally, forward from the earliest anchor and backward from the latest, keeping for each frame the prediction from the pass arriving from its nearest anchor.
 

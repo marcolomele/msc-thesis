@@ -81,16 +81,164 @@ Object Video Tracking for Cross-View Object Correspondence}
 \end{center}
 \end{frame}
 
-% \begin{frame}[t]
-% \begin{center}
-% {\large Ego-Exo4D Dataset}
-% \end{center}
-% \vfill
-% \begin{center}
-% \includegraphics[width=1\textwidth]{imgs/ch1/egoexo-many-examples.png}
-% \end{center}
-% \vfill
-% \end{frame}
+% ---- Reusable statistics bar for the dataset slides ----
+\newcommand{\datasetstatbar}{%
+  \begin{center}
+  \begin{tikzpicture}
+    \node[draw, rounded corners, inner sep=6pt, minimum height=1.4cm, text width=0.92\textwidth] (bar) {%
+      \centering
+      \begin{minipage}{0.30\textwidth}\centering {\Large\textbf{4M}}\\[0.2em] annotated frames\end{minipage}%
+      \hfill\vrule\hfill
+      \begin{minipage}{0.34\textwidth}\centering {\Large\textbf{700K}}\\[0.2em] cross-view paired mask tracks\end{minipage}%
+      \hfill\vrule\hfill
+      \begin{minipage}{0.28\textwidth}\centering {\Large\textbf{7}}\\[0.2em] scenarios\end{minipage}%
+    };
+  \end{tikzpicture}
+  \end{center}%
+}
+
+% Placeholder box for the example frames (to be replaced with real frames).
+\newcommand{\frameplaceholder}[1]{%
+  \fbox{\parbox[c][4.6cm][c]{0.9\linewidth}{\centering \textit{#1 frame}\\[0.4em]{\scriptsize (example to add)}}}%
+}
+
+\begin{frame}[t]
+\begin{center}
+{\large The dataset: Ego-Exo4D}
+\end{center}
+\vfill
+\datasetstatbar
+\vfill
+\end{frame}
+
+\begin{frame}[t]
+\begin{center}
+{\large The dataset: Ego-Exo4D}
+\end{center}
+\vfill
+\datasetstatbar
+\vspace{0.6em}
+\begin{columns}[t]
+  \begin{column}{0.48\textwidth}
+    \centering
+    {\large Egocentric}\\[0.6em]
+    \frameplaceholder{egocentric}
+  \end{column}
+  \begin{column}{0.48\textwidth}
+    \centering
+    {\large Exocentric}\\[0.6em]
+    \frameplaceholder{exocentric}
+  \end{column}
+\end{columns}
+\vfill
+\end{frame}
+
+% Placeholder box for the challenge column pictures (to be replaced).
+\newcommand{\challengeplaceholder}[1]{%
+  \fbox{\parbox[c][4.2cm][c]{0.92\linewidth}{\centering \textit{#1}\\[0.4em]{\scriptsize (picture to add)}}}%
+}
+
+\begin{frame}[t]
+\begin{center}
+{\large The challenges}
+\end{center}
+\vfill
+\begin{columns}[t]
+  \begin{column}{0.32\textwidth}
+    \centering
+    {\large 1. Viewpoint change}\\[0.6em]
+    \challengeplaceholder{viewpoint change}
+  \end{column}
+  \begin{column}{0.32\textwidth}
+    \centering
+    {\large 2. Temporal completeness}\\[0.6em]
+    \challengeplaceholder{temporal completeness}
+  \end{column}
+  \begin{column}{0.32\textwidth}
+    \centering
+    {\large 3. Only visual information}\\[0.6em]
+    \challengeplaceholder{only visual information}
+  \end{column}
+\end{columns}
+\vfill
+\end{frame}
+
+\begin{frame}[t]
+  \begin{center}
+      {\large Common Limitations}
+  \end{center}
+  \vfill
+  \begin{center}
+      \begin{enumerate}
+          \item Predictions are not interpretable.
+          \item Training on Ego-Exo4D.
+      \end{enumerate}
+  \end{center}
+  \vfill
+  \end{frame}
+  
+  \begin{frame}[t]
+  \begin{center}
+      {\large A new paradigm}
+  \end{center}
+  \vfill
+  \begin{center}
+      \begin{itemize}
+          \item will composing foundation models at transfer to novel tasks?
+          \item can language descriptions bridge architectures?
+      \end{itemize}
+  \end{center}
+  \vfill
+  \end{frame}
+  
+  \begin{frame}
+  \begin{center}
+      \includegraphics[width=\textwidth]{imgs/ch3/lang-as-bridge-keys.png}
+  \end{center}
+  \end{frame}
+  
+  \begin{frame}[t]
+  \begin{center}
+      {\large Common Limitations...solved!}
+  \end{center}
+  \vfill
+  \begin{center}
+      \begin{enumerate}
+          \item \sout{Predictions are not interpretable}. \newline
+          \textcolor{green}{Language is interpretable by design.}
+          \item \sout{Training on Ego-Exo4D}. \newline
+          \textcolor{green}{Foundation models already trained for general purpose.}
+      \end{enumerate}
+  \end{center}
+  \vfill
+  \end{frame}
+  
+  \begin{frame}
+  \begin{center}
+  {\Large Two Eyes and One Mouth:} \\[1.5em]
+  {\large a Training-Free Pipeline with Agentic Image Segmentation and \\
+  Object Video Tracking for Cross-View Object Correspondence}
+  \end{center}
+  \end{frame}
+  
+  \begin{frame}[t]
+  \begin{center}
+  {\large Terminology}
+  \end{center}
+  \vfill
+  \begin{center}
+  \includegraphics[width=0.8\textwidth]{imgs/ch3/terminology.png}
+  \end{center}
+  \vfill
+  \end{frame}
+  
+  \begin{frame}
+  \begin{center}
+  \includegraphics[width=\textwidth]{imgs/ch3/pipeline-stages.png} \\
+  \vspace{4mm}
+  {Assumptions: language detail, consistent interpretation, bridge points, offline prediction.}
+  \end{center}
+  \end{frame}
 
 \begin{frame}
 \begin{center}
@@ -366,83 +514,6 @@ Object Video Tracking for Cross-View Object Correspondence}
   \end{column}
 \end{columns}
 \vfill
-\end{frame}
-
-\begin{frame}[t]
-\begin{center}
-    {\large Common Limitations}
-\end{center}
-\vfill
-\begin{center}
-    \begin{enumerate}
-        \item Predictions are not interpretable.
-        \item Training on Ego-Exo4D.
-    \end{enumerate}
-\end{center}
-\vfill
-\end{frame}
-
-\begin{frame}[t]
-\begin{center}
-    {\large A new paradigm}
-\end{center}
-\vfill
-\begin{center}
-    \begin{itemize}
-        \item will composing foundation models at transfer to novel tasks?
-        \item can language descriptions bridge architectures?
-    \end{itemize}
-\end{center}
-\vfill
-\end{frame}
-
-\begin{frame}
-\begin{center}
-    \includegraphics[width=\textwidth]{imgs/ch3/lang-as-bridge-keys.png}
-\end{center}
-\end{frame}
-
-\begin{frame}[t]
-\begin{center}
-    {\large Common Limitations...solved!}
-\end{center}
-\vfill
-\begin{center}
-    \begin{enumerate}
-        \item \sout{Predictions are not interpretable}. \newline
-        \textcolor{green}{Language is interpretable by design.}
-        \item \sout{Training on Ego-Exo4D}. \newline
-        \textcolor{green}{Foundation models already trained for general purpose.}
-    \end{enumerate}
-\end{center}
-\vfill
-\end{frame}
-
-\begin{frame}
-\begin{center}
-{\Large Two Eyes and One Mouth:} \\[1.5em]
-{\large a Training-Free Pipeline with Agentic Image Segmentation and \\
-Object Video Tracking for Cross-View Object Correspondence}
-\end{center}
-\end{frame}
-
-\begin{frame}[t]
-\begin{center}
-{\large Terminology}
-\end{center}
-\vfill
-\begin{center}
-\includegraphics[width=0.8\textwidth]{imgs/ch3/terminology.png}
-\end{center}
-\vfill
-\end{frame}
-
-\begin{frame}
-\begin{center}
-\includegraphics[width=\textwidth]{imgs/ch3/pipeline-stages.png} \\
-\vspace{4mm} 
-{Assumptions: language detail, consistent interpretation, bridge points, offline prediction.}
-\end{center}
 \end{frame}
 
 \begin{frame}[t]
