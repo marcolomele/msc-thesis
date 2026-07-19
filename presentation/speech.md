@@ -241,8 +241,6 @@ The answer is the size of the source mask. On the dead cases, the selected sourc
 
 Interestingly, rather then hallucinating, the VLM names a real larger neighbour. 
 
-My hypothesis is not enough signal from the visual characteristics of the target object are reaching the VLM, meaning that the VLM cannot se the object well enough. This might be due to the grid tokenization, which makes me think that an approach like fovated tokenization could dramatically improve performance. 
-
 ```Slide design note: two colums and one wide horizontal rectangle at the bottom; the first has a table created from this paragraph in the thesis (". On the dead cases the source mask handed to the model is three to six times smaller than on the successful ones (median 1.43% against 4.05% of the frame in Ego2Exo, and 0.098% against 0.564% in Exo2Ego), and in Exo2Ego half of the failures show the object at under 0.1% of the frame.") note that "Median source mask size" should be the title of the table and "Source mask 3--6$\times$ smaller on dead cases." is irrelevant since it is already seen in the table and "In \textit{Exo2Ego}, half the failures fall under 0.1\% of the frame." is an extra note below the table; the second has the foveated tokenisation example (/Users/marcolomele/Documents/Repos/msc-thesis/presentation/imgs/ch4/foveated-tokenization.png); the wide horizontal rectangle below has the examples of failures (still todo).```
 
 ## Ablations
@@ -262,9 +260,6 @@ The conclusion from this ladder is clear: selection and propagation are already 
 
 ```Slide design note: table right in the center. Table caption says "Ego2Exo on 10% of the validation set."```
 
-# Conclusions
-140 words. 
-
 ## Recent developments
 In fact, ever since submitting my thesis, there have been more efforts. With the help of Prof. Plizzari, Filippo Dario Paolucci, and Giovanni Mantovani, two MSc students, our pipeline received several updates. 
 
@@ -274,6 +269,23 @@ Additionally, it also achieves state of the art on another benchmark.
 
 ```Slide design note: two nice tables in the center with one line caption at the bottom each. The first table has the pipeline at the thesis end of may checkpint, the pipeline today checkpoint, and v2-sam (the comparable model); its the caption says "Latest pipeline performance on the Ego-Exo4D test set."; the second table holds the results from the other benchmark (see prompt); its caption says "SOTA permance on HANDAL-X benchmark.".```
 
+# Considerations.
+So what did we learn from all these experiments?
+
+## Design Level
+First, a consideration from the design itself. Running foundation models at inference needs real hardware: we ran everything on an NVIDIA H200 with more than 80GB of VRAM, which won't be accessible to everyone.
+
+## Assumption Level
+Second, some of our assumptions still need work.
+
+On language detail, the evidence isn't conclusive. The most common failure on dead cases was the VLM description, but the cause runs deeper: not enough signal from the target's visual features reaches the VLM, so it simply cannot see the object well enough. I suspect the grid tokenization, and that an approach like foveated tokenization could dramatically improve performance.
+
+On reliable anchors, we found the pipeline's main weakness. A handful of correct segmentations does complete the track, but a single wrong anchor propagates its error across the whole take.
+
+Consistent interpretation held, since the pipeline still recovered significant quality against published work. And offline prediction held by design; in fact it could extend to live scenarios, since once the bridge is built, only SAM 2's stage-four propagation runs.
+
+# Conclusion
+
 ## Summary
 In this thesis presentation, I presented the Two eyes and one mouth pipeline to address cross view object correspondence.
 
@@ -281,7 +293,9 @@ We built its 4 stages, and found that it achieves results comparable to last yea
 
 We also investigated the source of dead mass, finding VLM description accuracy to be the current bottle neck. Given the interpretable nature of the pipeline, I ran several tests, far more than I have been able to discuss here today. 
 
-More broadly, my thesis work has become a direct test to the language as a bridge hypothesis: can natual language connect foundational architectures and replace visual features? and can all of this done without training?
+More broadly, my thesis work directly tested to the language as a bridge hypothesis: can natual language connect foundational architectures and replace visual features? and can all of this done without training?
+
+```Slide design notes: title "summary", enumerate list with keywords from the speech.```
 
 ## Can language act as a bridge between architectures?
 Yes, partially. 

@@ -240,9 +240,18 @@ Object Video Tracking for Cross-View Object Correspondence}
   \end{center}
   \end{frame}
 
-% Square box holding one design assumption (short title + description).
-\newcommand{\assumptionbox}[2]{%
-  \fbox{\parbox[c][3.6cm][c]{0.9\linewidth}{\centering \textbf{#1}\\[0.5em]{\small #2}}}%
+% One design assumption as a full-width rounded row: a numeral set off from the
+% statement by a vertical rule (same visual language as \datasetstatbar).
+\newcommand{\assumptionrow}[3]{%
+  \begin{center}
+  \begin{tikzpicture}
+    \node[draw, rounded corners, inner sep=8pt, minimum height=1.5cm, text width=0.90\textwidth] {%
+      \begin{minipage}[c]{0.07\textwidth}\centering {\Large\textbf{#1}}\end{minipage}%
+      \hfill\vrule\hfill
+      \begin{minipage}[c]{0.80\textwidth}\textbf{#2}\\[0.25em]{\small #3}\end{minipage}%
+    };
+  \end{tikzpicture}
+  \end{center}%
 }
 
 \begin{frame}[t]
@@ -250,18 +259,13 @@ Object Video Tracking for Cross-View Object Correspondence}
 {\large Four assumptions carry this design}
 \end{center}
 \vfill
-\begin{columns}[t]
-  \begin{column}{0.48\textwidth}
-    \centering
-    \assumptionbox{1. Language detail}{Language captures enough nuance to separate the target from clutter.}\\[0.6em]
-    \assumptionbox{3. Reliable anchors}{Cross-view segmentation can happen on a handful of moment in the video.}
-  \end{column}
-  \begin{column}{0.48\textwidth}
-    \centering
-    \assumptionbox{2. Consistent interpretation}{Foundation models map the same phrase as the same concept across their backbones.}\\[0.6em]
-    \assumptionbox{4. Offline prediction}{Cross-view segmentation can happen forward and backward in time.}
-  \end{column}
-\end{columns}
+\assumptionrow{1}{Language detail}{Language captures enough nuance to separate the target from clutter.}
+\vspace{0.4em}
+\assumptionrow{2}{Consistent interpretation}{Foundation models map the same phrase to the same concept across their backbones.}
+\vspace{0.4em}
+\assumptionrow{3}{Reliable anchors}{Cross-view segmentation can happen on a handful of moments in the video.}
+\vspace{0.4em}
+\assumptionrow{4}{Offline prediction}{Cross-view segmentation can happen forward and backward in time.}
 \vfill
 \end{frame}
 
@@ -967,6 +971,58 @@ Main weakness: error of low quality anchor gets propagated to the entire take.
 \vfill
 \end{frame}
 
+\begin{frame}[t]
+\begin{center}
+{\large A design consideration}
+\end{center}
+\vfill
+\begin{center}
+\begin{tikzpicture}
+  \node[draw, rounded corners, inner sep=10pt, text width=0.86\textwidth] {%
+    \centering Composing frozen foundation models is compute-heavy. The pipeline runs on a single \textbf{NVIDIA H200 (80\,GB VRAM)}, and its cost is front-loaded on the anchors: the agentic segmentation reaches \textbf{$\sim$21\,s per anchor frame}, while propagation then completes the take at \textbf{under 1\,s per frame}.};
+\end{tikzpicture}
+\end{center}
+\vfill
+\end{frame}
+
+% One assumption revisited: numeral | short name + verdict tag | explanation,
+% reusing the rounded-row + vertical-rule language of the assumptions slide.
+% Verdict tags: green = held, amber = still open.
+\newcommand{\heldtag}{\textcolor{green!70!black}{\small\textbf{Held}}}
+\newcommand{\opentag}[1]{\textcolor{orange!80!black}{\small\textbf{#1}}}
+\newcommand{\verdictrow}[4]{%
+  \begin{center}
+  \begin{tikzpicture}
+    \node[draw, rounded corners, inner sep=7pt, minimum height=1.35cm, text width=0.92\textwidth] {%
+      \begin{minipage}[c]{0.045\textwidth}\centering {\large\textbf{#1}}\end{minipage}%
+      \hfill\vrule\hfill
+      \begin{minipage}[c]{0.24\textwidth}\textbf{#2}\\[0.25em]{#3}\end{minipage}%
+      \hfill\vrule\hfill
+      \begin{minipage}[c]{0.585\textwidth}{\small #4}\end{minipage}%
+    };
+  \end{tikzpicture}
+  \end{center}%
+}
+
+\begin{frame}[t]
+\begin{center}
+{\large The four assumptions, revisited}
+\end{center}
+\vfill
+\verdictrow{1}{Language detail}{\opentag{TBD}}{The bottleneck is perception, not description: the VLM cannot resolve a target that fills a handful of pixels. Foveated tokenisation is a promising remedy.}
+\vspace{0.25em}
+\verdictrow{2}{Consistent interpretation}{\heldtag}{Independently trained backbones map the same phrase to the same concept; once the anchor is correct, quality reaches the state-of-the-art band.}
+\vspace{0.25em}
+\verdictrow{3}{Reliable anchors}{\opentag{Re-evaluate}}{A handful of anchors completes the track, yet a single wrong anchor propagates faithfully across the entire take.}
+\vspace{0.25em}
+\verdictrow{4}{Offline prediction}{\heldtag$^{*}$}{Bidirectional propagation raises no failures.}
+\vspace{0.4em}
+\begin{center}
+{\footnotesize $^{*}$Live applications require online prediction. Once the bridge is built only Stage 4 runs, so the pipeline still extends to live settings.}
+\end{center}
+\vfill
+\end{frame}
+
 \begin{frame}
 \begin{center}
     {\Large Recent developments.}
@@ -1016,6 +1072,24 @@ Main weakness: error of low quality anchor gets propagated to the entire take.
 \end{tabular}
 \\[0.8em]
 {\normalsize Our pipeline's performance on the HANDAL-X benchmark.}
+\vfill
+\end{frame}
+
+\begin{frame}[t]
+\begin{center}
+{\large Summary}
+\end{center}
+\vfill
+\begin{center}
+\begin{minipage}{0.86\textwidth}
+  \begin{enumerate}
+    \item \large \textbf{Presented} the \textit{Two Eyes and One Mouth} pipeline for cross-view object correspondence.
+    \item \large \textbf{Built} four training-free stages: on par with last year, and state of the art once dead cases are set aside.
+    \item \large \textbf{Investigated} the dead mass, exposing VLM description accuracy as the current bottleneck.
+    \item \large \textbf{Tested} the \textit{language as a bridge} hypothesis: connecting frozen architectures and replacing visual features, without training.
+  \end{enumerate}
+\end{minipage}
+\end{center}
 \vfill
 \end{frame}
 
