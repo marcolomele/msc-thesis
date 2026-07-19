@@ -242,13 +242,18 @@ Object Video Tracking for Cross-View Object Correspondence}
 
 % One design assumption as a full-width rounded row: a numeral set off from the
 % statement by a vertical rule (same visual language as \datasetstatbar).
+% \asgap is the single spacing unit reused for all three horizontal gaps
+% (border->number, number->rule, rule->text); \asnum is a fixed numeral-cell
+% width so the rule lands at the same x on every row.
+\newlength{\asgap}\setlength{\asgap}{1.3em}
+\newlength{\asnum}\settowidth{\asnum}{\Large\textbf{4}}
 \newcommand{\assumptionrow}[3]{%
   \begin{center}
   \begin{tikzpicture}
-    \node[draw, rounded corners, inner sep=8pt, minimum height=1.3cm, text width=0.90\textwidth] {%
-      \begin{minipage}[c]{0.07\textwidth}\centering {\Large\textbf{#1}}\end{minipage}%
-      \hfill\vrule\hfill
-      \begin{minipage}[c]{0.80\textwidth}\textbf{#2}\\[0.25em]{\small #3}\end{minipage}%
+    \node[draw, rounded corners, inner xsep=\asgap, inner ysep=8pt, minimum height=1.3cm, text width=0.90\textwidth] {%
+      \begin{minipage}[c]{\asnum}{\Large\textbf{#1}}\end{minipage}%
+      \hspace{\asgap}\vrule\hspace{\asgap}%
+      \begin{minipage}[c]{\dimexpr0.90\textwidth-\asnum-2\asgap-0.4pt\relax}\textbf{#2}\\[0.25em]{\small #3}\end{minipage}%
     };
   \end{tikzpicture}
   \end{center}%
@@ -990,15 +995,17 @@ Main weakness: error of low quality anchor gets propagated to the entire take.
 % Verdict tags: green = held, amber = still open.
 \newcommand{\heldtag}{\textcolor{green!70!black}{\small\textbf{Held}}}
 \newcommand{\opentag}[1]{\textcolor{orange!80!black}{\small\textbf{#1}}}
+% Same spacing standard as \assumptionrow: \asgap around every rule, \asnum
+% numeral cell, so both vertical rules align down all rows.
 \newcommand{\verdictrow}[4]{%
   \begin{center}
   \begin{tikzpicture}
-    \node[draw, rounded corners, inner sep=7pt, minimum height=1.35cm, text width=0.92\textwidth] {%
-      \begin{minipage}[c]{0.045\textwidth}\centering {\large\textbf{#1}}\end{minipage}%
-      \hfill\vrule\hfill
+    \node[draw, rounded corners, inner xsep=\asgap, inner ysep=7pt, minimum height=1.35cm, text width=0.92\textwidth] {%
+      \begin{minipage}[c]{\asnum}{\Large\textbf{#1}}\end{minipage}%
+      \hspace{\asgap}\vrule\hspace{\asgap}%
       \begin{minipage}[c]{0.24\textwidth}\textbf{#2}\\[0.25em]{#3}\end{minipage}%
-      \hfill\vrule\hfill
-      \begin{minipage}[c]{0.585\textwidth}{\small #4}\end{minipage}%
+      \hspace{\asgap}\vrule\hspace{\asgap}%
+      \begin{minipage}[c]{\dimexpr0.92\textwidth-\asnum-0.24\textwidth-4\asgap-0.8pt\relax}{\small #4}\end{minipage}%
     };
   \end{tikzpicture}
   \end{center}%
@@ -1009,13 +1016,13 @@ Main weakness: error of low quality anchor gets propagated to the entire take.
 {\large The four assumptions, revisited}
 \end{center}
 \vfill
-\verdictrow{1}{Language detail}{\opentag{TBD}}{The bottleneck is perception, not description: the VLM cannot resolve a target that fills a handful of pixels. Foveated tokenisation is a promising remedy.}
+\verdictrow{1}{Language detail}{\opentag{TBD}}{The VLM cannot see a target that fills a handful of pixels. Foveated tokenisation could dramatically improve performance.}
 \vspace{0.25em}
-\verdictrow{2}{Consistent interpretation}{\heldtag}{Independently trained backbones map the same phrase to the same concept; once the anchor is correct, quality reaches the state-of-the-art band.}
+\verdictrow{2}{Consistent interpretation}{\heldtag}{The pipeline recovers significant quality against trained published work, never trained together.}
 \vspace{0.25em}
-\verdictrow{3}{Reliable anchors}{\opentag{Re-evaluate}}{A handful of anchors completes the track, yet a single wrong anchor propagates faithfully across the entire take.}
+\verdictrow{3}{Reliable anchors}{\opentag{Re-evaluate}}{A handful of correct segmentations completes the track. But a single wrong anchor propagates its error across the whole take.}
 \vspace{0.25em}
-\verdictrow{4}{Offline prediction}{\heldtag$^{*}$}{Bidirectional propagation raises no failures.}
+\verdictrow{4}{Offline prediction}{\heldtag$^{*}$}{Prediction runs offline by design, propagating forward and backward in time.}
 \vspace{0.4em}
 \begin{center}
 {\footnotesize $^{*}$Live applications require online prediction. Once the bridge is built only Stage 4 runs, so the pipeline still extends to live settings.}
