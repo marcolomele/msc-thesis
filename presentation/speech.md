@@ -243,7 +243,7 @@ Interestingly, rather then hallucinating, the VLM names a real larger neighbour.
 
 My hypothesis is not enough signal from the visual characteristics of the target object are reaching the VLM, meaning that the VLM cannot se the object well enough. This might be due to the grid tokenization, which makes me think that an approach like fovated tokenization could dramatically improve performance. 
 
-```Slide design note: two colums; the first has a table created from this paragraph in the thesis (". On the dead cases the source mask handed to the model is three to six times smaller than on the successful ones (median 1.43% against 4.05% of the frame in Ego2Exo, and 0.098% against 0.564% in Exo2Ego), and in Exo2Ego half of the failures show the object at under 0.1% of the frame."); the second is divided in two horizontal rectangle parts; the upper has some images of the small cases (todo); the lower has the foveated tokenisation example (/Users/marcolomele/Documents/Repos/msc-thesis/presentation/imgs/ch4/foveated-tokenization.png).```
+```Slide design note: two colums and one wide horizontal rectangle at the bottom; the first has a table created from this paragraph in the thesis (". On the dead cases the source mask handed to the model is three to six times smaller than on the successful ones (median 1.43% against 4.05% of the frame in Ego2Exo, and 0.098% against 0.564% in Exo2Ego), and in Exo2Ego half of the failures show the object at under 0.1% of the frame.") note that "Median source mask size" should be the title of the table and "Source mask 3--6$\times$ smaller on dead cases." is irrelevant since it is already seen in the table and "In \textit{Exo2Ego}, half the failures fall under 0.1\% of the frame." is an extra note below the table; the second has the foveated tokenisation example (/Users/marcolomele/Documents/Repos/msc-thesis/presentation/imgs/ch4/foveated-tokenization.png); the wide horizontal rectangle below has the examples of failures (still todo).```
 
 ## Ablations
 After discovreing where the pipeline breaks and why, I wanted to understand which component of the pipeline deserved the most attention for future improvements. To this end, I ran ablations. 
@@ -260,31 +260,37 @@ That is 260% over the baseline at a third of the time.
 
 The conclusion from this ladder is clear: selection and propagation are already at their ceiling, while description and segmentation are where future efforts should go.
 
-```Slide design note: 
+```Slide design note: table right in the center. Table caption says "Ego2Exo on 10% of the validation set."```
 
 # Conclusions
 140 words. 
 
 ## Recent developments
-In fact, ever since submitting my thesis, there have been more efforts. My work was born from a research project with prof Plizzari and two other MSc students. Over the last weeks, we further developed the pipeline. 
+In fact, ever since submitting my thesis, there have been more efforts. With the help of Prof. Plizzari, Filippo Dario Paolucci, and Giovanni Mantovani, two MSc students, our pipeline received several updates. 
 
-The key innovations have been adding an VLM call to judge resulting segmentations and leveraging SAM'3 negative exemplars to discern better target object from neighbours. Together, these changes brough our results to 41.5 on Ego2Exo and 48.1 on Exo2Ego, a few points shy than the comparable state of the art. 
+Currently, it sits at 41.5 on Ego2Exo and 48.1 on Exo2Ego, a few percentage points shy than the comparable state of the art. 
 
-Motivated by the results, we are on track for submitting, at least at a workshop of a conference. 
+Additionally, it also achieves state of the art on another benchmark. 
+
+```Slide design note: two nice tables in the center with one line caption at the bottom each. The first table has the pipeline at the thesis end of may checkpint, the pipeline today checkpoint, and v2-sam (the comparable model); its the caption says "Latest pipeline performance on the Ego-Exo4D test set."; the second table holds the results from the other benchmark (see prompt); its caption says "SOTA permance on HANDAL-X benchmark.".```
 
 ## Summary
-In this presentation, we reviews the Two eyes and one mouth pipeline to address cross view object correspondence.
+In this thesis presentation, I presented the Two eyes and one mouth pipeline to address cross view object correspondence.
+
+We built its 4 stages, and found that it achieves results comparable to last year with quality raising to the state of the art when ignoring dead cases.
+
+We also investigated the source of dead mass, finding VLM description accuracy to be the current bottle neck. Given the interpretable nature of the pipeline, I ran several tests, far more than I have been able to discuss here today. 
 
 More broadly, my thesis work has become a direct test to the language as a bridge hypothesis: can natual language connect foundational architectures and replace visual features? and can all of this done without training?
 
-## What about language?
-Yes, partially. Our pipeline achieved results comparable to last year, and when focusing on the successful cases, the quality rises to that of the State of the art. 
+## Can language act as a bridge between architectures?
+Yes, partially. 
 
-Future effort should continue focusing on reducing the dead mass. Given the interpretable nature of the pipeline, I have been to run several tests, far more than I have been able to discuss here today. 
+On the one hand, we faced some limitations, in part coming from the design of the pipeline, in part due to our starting assumptions. 
 
-There is an additional consideration for the future.
+On the other hand, we have demonstrated that foundation models together were able to recover significant quality on a novel task none were trained on. 
 
-## Future
+## A trending question
 A trending question emerging this year in Machine Learning is: if intelligent agents already compute on rich abstract embeddings, why should they communicate in natural language at all? 
 
 A shared mathematical space could be more efficient due to no decoding step, consume less energy, and possibly produce more accurate results since embeddings focus on true signal, not noise of connectors and filler words.

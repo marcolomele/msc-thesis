@@ -252,13 +252,13 @@ Object Video Tracking for Cross-View Object Correspondence}
 \begin{columns}[t]
   \begin{column}{0.48\textwidth}
     \centering
-    \assumptionbox{1. Language detail}{Language captures enough detail to separate the target from clutter.}\\[0.6em]
-    \assumptionbox{3. Reliable anchors}{A handful of reliable anchors in the destination view lets a tracker complete the rest.}
+    \assumptionbox{1. Language detail}{Language captures enough nuance to separate the target from clutter.}\\[0.6em]
+    \assumptionbox{3. Reliable anchors}{Cross-view segmentation can happen on a handful of moment in the video.}
   \end{column}
   \begin{column}{0.48\textwidth}
     \centering
-    \assumptionbox{2. Consistent interpretation}{The composed foundation models read the same phrase as the same concept across their backbones.}\\[0.6em]
-    \assumptionbox{4. Offline prediction}{The bridge is a written description, not a live signal, so prediction can happen offline.}
+    \assumptionbox{2. Consistent interpretation}{Foundation models map the same phrase as the same concept across their backbones.}\\[0.6em]
+    \assumptionbox{4. Offline prediction}{Cross-view segmentation can happen offline.}
   \end{column}
 \end{columns}
 \vfill
@@ -884,27 +884,30 @@ Main weakness: error of low quality anchor gets propagated to the entire take.
 \end{center}
 \vfill
 \begin{columns}[c]
-  \begin{column}{0.46\textwidth}
+  \begin{column}{0.48\textwidth}
     \centering
+    {\normalsize Median source mask size}\\[0.4em]
     \small
     \begin{tabular}{lcc}
       \toprule
-      Median source & Dead & Successful \\
-      mask size & cases & cases \\
+       & Dead cases & Successful cases \\
       \midrule
       \textit{Ego2Exo} & 1.43\% & 4.05\% \\
       \textit{Exo2Ego} & 0.098\% & 0.564\% \\
       \bottomrule
     \end{tabular}
     \\[0.6em]
-    {\scriptsize Source mask 3--6$\times$ smaller on dead cases. In \textit{Exo2Ego}, half the failures fall under 0.1\% of the frame.}
+    {\scriptsize In \textit{Exo2Ego}, half the failures fall under 0.1\% of the frame.}
   \end{column}
-  \begin{column}{0.52\textwidth}
+  \begin{column}{0.50\textwidth}
     \centering
-    \fbox{\parbox[c][0.34\textheight][c]{0.92\linewidth}{\centering \textit{Small-object failure examples}\\[0.3em]{\scriptsize (image to add)}}}\\[0.6em]
-    \includegraphics[height=0.32\textheight]{imgs/ch4/foveated-tokenization.png}
+    \includegraphics[height=0.34\textheight]{imgs/ch4/foveated-tokenization.png}
   \end{column}
 \end{columns}
+\vspace{0.6em}
+\begin{center}
+\fbox{\parbox[c][0.26\textheight][c]{0.95\linewidth}{\centering \textit{Examples of failures}\\[0.3em]{\scriptsize (image to add)}}}
+\end{center}
 \vfill
 \end{frame}
 
@@ -923,31 +926,28 @@ Main weakness: error of low quality anchor gets propagated to the entire take.
 % \end{frame}
 
 
-
-\begin{frame}[t]
-\begin{center}
-{\large Why the Model Names the Wrong Object}
-\end{center}
-\vfill
-\begin{center}
-\includegraphics[width=0.7\textwidth]{imgs/ch4/vlm-description-failure.png}
-\end{center}
-\vfill
-\begin{center}
-{\scriptsize The VLM names a real, larger neighbour, the container or surface, rather than hallucinating.}
-\end{center}
-\end{frame}
+% \begin{frame}[t]
+% \begin{center}
+% {\large Why the Model Names the Wrong Object}
+% \end{center}
+% \vfill
+% \begin{center}
+% \includegraphics[width=0.7\textwidth]{imgs/ch4/vlm-description-failure.png}
+% \end{center}
+% \vfill
+% \begin{center}
+% {\scriptsize The VLM names a real, larger neighbour, the container or surface, rather than hallucinating.}
+% \end{center}
+% \end{frame}
 
 \begin{frame}[t]
 \begin{center}
 {\large Ablation: What Each Block Contributes}
 \end{center}
 \vfill
-\begin{columns}
-  \begin{column}{0.58\textwidth}
-    \centering
-    \tiny
-    \setlength{\tabcolsep}{3pt}
+\begin{center}
+    \footnotesize
+    \setlength{\tabcolsep}{5pt}
     \begin{tabular}{lccccrr}
       \toprule
       Exp. & Frame Sel. & SAM 3 Agent & Propag. & G-DINO Anchor & IoU$\uparrow$ & $t$/frame\,(s)$\downarrow$ \\
@@ -960,18 +960,9 @@ Main weakness: error of low quality anchor gets propagated to the entire take.
       (D) G-DINO            & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & \textbf{38.1} & 0.90 \\
       \bottomrule
     \end{tabular}
-    \\[0.6em]
-    {\scriptsize Components added one at a time, \textit{Ego2Exo}, 10\% of validation. Baseline Oracle (17.0 IoU, 0.12s/frame) omitted: a diagnostic ceiling, not decomposable into pipeline stages.}
-  \end{column}
-  \begin{column}{0.42\textwidth}
-    \large
-    \begin{itemize}
-        \item $+260\%$ over the baseline at a third of the time.
-        \item Selection and propagation are at their ceiling.
-        \item Description and segmentation are where to focus.
-    \end{itemize}
-  \end{column}
-\end{columns}
+    \\[0.8em]
+    {\scriptsize \textit{Ego2Exo} on 10\% of the validation set.}
+\end{center}
 \vfill
 \end{frame}
 
@@ -986,29 +977,45 @@ Main weakness: error of low quality anchor gets propagated to the entire take.
 {\large Recent Developments}
 \end{center}
 \vfill
-\begin{columns}
-  \begin{column}{0.48\textwidth}
-    \large
-    \begin{itemize}
-        \item Research project with Prof.\ Plizzari, Giovanni Mantovani, and Filippo Dario Paolucci (MSc students).
-        \item $+$ VLM judge on the segmentations.
-        \item $+$ SAM 3 negative exemplars to separate the target from neighbours.
-        \item Aiming at conference submission.
-    \end{itemize}
-  \end{column}
-  \begin{column}{0.52\textwidth}
+\begin{columns}[c]
+  \begin{column}{0.42\textwidth}
     \centering
     \small
     \begin{tabular}{lcc}
       \toprule
       & \textit{Ego2Exo} & \textit{Exo2Ego} \\
       \midrule
-      Thesis pipeline & 37.7 & 40.6 \\
-      \textbf{$+$ judge $+$ exemplars} & \textbf{41.5} & \textbf{48.7} \\
+      Thesis pipeline (May)   & 37.7 & 40.6 \\
+      \textbf{Pipeline today} & \textbf{41.5} & \textbf{48.1} \\
+      V\textsuperscript{2}-SAM & 46.3 & 49.6 \\
+      \midrule
+      \% gap to V\textsuperscript{2}-SAM & $-10.4\%$ & $-3.0\%$ \\
       \bottomrule
     \end{tabular}
     \\[0.6em]
-    {\scriptsize A few points shy of the comparable state of the art.}
+    {\scriptsize Latest pipeline performance on the Ego-Exo4D test set.}
+  \end{column}
+  \begin{column}{0.56\textwidth}
+    \centering
+    \footnotesize
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{llc}
+      \toprule
+      Method & Training data & IoU$\uparrow$ \\
+      \midrule
+      XSegTx & COCO / Self-Gen. Pairs & 1.5 \\
+      SEEM & COCO Pan., RefCOCO/+g & 2.5 \\
+      PSALM & COCO Pan., RefCOCO/+g, etc. & 14.2 \\
+      PSALM & Ego-Exo4D & 39.9 \\
+      ObjectRelator & Ego-Exo4D & 42.8 \\
+      V\textsuperscript{2}-SAM (Single-Expert) & Ego-Exo4D & 66.4 \\
+      V\textsuperscript{2}-SAM (Multi-Experts) & Ego-Exo4D & 77.2 \\
+      \midrule
+      \textbf{Our pipeline} & \textit{training-free} & \textbf{79.56} \\
+      \bottomrule
+    \end{tabular}
+    \\[0.6em]
+    {\scriptsize SOTA performance on the HANDAL-X benchmark.}
   \end{column}
 \end{columns}
 \vfill
@@ -1016,19 +1023,23 @@ Main weakness: error of low quality anchor gets propagated to the entire take.
 
 \begin{frame}[t]
 \begin{center}
-{\large Does this answer the language-as-a-bridge hypothesis?}
+{\large Can language act as a bridge between architectures?}
 \end{center}
 \vfill
 \begin{center}
     {\Large Yes, partially.}\\[1.5em]
-    {\large Language bridges frozen foundation models without training, \\ most useful when their embedding backbones differ.}
+    {\large Language bridges frozen foundation models without training, \\ and becomes most useful when their embedding backbones differ.}
 \end{center}
 \vfill
 \end{frame}
 
 \begin{frame}
 \begin{center}
-    {\Large If agents already reason over rich abstract embeddings, \\ why communicate in natural language at all?}
+  {\large A trending question}
+  \end{center}
+  \vfill
+\begin{center}
+    {\Large If agents already reason over rich abstract embeddings, \\ why should they collaborate in natural language at all?}
 \end{center}
 \end{frame}
 
