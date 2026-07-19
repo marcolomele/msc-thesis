@@ -41,8 +41,9 @@ Finally, it assumes simple cameras with no geometric calibration, meaning that t
 ## Previous methods
 Since Ego-Exo4d was released two years ago, several works have been published attemping to solve it.
 
-Every method so far creates feature representations for masks and then train ad-hoc fusion component on Ego-Exo4D's labelled data. 
+Every method published so far creates abstract visual representations for masks and then trains ad-hoc fusion component on Ego-Exo4D's labelled data. 
 
+## Common limitations
 This produces two limitations common to the entire field:
 
 1. The reasoning behind each correspondence is hidden in weights; beyond attention maps, there are no interpretable intermediate steps to inspect when the output is wrong.
