@@ -29,6 +29,15 @@
 \hypersetup{colorlinks=true, linkcolor=blue}
 \usepackage[normalem]{ulem}
 
+% ---- Bottom-left corner citation for a slide ("First author et al., year") ----
+% Absolute overlay so it sits in the corner regardless of frame content flow.
+\newcommand{\slideref}[1]{%
+  \begin{tikzpicture}[remember picture, overlay]
+    \node[anchor=south west, font=\scriptsize, text=black!70]
+      at ([xshift=1.5em, yshift=1.5ex]current page.south west) {#1};
+  \end{tikzpicture}%
+}
+
 % ---- Title metadata ----
 \title{Two Eyes and One Mouth:}
 \subtitle{a Training-Free Pipeline with Agentic Image Segmentation and \\
@@ -318,6 +327,7 @@ Object Video Tracking for Cross-View Object Correspondence}
 \includegraphics[width=0.9\textwidth]{imgs/ch2/vlm-slide.png}
 \end{center}
 \vfill
+\slideref{Bai et al., 2023; Ali, 2025}
 \end{frame}
 
 \begin{frame}[t]
@@ -362,6 +372,7 @@ Object Video Tracking for Cross-View Object Correspondence}
 \includegraphics[width=\textwidth]{imgs/ch2/sam2.png}
 \end{center}
 \vfill
+\slideref{Ravi et al., 2024}
 \end{frame}
 
 \begin{frame}[t]
@@ -373,6 +384,7 @@ Object Video Tracking for Cross-View Object Correspondence}
 \includegraphics[width=\textwidth]{imgs/ch2/sam3-pcs.png}
 \end{center}
 \vfill
+\slideref{Ravi et al., 2025}
 \end{frame}
 
 \begin{frame}[t]
@@ -1571,9 +1583,47 @@ The anchor IoU is exactly zero in 37\% of cases, and only about one in ten of th
 \end{frame}
 
 \begin{frame}
+\begin{frame}[t]
 \begin{center}
-    {\Large References.}
+{\large Waterfall analysis}
 \end{center}
+\vfill
+    \centering
+    \small
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{lcc}
+      \toprule
+      First failure & \textit{Ego2Exo} & \textit{Exo2Ego} \\
+      \midrule
+        (2) VLM names a different object        & \textbf{59\%} & \textbf{81\%} \\
+        (3) Anchor lands on a tiny object       & 15\% & 11\% \\
+        (3) Grounding DINO box misses           & 10\% & 2\%  \\
+        (3) Agent segments wrong, good box      & 16\% & 5\%  \\
+        (4) Propagation                         & 0\%  & 0\%  \\
+      \bottomrule
+    \end{tabular}
+    \\[0.6em]
+    {\scriptsize Each dead case charged to the first stage that breaks.}
+\vfill
+\end{frame}
+
+\begin{frame}[t]
+\begin{center}
+    {\large References}
+\end{center}
+\vfill
+\begin{itemize}
+  \small
+  \item[$\bullet$] Ali, H. (2025). \textit{Vision Transformer}. Agi Lambda, YouTube.
+  \item[$\bullet$] Bai, J., et al. (2023). \textit{Qwen-VL: A Versatile Vision-Language Model for Understanding, Localization, Text Reading, and Beyond}. arXiv:2308.12966.
+  \item[$\bullet$] Ravi, N., et al. (2024). \textit{SAM 2: Segment Anything in Images and Videos}. arXiv:2408.00714.
+  \item[$\bullet$] Ravi, N., et al. (2025). \textit{SAM 3: Segment Anything with Concepts}. Advances in Neural Information Processing Systems (NeurIPS).
+\end{itemize}
+\vfill
+\begin{center}
+\small All other references are available in the thesis full report.
+\end{center}
+\vfill
 \end{frame}
 \end{document}
 
