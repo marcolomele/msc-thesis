@@ -53,7 +53,7 @@ Object Video Tracking for Cross-View Object Correspondence}
     \includegraphics[width=0.8\textwidth]{imgs/ch1/lang-as-bridge-intro.png}\\[1.2em]
   \end{center}
 \begin{center}
-{\normalsize Marco Lomele -- MSc Thesis Presentation -- Supervised by Chiara Plizzari \\ July 2026 -- Bocconi University}
+{\normalsize Marco Lomele -- MSc Thesis Presentation -- Supervised by Prof. Chiara Plizzari \\ July 2026 -- Bocconi University}
 \end{center}
 \end{frame}
 \addtocounter{framenumber}{-1}
@@ -101,7 +101,7 @@ Object Video Tracking for Cross-View Object Correspondence}
       \centering
       \begin{minipage}{0.30\textwidth}\centering {\Large\textbf{4M}}\\[0.2em] annotated frames\end{minipage}%
       \hfill\vrule\hfill
-      \begin{minipage}{0.34\textwidth}\centering {\Large\textbf{700K}}\\[0.2em] cross-view paired mask tracks\end{minipage}%
+      \begin{minipage}{0.34\textwidth}\centering {\Large\textbf{700K}}\\[0.2em] paired mask tracks\end{minipage}%
       \hfill\vrule\hfill
       \begin{minipage}{0.28\textwidth}\centering {\Large\textbf{7}}\\[0.2em] scenarios\end{minipage}%
     };
@@ -113,15 +113,6 @@ Object Video Tracking for Cross-View Object Correspondence}
 \newcommand{\frameplaceholder}[1]{%
   \fbox{\parbox[c][4.6cm][c]{0.9\linewidth}{\centering \textit{#1 frame}\\[0.4em]{\scriptsize (example to add)}}}%
 }
-
-\begin{frame}[t]
-\begin{center}
-{\large The dataset: Ego-Exo4D}
-\end{center}
-\vfill
-\datasetstatbar
-\vfill
-\end{frame}
 
 \begin{frame}[t]
 \begin{center}
@@ -528,7 +519,7 @@ LM-EEC fine-tuned SAM 2 with additional modules on Ego-Exo4D.
 \end{center}
 \vfill
 \begin{center}
-Our pipeline is the only training-free method in the field.
+Our pipeline is the only training-free method.
 \end{center}
 \end{frame}
 
@@ -608,11 +599,11 @@ Main weakness: error of low quality anchor gets propagated to the entire take.
 \begin{columns}[c]
   \begin{column}{0.55\textwidth}
     \centering
-    \fbox{\parbox[c][0.6\textheight][c]{0.92\linewidth}{\centering \textit{Examples of naming failures}\\[0.4em]{\scriptsize (image to add)}}}
+    \fbox{\parbox[c][0.6\textheight][c]{0.92\linewidth}{\centering Examples of naming failures\\[0.4em]{\scriptsize (image to add)}}}
   \end{column}
   \begin{column}{0.42\textwidth}
     \large
-    Naming a different object in \textbf{59\%} of the cases in \textit{Ego2Exo}, and \textbf{81\%} in \textit{Exo2Ego}.
+    Naming a different object in 59\% of the cases in Ego2Exo, and 81\% in Exo2Ego.
   \end{column}
 \end{columns}
 \vfill
@@ -648,18 +639,20 @@ Main weakness: error of low quality anchor gets propagated to the entire take.
 \end{center}
 \vfill
 \begin{center}
+    Baseline: describe every source frame and run SAM 3 one shot per destination frame.
+    \\[2.0em]
     \footnotesize
     \setlength{\tabcolsep}{5pt}
     \begin{tabular}{lccccrr}
       \toprule
-      Exp. & Frame Sel. & SAM 3 Agent & Propag. & G-DINO Anchor & IoU$\uparrow$ & $t$/frame\,(s)$\downarrow$ \\
+      Exp. & Frame Sel. & SAM 3 Agent & Propagation & G-DINO Anchor Sel. & IoU$\uparrow$ & $t$/frame\,(s)$\downarrow$ \\
       \midrule
       Baseline          & $\times$ & $\times$ & $\times$ & $\times$ & 10.6 & 1.32 \\
       \midrule
-      (A) Best Single Frame & $\checkmark$ & $\times$ & $\times$ & $\times$ & 16.8 & 0.13 \\
-      (B) SAM 3 Agent Loop  & $\checkmark$ & $\checkmark$ & $\times$ & $\times$ & 35.5 & 21.30 \\
-      (C) Propagation       & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\times$ & 37.7 & 0.82 \\
-      (D) G-DINO            & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & \textbf{38.1} & 0.90 \\
+      Stage 1 & $\checkmark$ & $\times$ & $\times$ & $\times$ & 16.8 & \textbf{0.13} \\
+      Stage 3 & $\checkmark$ & $\checkmark$ & $\times$ & $\times$ & 35.5 & 21.30 \\
+      Stage 4 & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\times$ & 37.7 & 0.82 \\
+      Stage 3 & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & \textbf{38.1} & 0.90 \\
       \bottomrule
     \end{tabular}
     \\[0.8em]
