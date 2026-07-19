@@ -982,12 +982,12 @@ Main weakness: error of low quality anchor gets propagated to the entire take.
 \small
 \begin{tabular}{lcc}
   \toprule
-  & \textit{Ego2Exo} & \textit{Exo2Ego} \\
+  & \textit{Ego2Exo} IoU$\uparrow$ & \textit{Exo2Ego} IoU$\uparrow$ \\
   \midrule
-  Thesis pipeline (May)   & 37.7 & 40.6 \\
-  \textbf{Pipeline today} & \textbf{41.5} & \textbf{48.1} \\
   V\textsuperscript{2}-SAM & 46.3 & 49.6 \\
+  Our pipeline (May-end)   & 37.7 & 40.6 \\
   \midrule
+  Our pipeline (today) & \textbf{41.5} & \textbf{48.1} \\
   \% gap to V\textsuperscript{2}-SAM & $-10.4\%$ & $-3.0\%$ \\
   \bottomrule
 \end{tabular}
@@ -1004,19 +1004,14 @@ Main weakness: error of low quality anchor gets propagated to the entire take.
 \centering
 \footnotesize
 \setlength{\tabcolsep}{4pt}
-\begin{tabular}{llc}
+\begin{tabular}{lc}
   \toprule
-  Method & Training data & IoU$\uparrow$ \\
+  Method & IoU$\uparrow$ \\
   \midrule
-  XSegTx & COCO / Self-Gen. Pairs & 1.5 \\
-  SEEM & COCO Pan., RefCOCO/+g & 2.5 \\
-  PSALM & COCO Pan., RefCOCO/+g, etc. & 14.2 \\
-  PSALM & Ego-Exo4D & 39.9 \\
-  ObjectRelator & Ego-Exo4D & 42.8 \\
-  V\textsuperscript{2}-SAM (Single-Expert) & Ego-Exo4D & 66.4 \\
-  V\textsuperscript{2}-SAM (Multi-Experts) & Ego-Exo4D & 77.2 \\
+  ObjectRelator & 42.8 \\
+  V\textsuperscript{2}-SAM & 77.2 \\
   \midrule
-  \textbf{Our pipeline} & \textit{training-free} & \textbf{79.56} \\
+  Our pipeline (today) & \textbf{79.56} \\
   \bottomrule
 \end{tabular}
 \\[0.8em]
