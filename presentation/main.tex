@@ -590,7 +590,7 @@ Object Video Tracking for Cross-View Object Correspondence}
 \end{center}
 \vfill
 \begin{center}
-\includegraphics[width=0.8\textwidth]{imgs/ch2/qwen-training.png}
+\includegraphics[width=0.8\textwidth]{imgs/ch2/vlm-slide.png}
 \end{center}
 \vfill
 \end{frame}
@@ -647,6 +647,17 @@ Object Video Tracking for Cross-View Object Correspondence}
   \begin{center}
     \includegraphics[width=0.9\textwidth]{imgs/ch3/block-4-focus.png}
   \end{center}
+\vfill
+\end{frame}
+
+\begin{frame}[t]
+\begin{center}
+{\large Video Tracker: Propagation Example}
+\end{center}
+\vfill
+\begin{center}
+\fbox{\parbox[c][0.66\textheight][c]{0.9\linewidth}{\centering \textit{Video tracker propagation example on Ego-Exo4D}\\[0.4em]{\scriptsize (image to add)}}}
+\end{center}
 \vfill
 \end{frame}
 
@@ -795,13 +806,16 @@ Object Video Tracking for Cross-View Object Correspondence}
 {\large Gap Analysis}
 \end{center}
 \vfill
-\begin{center}
-\includegraphics[height=0.8\textheight]{imgs/ch4/gap-analysis-distribution.png}
-\end{center}
-\vspace{0.4em}
-\begin{center}
-Mean IoU \textit{Exo2Ego}: 40.5 \textcolor{plotblue}{Our Pipeline} vs 64.4 \textcolor{plotorange}{LM-EEC}.
-\end{center}
+\begin{columns}[c]
+  \begin{column}{0.62\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{imgs/ch4/gap-analysis-distribution.png}
+  \end{column}
+  \begin{column}{0.34\textwidth}
+    \large
+    Mean IoU \textit{Exo2Ego}: 40.5 \textcolor{plotblue}{Our Pipeline} vs 64.4 \textcolor{plotorange}{LM-EEC}.
+  \end{column}
+\end{columns}
 \vfill
 \end{frame}
 
@@ -810,13 +824,16 @@ Mean IoU \textit{Exo2Ego}: 40.5 \textcolor{plotblue}{Our Pipeline} vs 64.4 \text
 {\large Removing the Dead Mass}
 \end{center}
 \vfill
-\begin{center}
-\includegraphics[height=0.7\textheight]{imgs/ch4/gap-analysis-distribution-removed.png}
-\end{center}
-\vspace{0.4em}
-\begin{center}
-Mean IoU \textit{Exo2Ego} after removing the dead mass: 61.7 \textcolor{plotblue}{Our Pipeline} vs 64.4 \textcolor{plotorange}{LM-EEC}.
-\end{center}
+\begin{columns}[c]
+  \begin{column}{0.62\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{imgs/ch4/gap-analysis-distribution-removed.png}
+  \end{column}
+  \begin{column}{0.34\textwidth}
+    \large
+    Mean IoU \textit{Exo2Ego} after removing the dead mass: 61.7 \textcolor{plotblue}{Our Pipeline} vs 64.4 \textcolor{plotorange}{LM-EEC}.
+  \end{column}
+\end{columns}
 \vfill
 \end{frame}
 
