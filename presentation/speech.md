@@ -226,35 +226,41 @@ This exposes the main weakness of the pipeline. Everything hinges on the bridge.
 ```Slide design notes: title in the center as usual per other slides; ch4/gap-analysis-groups.png in the middle centered; below centered the following text: Anchor mask quality is the determing factor; incorrect bridges propagate error to entire take."```
 
 ## Naming issue
-So where is the dead mass born? To find out, I checked the intermediate results for all runs, and charge every dead case to the first stage of the pipeline that breaks.
+So where is the dead mass born? To find out, I did a waterfall analysis, checking the intermediate results for all runs and charging every dead case to the first stage of the pipeline that breaks.
 
-The finding was clear. The second stage of description generation is the single largest cause: 59% of the dead mass in Ego2Exo, and 81% in Exo2Ego. 
+The main contribuent causing poor anchor masks is the VLM naming a different object than the target.
 
-Anchor selection in stage three is next, and the two together explain 74% and 92% of all dead cases. 
+This issue accounted for 59% of the dead mass in Ego2Exo, and 81% in Exo2Ego. 
 
 The following question thus is: why does the VLM mislabel an object? 
+
+```Slide design notes: two columns; the first has examples of naming failures (image to do); the second has the text "Source of bad anchor masks in 59% of the cases in Ego2Exo, and 81% in Exo2Ego". Original slide with table moved to supplementary material.```
 
 ## Perception issue
 The answer is the size of the source mask. On the dead cases, the selected source mask is three to six times smaller than on the successful cases. In Exo2Ego, half the failures show the object at under 0.1% of the frame.
 
-```Slide design note: have big examples in the middle as columns```
+Interestingly, rather then hallucinating, the VLM names a real larger neighbour. 
 
-Interestingly, rather then hallucinating, the VLM names a real larger neighbour. It honestly describes the container, the tool, or the surface the small target object is resting on. In comparison, true vocabulary near misses are negligible. 
+My hypothesis is not enough signal from the visual characteristics of the target object are reaching the VLM, meaning that the VLM cannot se the object well enough. This might be due to the grid tokenization, which makes me think that an approach like fovated tokenization could dramatically improve performance. 
 
-That diagnosis rules out the cheap explanations. It is not a weak prompt, and it is not a poor vocabulary. It is perception. The model cannot see a small enough object well enough to name it.
+```Slide design note: two colums; the first has a table created from this paragraph in the thesis (". On the dead cases the source mask handed to the model is three to six times smaller than on the successful ones (median 1.43% against 4.05% of the frame in Ego2Exo, and 0.098% against 0.564% in Exo2Ego), and in Exo2Ego half of the failures show the object at under 0.1% of the frame."); the second is divided in two horizontal rectangle parts; the upper has some images of the small cases (todo); the lower has the foveated tokenisation example (/Users/marcolomele/Documents/Repos/msc-thesis/presentation/imgs/ch4/foveated-tokenization.png).```
 
 ## Ablations
-After discovreing where the pipeline breaks and why, the I wanted to understand which component of the pipeline deserved the most attention for future improvements. To this end, I ran ablations. 
+After discovreing where the pipeline breaks and why, I wanted to understand which component of the pipeline deserved the most attention for future improvements. To this end, I ran ablations. 
 
-First, I looked at what each block actually contributes. The naive version of the pipeline is: describe every source frame and run SAM 3 one shot per destination frame. This scored 10.6 IoU. Replacing our description with the ground-truth object name lifted it to 17.0, which again isolated naming as the bottleneck. Nonetheless, most of the oracle advantage was captured back with frame selection startegy.
+First, I defined a naive version of the pipeline: describe every source frame and run SAM 3 one shot per destination frame. This scored 10.6 IoU. 
 
-Swapping in SAM 3 agent on every frame raised the score to 35.5, but costed 21 seconds per frame, or 59 hours for the validation run. Propagation solves the timing constraing at 0.82 seconds per frame, and Grounding DINO anchors further raise IoU at 38.1.
+Then, I added frame selection, lifting IoU to 16.8.
+
+Swapping in SAM 3 agent on every frame raised the score to 35.5, the biggest boost. Howeber, it also costed 21 seconds per frame, or 59 hours on 10% of the validation set. 
+
+Propagation solves the timing constraing at 0.82 seconds per frame, and Grounding DINO anchor selection further raise IoU at 38.1.
 
 That is 260% over the baseline at a third of the time.
 
-Two softer limits are worth naming here too: the bridge itself rests on just a handful of frames, and language carries an irreducible ambiguity no amount of engineering removes.
-
 The conclusion from this ladder is clear: selection and propagation are already at their ceiling, while description and segmentation are where future efforts should go.
+
+```Slide design note: 
 
 # Conclusions
 140 words. 

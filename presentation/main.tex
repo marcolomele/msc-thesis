@@ -865,12 +865,48 @@ Main weakness: error of low quality anchor gets propagated to the entire take.
 \begin{center}
 {\large Naming issue}
 \end{center}
+\vfill
+\begin{columns}[c]
+  \begin{column}{0.55\textwidth}
+    \centering
+    \fbox{\parbox[c][0.6\textheight][c]{0.92\linewidth}{\centering \textit{Examples of naming failures}\\[0.4em]{\scriptsize (image to add)}}}
+  \end{column}
+  \begin{column}{0.42\textwidth}
+    \large
+    The VLM naming a different object than the target is the source of bad anchor masks in \textbf{59\%} of the cases in \textit{Ego2Exo}, and \textbf{81\%} in \textit{Exo2Ego}.
+  \end{column}
+\end{columns}
+\vfill
 \end{frame}
 
 \begin{frame}[t]
 \begin{center}
 {\large Perception issue}
 \end{center}
+\vfill
+\begin{columns}[c]
+  \begin{column}{0.46\textwidth}
+    \centering
+    \small
+    \begin{tabular}{lcc}
+      \toprule
+      Median source & Dead & Successful \\
+      mask size & cases & cases \\
+      \midrule
+      \textit{Ego2Exo} & 1.43\% & 4.05\% \\
+      \textit{Exo2Ego} & 0.098\% & 0.564\% \\
+      \bottomrule
+    \end{tabular}
+    \\[0.6em]
+    {\scriptsize Source mask 3--6$\times$ smaller on dead cases. In \textit{Exo2Ego}, half the failures fall under 0.1\% of the frame.}
+  \end{column}
+  \begin{column}{0.52\textwidth}
+    \centering
+    \fbox{\parbox[c][0.34\textheight][c]{0.92\linewidth}{\centering \textit{Small-object failure examples}\\[0.3em]{\scriptsize (image to add)}}}\\[0.6em]
+    \includegraphics[height=0.32\textheight]{imgs/ch4/foveated-tokenization.png}
+  \end{column}
+\end{columns}
+\vfill
 \end{frame}
 
 % \begin{frame}[t]
@@ -901,67 +937,6 @@ Main weakness: error of low quality anchor gets propagated to the entire take.
 \begin{center}
 {\scriptsize The VLM names a real, larger neighbour, the container or surface, rather than hallucinating.}
 \end{center}
-\end{frame}
-
-\begin{frame}[t]
-\begin{center}
-{\large Targeted Interventions}
-\end{center}
-\vfill
-\begin{columns}
-  \begin{column}{0.55\textwidth}
-    \centering
-    \small
-    \begin{tabular}{lcc}
-      \toprule
-      Intervention & \textit{Ego2Exo} $\Delta$ & \textit{Exo2Ego} $\Delta$ \\
-      \midrule
-      Scene vocabulary hint    & $+1.1$ & $-0.8$ \\
-      Destination crop hint    & $-4.4$ & $-4.3$ \\
-      Brighten ego frames      & $-3.7$ & $-2.3$ \\
-      \bottomrule
-    \end{tabular}
-    \\[0.6em]
-    {\scriptsize $\Delta$ IoU on 25\% of validation.}
-  \end{column}
-  \begin{column}{0.45\textwidth}
-    \large
-    Outcomes mostly negative. On a legible pipeline, each still localises the constraint.
-  \end{column}
-\end{columns}
-\vfill
-\end{frame}
-
-\begin{frame}[t]
-\begin{center}
-{\large The Crop Paradox}
-\end{center}
-\vfill
-\begin{columns}
-  \begin{column}{0.50\textwidth}
-    \centering
-    \small
-    \begin{tabular}{lcc}
-      \toprule
-      Baseline band & \textit{Ego2Exo} $\Delta$ & \textit{Exo2Ego} $\Delta$ \\
-      \midrule
-      Low $[0,0.25)$    & $+4.9$  & $+5.6$ \\
-      Mid $[0.25,0.6)$  & $+6.3$  & $+5.9$ \\
-      High $[0.6,1]$    & $-19.4$ & $-7.6$ \\
-      \bottomrule
-    \end{tabular}
-    \\[0.6em]
-    {\scriptsize Destination crop hint, stratified by frame baseline IoU.}
-  \end{column}
-  \begin{column}{0.50\textwidth}
-    \large
-    \begin{itemize}
-        \item Hint rescues failing frames, corrupts passing ones.
-        \item Source crop collapses IoU 41.1 $\rightarrow$ 18.0: a small object's identity lives in its surroundings.
-    \end{itemize}
-  \end{column}
-\end{columns}
-\vfill
 \end{frame}
 
 \begin{frame}[t]
@@ -1101,11 +1076,83 @@ Main weakness: error of low quality anchor gets propagated to the entire take.
 
 \begin{frame}[t]
 \begin{center}
+{\large Extended gap analysis}
+\end{center}
+\vfill
+\begin{center}
+\includegraphics[width=0.6\textwidth]{imgs/ch4/gap-analysis-groups.png}
+\end{center}
+\vfill
+\end{frame}
+
+\begin{frame}[t]
+\begin{center}
+{\large Targeted Interventions}
+\end{center}
+\vfill
+\begin{columns}
+  \begin{column}{0.55\textwidth}
+    \centering
+    \small
+    \begin{tabular}{lcc}
+      \toprule
+      Intervention & \textit{Ego2Exo} $\Delta$ & \textit{Exo2Ego} $\Delta$ \\
+      \midrule
+      Scene vocabulary hint    & $+1.1$ & $-0.8$ \\
+      Destination crop hint    & $-4.4$ & $-4.3$ \\
+      Brighten ego frames      & $-3.7$ & $-2.3$ \\
+      \bottomrule
+    \end{tabular}
+    \\[0.6em]
+    {\scriptsize $\Delta$ IoU on 25\% of validation.}
+  \end{column}
+  \begin{column}{0.45\textwidth}
+    \large
+    Outcomes mostly negative. On a legible pipeline, each still localises the constraint.
+  \end{column}
+\end{columns}
+\vfill
+\end{frame}
+
+\begin{frame}[t]
+\begin{center}
+{\large The Crop Paradox}
+\end{center}
+\vfill
+\begin{columns}
+  \begin{column}{0.50\textwidth}
+    \centering
+    \small
+    \begin{tabular}{lcc}
+      \toprule
+      Baseline band & \textit{Ego2Exo} $\Delta$ & \textit{Exo2Ego} $\Delta$ \\
+      \midrule
+      Low $[0,0.25)$    & $+4.9$  & $+5.6$ \\
+      Mid $[0.25,0.6)$  & $+6.3$  & $+5.9$ \\
+      High $[0.6,1]$    & $-19.4$ & $-7.6$ \\
+      \bottomrule
+    \end{tabular}
+    \\[0.6em]
+    {\scriptsize Destination crop hint, stratified by frame baseline IoU.}
+  \end{column}
+  \begin{column}{0.50\textwidth}
+    \large
+    \begin{itemize}
+        \item Hint rescues failing frames, corrupts passing ones.
+        \item Source crop collapses IoU 41.1 $\rightarrow$ 18.0: a small object's identity lives in its surroundings.
+    \end{itemize}
+  \end{column}
+\end{columns}
+\vfill
+\end{frame}
+
+\begin{frame}[t]
+\begin{center}
 {\large Motivating Stage 3.1: correlation in visibility score across views}
 \end{center}
 \vfill
   \begin{center}
-    \includegraphics[width=0.5\textwidth]{presentation/imgs/ch3/visibility-score-correlation.png}
+    \includegraphics[width=0.5\textwidth]{imgs/ch3/visibility-score-correlation.png}
   \end{center}
 \begin{center}
 \end{center}
