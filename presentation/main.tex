@@ -1016,17 +1016,16 @@ Main weakness: error of low quality anchor gets propagated to the entire take.
 {\large The four assumptions, revisited}
 \end{center}
 \vfill
-\verdictrow{1}{Language detail}{\opentag{TBD}}{The VLM cannot see a target that fills a handful of pixels. Foveated tokenisation could dramatically improve performance.}
+\verdictrow{1}{Language detail}{\opentag{TBD}}{
+
+Small object $\Rightarrow$ small signal to VLM. \\ Potential solution is foveated tokenisation.}
 \vspace{0.25em}
-\verdictrow{2}{Consistent interpretation}{\heldtag}{The pipeline recovers significant quality against trained published work, never trained together.}
+\verdictrow{2}{Consistent \\ interpretation}{\heldtag}{The pipeline recovers training-free significant quality against related works.}
 \vspace{0.25em}
-\verdictrow{3}{Reliable anchors}{\opentag{Re-evaluate}}{A handful of correct segmentations completes the track. But a single wrong anchor propagates its error across the whole take.}
+\verdictrow{3}{Reliable anchors}{\opentag{Re-evaluate}}{A single wrong anchor propagates its error across the whole take.}
 \vspace{0.25em}
-\verdictrow{4}{Offline prediction}{\heldtag$^{*}$}{Prediction runs offline by design, propagating forward and backward in time.}
+\verdictrow{4}{Offline prediction}{\heldtag}{By design. Feasible online; once the bridge is built, run only SAM 2 propagation.}
 \vspace{0.4em}
-\begin{center}
-{\footnotesize $^{*}$Live applications require online prediction. Once the bridge is built only Stage 4 runs, so the pipeline still extends to live settings.}
-\end{center}
 \vfill
 \end{frame}
 
@@ -1082,9 +1081,15 @@ Main weakness: error of low quality anchor gets propagated to the entire take.
 \vfill
 \end{frame}
 
+\begin{frame}
+\begin{center}
+    {\Large Conclusion.}
+\end{center}
+\end{frame}
+
 \begin{frame}[t]
 \begin{center}
-{\large Summary}
+{\large In this presentation}
 \end{center}
 \vfill
 \begin{center}
